@@ -18,11 +18,25 @@
     background: #f5f5f9;
     color: #566a7f;
     font-weight: 600;
+    white-space: nowrap;
 }
 
+/* Center align status & action */
+#jobWorkerTable th:nth-child(6),
+#jobWorkerTable th:nth-child(7),
+#jobWorkerTable td:nth-child(6),
+#jobWorkerTable td:nth-child(7) {
+    text-align: center;
+}
+
+/* Row hover */
 #jobWorkerTable tbody tr:hover {
     background-color: #f9fafb;
-    transition: 0.2s;
+}
+
+/* Search input */
+.search-box {
+    width: 180px;
 }
 
 /* =========================
@@ -80,15 +94,34 @@ input:checked + .slider:before {
     <div class="card shadow-sm border-0 rounded-4 p-3">
 
         <!-- =========================
-            HEADER
+            HEADER + SEARCH
         ========================== -->
-        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 row">
 
-            <h5 class="mb-0 text-primary">Job Worker Management</h5>
+            <!-- Title -->
+            <div class="col-md-3">
+                <h5 class="mb-0 text-primary">Job Worker Management</h5>
+            </div>
 
-            <a href="{{ route('admin.jobworkers.create') }}" class="btn btn-primary">
-                Add Job Worker
-            </a>
+            <!-- Filters -->
+            <div class="d-flex gap-2 col-md-5">
+
+                <input type="text" id="search_name" 
+                    class="form-control search-box" 
+                    placeholder="Job Worker">
+
+                <input type="text" id="search_global" 
+                    class="form-control search-box" 
+                    placeholder="Search here">
+
+            </div>
+
+            <!-- Add Button -->
+            <div class="col-md-2 text-end">
+                <a href="{{ route('admin.jobworkers.create') }}" class="btn btn-primary">
+                    Add Job Worker
+                </a>
+            </div>
 
         </div>
 
@@ -96,7 +129,7 @@ input:checked + .slider:before {
             TABLE
         ========================== -->
         <div class="table-responsive">
-            <table class="table table-bordered table-hover align-middle" id="jobWorkerTable" style="width:100%">
+            <table class="table table-bordered table-hover align-middle w-100" id="jobWorkerTable">
                 <thead>
                     <tr>
                         <th>#</th>
@@ -104,11 +137,10 @@ input:checked + .slider:before {
                         <th>Phone</th>
                         <th>Email</th>
                         <th>City</th>
-                        <th class="text-center">Status</th>
-                        <th class="text-center">Action</th>
+                        <th>Status</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
-                <tbody></tbody>
             </table>
         </div>
 
@@ -121,12 +153,6 @@ input:checked + .slider:before {
 
 @section('script')
 
-<!-- SweetAlert -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-<!-- Toastr -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css"/>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
 
 <script>
 $(function () {
@@ -139,7 +165,17 @@ $(function () {
     let table = $('#jobWorkerTable').DataTable({
         processing: true,
         serverSide: true,
-        ajax: "{{ route('admin.jobworkers.getall') }}",
+        autoWidth: false,
+        responsive: true,
+
+        ajax: {
+            url: "{{ route('admin.jobworkers.getall') }}",
+            data: function (d) {
+                d.name = $('#search_name').val();
+                d.search_value = $('#search_global').val();
+            }
+        },
+
         searching: false,
 
         columns: [
@@ -151,6 +187,24 @@ $(function () {
             { data: 'status', orderable: false, searchable: false },
             { data: 'action', orderable: false, searchable: false }
         ]
+    });
+
+
+    /**
+     * =========================
+     * AUTO SEARCH (DEBOUNCE)
+     * =========================
+     */
+    let delayTimer;
+
+    $('#search_name, #search_global').on('keyup', function () {
+
+        clearTimeout(delayTimer);
+
+        delayTimer = setTimeout(function () {
+            table.ajax.reload();
+        }, 400);
+
     });
 
 

@@ -28,6 +28,22 @@ class JobWorkerController extends Controller
 
             // ✅ correct model
             $query = JobWorker::query()->latest();
+            
+
+            if (!empty($request->name)) {
+                $query->where('name', 'like', '%' . $request->name . '%');
+            }
+
+            if (!empty($request->search_value)) {
+                $search = $request->search_value;
+
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%$search%")
+                    ->orWhere('phone', 'like', "%$search%")
+                    ->orWhere('email', 'like', "%$search%")
+                    ->orWhere('city', 'like', "%$search%");
+                });
+            }
 
             return DataTables::of($query)
                 ->addIndexColumn()
