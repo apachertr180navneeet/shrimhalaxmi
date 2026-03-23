@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\{
     AdminAuthController,
     VendorController,
     JobWorkerController,
+    CustomerController
 };
 
 /*
@@ -80,6 +81,21 @@ Route::name('admin.')->prefix('admin')->group(function () {
 
             Route::post('/status', [JobWorkerController::class, 'changeStatus'])->name('status');
             Route::delete('/delete/{id}', [JobWorkerController::class, 'delete'])->name('delete');
+        });
+
+        Route::prefix('customers')->name('customers.')->group(function () {
+
+            Route::get('/', [CustomerController::class, 'index'])->name('index');
+            Route::get('/getall', [CustomerController::class, 'getAll'])->name('getall');
+
+            Route::get('/create', [CustomerController::class, 'create'])->name('create');
+            Route::post('/store', [CustomerController::class, 'store'])->name('store');
+
+            Route::get('/edit/{id}', [CustomerController::class, 'edit'])->name('edit');
+            Route::post('/update/{id}', [CustomerController::class, 'update'])->name('update');
+
+            Route::post('/status', [CustomerController::class, 'changeStatus'])->name('status');
+            Route::delete('/delete/{id}', [CustomerController::class, 'delete'])->name('delete');
         });
     });
 

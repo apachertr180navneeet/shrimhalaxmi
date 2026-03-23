@@ -36,6 +36,13 @@
 				<div data-i18n="Job Worker">Job Worker</div>
 			</a>
 		</li>
+
+		<li class="menu-item {{ request()->is('admin/customers*') ? 'active' : ''}}">
+			<a href="{{route('admin.customers.index')}}" class="menu-link">
+				<i class="menu-icon tf-icons bx bx-home-circle"></i>
+				<div data-i18n="Customer">Customer</div>
+			</a>
+		</li>
 		
 	</ul>
 </aside>
