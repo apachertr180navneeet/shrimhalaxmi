@@ -30,8 +30,8 @@
 			</a>
 		</li>
 
-		<li class="menu-item {{ request()->is('admin/vendors*') ? 'active' : ''}}">
-			<a href="{{route('admin.vendors.index')}}" class="menu-link">
+		<li class="menu-item {{ request()->is('admin/jobworkers*') ? 'active' : ''}}">
+			<a href="{{route('admin.jobworkers.index')}}" class="menu-link">
 				<i class="menu-icon tf-icons bx bx-home-circle"></i>
 				<div data-i18n="Job Worker">Job Worker</div>
 			</a>

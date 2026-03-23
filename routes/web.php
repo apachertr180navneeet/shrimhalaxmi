@@ -5,6 +5,7 @@ use App\Http\Controllers\Web\HomeController;
 use App\Http\Controllers\Admin\{
     AdminAuthController,
     VendorController,
+    JobWorkerController,
 };
 
 /*
@@ -63,6 +64,22 @@ Route::name('admin.')->prefix('admin')->group(function () {
 
             Route::post('/status', [VendorController::class, 'changeStatus'])->name('status');
             Route::delete('/delete/{id}', [VendorController::class, 'delete'])->name('delete');
+        });
+
+
+        Route::prefix('jobworkers')->name('jobworkers.')->group(function () {
+
+            Route::get('/', [JobWorkerController::class, 'index'])->name('index');
+            Route::get('/getall', [JobWorkerController::class, 'getAll'])->name('getall');
+
+            Route::get('/create', [JobWorkerController::class, 'create'])->name('create');
+            Route::post('/store', [JobWorkerController::class, 'store'])->name('store');
+
+            Route::get('/edit/{id}', [JobWorkerController::class, 'edit'])->name('edit');
+            Route::post('/update/{id}', [JobWorkerController::class, 'update'])->name('update');
+
+            Route::post('/status', [JobWorkerController::class, 'changeStatus'])->name('status');
+            Route::delete('/delete/{id}', [JobWorkerController::class, 'delete'])->name('delete');
         });
     });
 
