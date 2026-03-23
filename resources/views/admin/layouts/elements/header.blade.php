@@ -22,7 +22,15 @@
 				<a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);"
 					data-bs-toggle="dropdown">
 					<div class="avatar avatar-online">
-						<img src="{{asset('assets/admin/img/avatars/1.png')}}" alt="admin" class="w-px-40 h-auto rounded-circle" />
+						@if(!empty($authUser->avatar) && file_exists(public_path($authUser->avatar)))
+							<img src="{{ asset($authUser->avatar) }}" 
+								alt="User Image" 
+								class="w-px-40 h-auto rounded-circle">
+						@else
+							<img src="{{ asset('assets/admin/img/avatars/1.png') }}" 
+								alt="Default Image" 
+								class="w-px-40 h-auto rounded-circle">
+						@endif
 					</div>
 				</a>
 				<ul class="dropdown-menu dropdown-menu-end">
@@ -31,16 +39,25 @@
 							<div class="d-flex">
 								<div class="flex-shrink-0 me-3">
 									<div class="avatar avatar-online">
-										@if(!empty($user->avatar) && file_exists(public_path('/').$user->avatar))
-		                                    <img src="{{asset($user->avatar)}}" alt="User Image" class="w-px-40 h-auto rounded-circle">
-		                                @else
-		                                    <img src="{{asset('assets/admin/img/avatars/1.png')}}"  alt="User Image" class="w-px-40 h-auto rounded-circle">
-		                                @endif
+										@php
+											$authUser = Auth::user();
+										@endphp
+
+										@if(!empty($authUser->avatar) && file_exists(public_path($authUser->avatar)))
+											<img src="{{ asset($authUser->avatar) }}" 
+												alt="User Image" 
+												class="w-px-40 h-auto rounded-circle">
+										@else
+											<img src="{{ asset('assets/admin/img/avatars/1.png') }}" 
+												alt="Default Image" 
+												class="w-px-40 h-auto rounded-circle">
+										@endif
 									</div>
 								</div>
+
 								<div class="flex-grow-1">
-									<span class="fw-medium d-block">{{Auth::user()->full_name}}</span>
-									<small class="text-muted">{{ucfirst(Auth::user()->role)}}</small>
+									<span class="fw-medium d-block">{{ $authUser->full_name }}</span>
+									<small class="text-muted">{{ ucfirst($authUser->role) }}</small>
 								</div>
 							</div>
 						</a>
