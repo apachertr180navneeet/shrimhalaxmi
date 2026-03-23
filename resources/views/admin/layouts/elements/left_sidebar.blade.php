@@ -21,6 +21,21 @@
 				<div data-i18n="Dashboard">Dashboard</div>
 			</a>
 		</li>
+
+
+		<li class="menu-item {{ request()->is('admin/vendors*') ? 'active' : ''}}">
+			<a href="{{route('admin.vendors.index')}}" class="menu-link">
+				<i class="menu-icon tf-icons bx bx-home-circle"></i>
+				<div data-i18n="Vendor">Vendor</div>
+			</a>
+		</li>
+
+		<li class="menu-item {{ request()->is('admin/vendors*') ? 'active' : ''}}">
+			<a href="{{route('admin.vendors.index')}}" class="menu-link">
+				<i class="menu-icon tf-icons bx bx-home-circle"></i>
+				<div data-i18n="Job Worker">Job Worker</div>
+			</a>
+		</li>
 		
 	</ul>
 </aside>

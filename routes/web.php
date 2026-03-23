@@ -2,11 +2,10 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Web\HomeController;
-use App\Http\Controllers\Admin\AdminAuthController;
-use App\Http\Controllers\Admin\PageController;
-use App\Http\Controllers\Admin\ContactController;
-use App\Http\Controllers\Admin\NotificationController;
-use App\Http\Controllers\Admin\AdminUserController;
+use App\Http\Controllers\Admin\{
+    AdminAuthController,
+    VendorController,
+};
 
 /*
 |--------------------------------------------------------------------------
@@ -50,6 +49,21 @@ Route::name('admin.')->prefix('admin')->group(function () {
         Route::get('profile', [AdminAuthController::class, 'adminProfile'])->name('profile');
 
         Route::post('profile', [AdminAuthController::class, 'updateAdminProfile'])->name('update.profile');
+
+        Route::prefix('vendors')->name('vendors.')->group(function () {
+
+            Route::get('/', [VendorController::class, 'index'])->name('index');
+            Route::get('/getall', [VendorController::class, 'getAll'])->name('getall');
+
+            Route::get('/create', [VendorController::class, 'create'])->name('create');
+            Route::post('/store', [VendorController::class, 'store'])->name('store');
+
+            Route::get('/edit/{id}', [VendorController::class, 'edit'])->name('edit');
+            Route::post('/update/{id}', [VendorController::class, 'update'])->name('update');
+
+            Route::post('/status', [VendorController::class, 'changeStatus'])->name('status');
+            Route::delete('/delete/{id}', [VendorController::class, 'delete'])->name('delete');
+        });
     });
 
 });
