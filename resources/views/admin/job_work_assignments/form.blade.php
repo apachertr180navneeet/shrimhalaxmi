@@ -1,3 +1,9 @@
+<!--
+    =============================
+    Job Work Assignment Form CSS
+    =============================
+    Custom styles for the assignment form layout and table
+-->
 <style>
     .assignment-form-grid {
         display: grid;
@@ -86,6 +92,10 @@
 </style>
 
 @php
+    // =============================
+    // Data Preparation for Form
+    // =============================
+    // Set up variables for assignment, job workers, items, lot sources, assignment items, and process options
     $assignment = $assignment ?? [];
     $jobWorkers = $jobWorkers ?? collect();
     $items = $items ?? collect();
@@ -96,6 +106,7 @@
     $processNameById = $processOptions->pluck('name', 'id');
     $processIdByName = $processOptions->pluck('id', 'name');
 
+    // Prepare form rows: use old input if validation failed, otherwise use existing assignment items
     if (old('items_data')) {
         $formRows = collect(old('items_data'))->values()->map(function ($row) use ($itemNameMap, $lotSources, $processIdByName, $processNameById) {
             $source = $lotSources->firstWhere('purchase_item_id', (int) ($row['purchase_item_id'] ?? 0));
@@ -135,9 +146,17 @@
         });
     }
 
+    // Get unique lot numbers for the lot dropdown
     $uniqueLots = $lotSources->pluck('lot_no')->filter()->unique()->values();
 @endphp
 
+
+{{--
+    =============================
+    Error Display Section
+    =============================
+    Show validation errors if any
+--}}
 @if ($errors->any())
     <div class="alert alert-danger">
         <ul class="mb-0">
@@ -148,6 +167,12 @@
     </div>
 @endif
 
+{{--
+    =============================
+    Assignment Main Fields
+    =============================
+    Date, Job Worker, Assign No, Freight
+--}}
 <div class="assignment-form-grid">
     <div>
         <div class="assignment-field-grid">
@@ -193,6 +218,11 @@
     </div>
 </div>
 
+{{--
+    =============================
+    Remark Field
+    =============================
+--}}
 <div class="assignment-form-grid">
     <div class="assignment-field-grid">
         <label>Remark</label>
@@ -200,6 +230,12 @@
     </div>
 </div>
 
+{{--
+    =============================
+    Assignment Item Entry Fields
+    =============================
+    Fields for adding a new item to the assignment
+--}}
 <div class="assignment-inline-grid">
     <div class="assignment-field-grid">
         <label>LOT NO.</label>
@@ -259,10 +295,22 @@
     </div>
 </div>
 
+
+{{--
+    =============================
+    Items Data Error
+    =============================
+--}}
 @error('items_data')
 <div class="text-danger small mb-2">{{ $message }}</div>
 @enderror
 
+{{--
+    =============================
+    Assignment Items Table
+    =============================
+    Table of all items added to the assignment
+--}}
 <div class="assignment-bottom-grid">
     <div class="text-end mb-3">
         <button type="button" id="add_assignment_item" class="btn btn-primary">Add Item</button>
@@ -336,11 +384,17 @@
     </div>
 </div>
 
-<script>
 document.addEventListener('DOMContentLoaded', function () {
-    // `lotSources` drives the lot -> item dependency; processes load independently.
+<script>
+// =============================
+// Assignment Form JavaScript Logic
+// =============================
+// Handles dynamic population of dropdowns, adding/removing items, and syncing hidden inputs
+document.addEventListener('DOMContentLoaded', function () {
+    // Lot sources and process options are passed from PHP as JSON
     const lotSources = @json($lotSources);
     const processOptions = @json($processOptions);
+    // Get references to all form fields
     const lotSelect = document.getElementById('lot_no');
     const purchaseItemSelect = document.getElementById('purchase_item_id');
     const qualityInput = document.getElementById('quality');
@@ -354,28 +408,28 @@ document.addEventListener('DOMContentLoaded', function () {
     const tableBody = document.getElementById('assignment_items_body');
     const emptyRowId = 'assignment_empty_row';
 
+    // Get all data rows in the table (excluding the empty state row)
     function getDataRows() {
         return Array.from(tableBody.querySelectorAll('tr')).filter(function (row) {
             return row.id !== emptyRowId;
         });
     }
 
+    // Get the currently selected purchase item source object
     function currentSource() {
         const purchaseItemId = purchaseItemSelect.value;
         if (!purchaseItemId) {
             return null;
         }
-
         return lotSources.find(function (row) {
             return String(row.purchase_item_id) === String(purchaseItemId);
         }) || null;
     }
 
-    // Keep process dropdown independent from lot and item selection.
+    // Populate the process dropdown (independent of lot/item selection)
     function populateProcessOptions() {
         const selectedValue = processSelect.value;
         processSelect.innerHTML = '<option value="">Select Process</option>';
-
         processOptions.forEach(function (row) {
             const option = document.createElement('option');
             option.value = row.id;
@@ -387,17 +441,15 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Item list is the only dropdown filtered by the selected lot number.
+    // Populate the item dropdown based on selected lot number
     function populateItemOptions() {
         const selectedLotNo = lotSelect.value;
         purchaseItemSelect.innerHTML = '<option value="">Select Item</option>';
-
         if (!selectedLotNo) {
             fillSourceFields(null);
             populateProcessOptions();
             return;
         }
-
         lotSources
             .filter(function (row) {
                 return row.lot_no === selectedLotNo;
@@ -409,12 +461,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 option.dataset.itemId = row.item_id;
                 purchaseItemSelect.appendChild(option);
             });
-
         fillSourceFields(null);
         populateProcessOptions();
     }
 
-    // Copy purchase defaults into the working inputs for the selected lot item.
+    // Fill quality, meter, fold, net meter fields from the selected source
     function fillSourceFields(source) {
         qualityInput.value = source ? source.quality : '';
         meterInput.value = source ? source.meter : '';
@@ -424,23 +475,24 @@ document.addEventListener('DOMContentLoaded', function () {
         transportInput.value = '';
     }
 
-    // Mirror the visible table row into hidden inputs for form submission.
+    // Update hidden inputs for a table row to match its data attributes
     function updateRowHiddenInputs(row, index) {
         const holder = row.querySelector('.row-hidden-inputs');
         holder.innerHTML = ''
-            + '<input type="hidden" name="items_data[' + index + '][purchase_item_id]" value="' + (row.dataset.purchaseItemId || '') + '">'
-            + '<input type="hidden" name="items_data[' + index + '][item_id]" value="' + (row.dataset.itemId || '') + '">'
-            + '<input type="hidden" name="items_data[' + index + '][lot_no]" value="' + (row.dataset.lotNo || '') + '">'
-            + '<input type="hidden" name="items_data[' + index + '][quality]" value="' + (row.dataset.quality || '') + '">'
-            + '<input type="hidden" name="items_data[' + index + '][meter]" value="' + (row.dataset.meter || '') + '">'
-            + '<input type="hidden" name="items_data[' + index + '][fold]" value="' + (row.dataset.fold || '') + '">'
-            + '<input type="hidden" name="items_data[' + index + '][net_meter]" value="' + (row.dataset.netMeter || '') + '">'
-            + '<input type="hidden" name="items_data[' + index + '][process_id]" value="' + (row.dataset.processId || '') + '">'
-            + '<input type="hidden" name="items_data[' + index + '][lr_no]" value="' + (row.dataset.lrNo || '') + '">'
-            + '<input type="hidden" name="items_data[' + index + '][transport]" value="' + (row.dataset.transport || '') + '">'
+            + '<input type="hidden" name="items_data[' + index + '][purchase_item_id]" value="' + (row.dataset.purchaseItemId || '') + '">' 
+            + '<input type="hidden" name="items_data[' + index + '][item_id]" value="' + (row.dataset.itemId || '') + '">' 
+            + '<input type="hidden" name="items_data[' + index + '][lot_no]" value="' + (row.dataset.lotNo || '') + '">' 
+            + '<input type="hidden" name="items_data[' + index + '][quality]" value="' + (row.dataset.quality || '') + '">' 
+            + '<input type="hidden" name="items_data[' + index + '][meter]" value="' + (row.dataset.meter || '') + '">' 
+            + '<input type="hidden" name="items_data[' + index + '][fold]" value="' + (row.dataset.fold || '') + '">' 
+            + '<input type="hidden" name="items_data[' + index + '][net_meter]" value="' + (row.dataset.netMeter || '') + '">' 
+            + '<input type="hidden" name="items_data[' + index + '][process_id]" value="' + (row.dataset.processId || '') + '">' 
+            + '<input type="hidden" name="items_data[' + index + '][lr_no]" value="' + (row.dataset.lrNo || '') + '">' 
+            + '<input type="hidden" name="items_data[' + index + '][transport]" value="' + (row.dataset.transport || '') + '">' 
             + '<input type="hidden" name="items_data[' + index + '][sort_order]" value="' + (index + 1) + '">';
     }
 
+    // Reindex table rows and update their hidden inputs
     function reindexRows() {
         getDataRows().forEach(function (row, index) {
             row.children[0].textContent = (index + 1) + '.';
@@ -448,10 +500,10 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // Show or hide the empty state row depending on table content
     function ensureEmptyState() {
         const rows = getDataRows();
         const emptyRow = document.getElementById(emptyRowId);
-
         if (rows.length === 0) {
             if (!emptyRow) {
                 const row = document.createElement('tr');
@@ -464,6 +516,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    // Clear all entry fields after adding an item
     function clearEntryFields() {
         lotSelect.value = '';
         populateItemOptions();
@@ -473,12 +526,11 @@ document.addEventListener('DOMContentLoaded', function () {
         populateProcessOptions();
     }
 
-    // In edit mode, preload the first saved row into the top editor fields.
+    // In edit mode, preload the first saved row into the top editor fields
     function populateEditorFromRow(row) {
         if (!row) {
             return;
         }
-
         lotSelect.value = row.dataset.lotNo || '';
         populateItemOptions();
         purchaseItemSelect.value = row.dataset.purchaseItemId || '';
@@ -491,38 +543,34 @@ document.addEventListener('DOMContentLoaded', function () {
         processSelect.value = row.dataset.processId || '';
     }
 
-    // Add the staged entry into the detail table.
+    // Add the staged entry into the detail table
     function addRow() {
         const source = currentSource();
         const processId = processSelect.value;
         const processName = processSelect.options[processSelect.selectedIndex] ? processSelect.options[processSelect.selectedIndex].text : '';
-
+        // Validate required fields
         if (!lotSelect.value) {
             toastr.error('Select lot no first');
             return;
         }
-
         if (!source) {
             toastr.error('Select item first');
             return;
         }
-
         if (!processId) {
             toastr.error('Select process first');
             return;
         }
-
+        // Prevent duplicate items
         const duplicateRow = getDataRows().find(function (row) {
             return String(row.dataset.purchaseItemId) === String(source.purchase_item_id);
         });
-
         if (duplicateRow) {
             toastr.error('This item is already added');
             return;
         }
-
         ensureEmptyState();
-
+        // Create new table row with all data attributes
         const row = document.createElement('tr');
         row.dataset.purchaseItemId = source.purchase_item_id;
         row.dataset.itemId = source.item_id;
@@ -536,7 +584,6 @@ document.addEventListener('DOMContentLoaded', function () {
         row.dataset.processName = processName;
         row.dataset.lrNo = lrNoInput.value || '';
         row.dataset.transport = transportInput.value || '';
-
         row.innerHTML = ''
             + '<td></td>'
             + '<td>' + (source.lot_no || '') + '</td>'
@@ -550,45 +597,40 @@ document.addEventListener('DOMContentLoaded', function () {
             + '<td>' + (transportInput.value || '') + '</td>'
             + '<td><a href="javascript:void(0)" class="remove-link remove-row">Remove</a></td>'
             + '<td class="d-none row-hidden-inputs"></td>';
-
         tableBody.appendChild(row);
         ensureEmptyState();
         reindexRows();
         clearEntryFields();
     }
 
+    // Event listeners for dropdowns and buttons
     lotSelect?.addEventListener('change', function () {
         populateItemOptions();
     });
-
     purchaseItemSelect?.addEventListener('change', function () {
         const source = currentSource();
         fillSourceFields(source);
         populateProcessOptions();
     });
-
     addItemButton?.addEventListener('click', addRow);
-
     tableBody?.addEventListener('click', function (event) {
         if (!event.target.classList.contains('remove-row')) {
             return;
         }
-
         event.preventDefault();
         const row = event.target.closest('tr');
         if (!row || row.id === emptyRowId) {
             return;
         }
-
         row.remove();
         ensureEmptyState();
         reindexRows();
     });
 
+    // Initial setup: show empty state, reindex, populate process options, preload first row if editing
     ensureEmptyState();
     reindexRows();
     populateProcessOptions();
-
     const existingRows = getDataRows();
     if (existingRows.length > 0) {
         populateEditorFromRow(existingRows[0]);

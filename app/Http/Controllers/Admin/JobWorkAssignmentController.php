@@ -18,19 +18,28 @@ use Yajra\DataTables\Facades\DataTables;
 
 class JobWorkAssignmentController extends Controller
 {
-    // Build the next running assignment number without depending on auto-increment ids.
+    /**
+     * Generate the next assignment number (assign_no) for job work assignments.
+     * This does not depend on auto-increment IDs, but finds the max assign_no and increments it.
+     *
+     * @param int|null $ignoreId Optionally ignore a specific assignment ID (for updates)
+     * @return string The next assignment number, zero-padded to 4 digits
+     */
     private function nextAssignNo(?int $ignoreId = null): string
     {
+        // If the table does not exist, return the initial number
         if (! Schema::hasTable('job_work_assignments')) {
             return '0001';
         }
 
         $query = JobWorkAssignment::withTrashed();
 
+        // Ignore a specific ID if provided (useful for updates)
         if ($ignoreId) {
             $query->where('id', '!=', $ignoreId);
         }
 
+        // Extract numeric part of assign_no, find max, increment
         $max = $query->pluck('assign_no')
             ->map(fn ($assignNo) => (int) preg_replace('/\D/', '', (string) $assignNo))
             ->max() ?? 0;
@@ -38,7 +47,11 @@ class JobWorkAssignmentController extends Controller
         return str_pad((string) ($max + 1), 4, '0', STR_PAD_LEFT);
     }
 
-    // Process dropdown is global for this screen, so load active processes once.
+    /**
+     * Get all active process options for dropdowns.
+     *
+     * @return \Illuminate\Support\Collection List of active processes (id, item_id, name)
+     */
     private function processOptions()
     {
         return Process::query()
@@ -47,11 +60,22 @@ class JobWorkAssignmentController extends Controller
             ->get(['id', 'item_id', 'name']);
     }
 
+    /**
+     * Resolve a process name by its ID.
+     *
+     * @param int|string $processId
+     * @return string Process name or empty string if not found
+     */
     private function resolveProcessName($processId): string
     {
         return Process::query()->whereKey($processId)->value('name') ?: '';
     }
 
+    /**
+     * Get default values for a new job work assignment form.
+     *
+     * @return array
+     */
     private function assignmentDefaults(): array
     {
         return [
@@ -63,7 +87,12 @@ class JobWorkAssignmentController extends Controller
         ];
     }
 
-    // Assignment rows are created from purchase item data keyed by lot number.
+    /**
+     * Get all lot sources from purchase items, including related item and purchase info.
+     * Used to populate assignment rows.
+     *
+     * @return \Illuminate\Support\Collection
+     */
     private function lotSources()
     {
         return PurchaseItem::query()
@@ -89,20 +118,34 @@ class JobWorkAssignmentController extends Controller
             ->values();
     }
 
+    /**
+     * Show the job work assignments index page.
+     *
+     * @return \Illuminate\View\View
+     */
     public function index()
     {
         return view('admin.job_work_assignments.index');
     }
 
+    /**
+     * Get all job work assignments for DataTables AJAX request.
+     * Supports searching and filtering.
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function getAll(Request $request)
     {
         try {
             $query = JobWorkAssignment::with(['jobWorker', 'items'])->latest();
 
+            // Filter by assignment number if provided
             if ($request->filled('assign_no')) {
                 $query->where('assign_no', 'like', '%' . $request->assign_no . '%');
             }
 
+            // General search across multiple fields and relations
             if ($request->filled('search_value')) {
                 $search = $request->search_value;
 
@@ -121,6 +164,7 @@ class JobWorkAssignmentController extends Controller
                 });
             }
 
+            // Format columns for DataTables
             return DataTables::of($query)
                 ->addColumn('date', fn ($row) => optional($row->assignment_date)->format('d/m/Y') ?: '-')
                 ->addColumn('job_worker_name', fn ($row) => $row->jobWorker?->name ?: '-')
@@ -130,6 +174,7 @@ class JobWorkAssignmentController extends Controller
                     return $processes->isEmpty() ? '-' : e($processes->join(', '));
                 })
                 ->addColumn('action', function ($row) {
+                    // Action buttons for edit and delete
                     return '
                         <a href="' . route('admin.jobworkassignments.edit', $row->id) . '" class="btn btn-sm btn-primary">Edit</a>
                         <button class="btn btn-sm btn-danger deleteBtn" data-id="' . $row->id . '">Delete</button>
@@ -144,6 +189,11 @@ class JobWorkAssignmentController extends Controller
         }
     }
 
+    /**
+     * Show the create job work assignment form.
+     *
+     * @return \Illuminate\View\View
+     */
     public function create()
     {
         $assignment = $this->assignmentDefaults();
@@ -163,6 +213,13 @@ class JobWorkAssignmentController extends Controller
         ));
     }
 
+    /**
+     * Store a new job work assignment and its items.
+     * Validates input and saves assignment and related items in a transaction.
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -193,6 +250,7 @@ class JobWorkAssignmentController extends Controller
             DB::transaction(function () use ($request) {
                 $itemsData = collect($request->items_data)->values();
 
+                // Create the assignment
                 $assignment = JobWorkAssignment::create([
                     'assignment_date' => $request->date,
                     'assign_no' => $request->assign_no,
@@ -203,6 +261,7 @@ class JobWorkAssignmentController extends Controller
                     'total_net_meter' => $itemsData->sum(fn ($item) => (float) $item['net_meter']),
                 ]);
 
+                // Create assignment items
                 foreach ($itemsData as $itemRow) {
                     JobWorkAssignmentItem::create([
                         'job_work_assignment_id' => $assignment->id,
@@ -229,6 +288,13 @@ class JobWorkAssignmentController extends Controller
         }
     }
 
+    /**
+     * Show the edit form for a job work assignment.
+     * Loads assignment, items, and related dropdown data.
+     *
+     * @param int $id Assignment ID
+     * @return \Illuminate\View\View|\Illuminate\Http\RedirectResponse
+     */
     public function edit($id)
     {
         try {
@@ -264,6 +330,14 @@ class JobWorkAssignmentController extends Controller
         }
     }
 
+    /**
+     * Update an existing job work assignment and its items.
+     * Validates input and updates assignment and related items in a transaction.
+     *
+     * @param Request $request
+     * @param int $id Assignment ID
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function update(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
@@ -295,6 +369,7 @@ class JobWorkAssignmentController extends Controller
                 $assignment = JobWorkAssignment::findOrFail($id);
                 $itemsData = collect($request->items_data)->values();
 
+                // Update assignment
                 $assignment->update([
                     'assignment_date' => $request->date,
                     'assign_no' => $request->assign_no,
@@ -305,8 +380,10 @@ class JobWorkAssignmentController extends Controller
                     'total_net_meter' => $itemsData->sum(fn ($item) => (float) $item['net_meter']),
                 ]);
 
+                // Remove old assignment items
                 $assignment->items()->delete();
 
+                // Create new assignment items
                 foreach ($itemsData as $itemRow) {
                     JobWorkAssignmentItem::create([
                         'job_work_assignment_id' => $assignment->id,
@@ -333,6 +410,12 @@ class JobWorkAssignmentController extends Controller
         }
     }
 
+    /**
+     * Delete a job work assignment by ID (soft delete).
+     *
+     * @param int $id Assignment ID
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function delete($id)
     {
         try {
