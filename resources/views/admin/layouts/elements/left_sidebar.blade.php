@@ -64,6 +64,13 @@
 				<div data-i18n="Job Work Assign">Job Work Assign</div>
 			</a>
 		</li>
+
+		<li class="menu-item {{ request()->is('admin/job-worker-inwards*') ? 'active' : ''}}">
+			<a href="{{route('admin.jobworkerinwards.index')}}" class="menu-link">
+				<i class="menu-icon tf-icons bx bx-clipboard"></i>
+				<div data-i18n="Job Worker Inward">Job Worker Inward</div>
+			</a>
+		</li>
 		
 	</ul>
 </aside>

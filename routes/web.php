@@ -5,8 +5,7 @@ use App\Http\Controllers\Web\HomeController;
 use App\Http\Controllers\Admin\{
     AdminAuthController,
     VendorController,
-    JobWorkerController,
-    JobWorkAssignmentController,
+    JobWorkerController,    JobWorkerInwardController,    JobWorkAssignmentController,
     CustomerController,
     ItemController,
     PurchaseController,
@@ -94,6 +93,16 @@ Route::name('admin.')->prefix('admin')->group(function () {
             Route::get('/edit/{id}', [JobWorkAssignmentController::class, 'edit'])->name('edit');
             Route::post('/update/{id}', [JobWorkAssignmentController::class, 'update'])->name('update');
             Route::delete('/delete/{id}', [JobWorkAssignmentController::class, 'delete'])->name('delete');
+        });
+
+        Route::prefix('job-worker-inwards')->name('jobworkerinwards.')->group(function () {
+            Route::get('/', [JobWorkerInwardController::class, 'index'])->name('index');
+            Route::get('/getall', [JobWorkerInwardController::class, 'getAll'])->name('getall');
+            Route::get('/create', [JobWorkerInwardController::class, 'create'])->name('create');
+            Route::post('/store', [JobWorkerInwardController::class, 'store'])->name('store');
+            Route::get('/edit/{id}', [JobWorkerInwardController::class, 'edit'])->name('edit');
+            Route::post('/update/{id}', [JobWorkerInwardController::class, 'update'])->name('update');
+            Route::delete('/delete/{id}', [JobWorkerInwardController::class, 'delete'])->name('delete');
         });
     });
 });

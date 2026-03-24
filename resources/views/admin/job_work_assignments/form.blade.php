@@ -384,7 +384,6 @@
     </div>
 </div>
 
-document.addEventListener('DOMContentLoaded', function () {
 <script>
 // =============================
 // Assignment Form JavaScript Logic
