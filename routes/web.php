@@ -6,7 +6,8 @@ use App\Http\Controllers\Admin\{
     AdminAuthController,
     VendorController,
     JobWorkerController,
-    CustomerController
+    CustomerController,
+    ItemController
 };
 
 /*
@@ -97,6 +98,21 @@ Route::name('admin.')->prefix('admin')->group(function () {
             Route::post('/status', [CustomerController::class, 'changeStatus'])->name('status');
             Route::delete('/delete/{id}', [CustomerController::class, 'delete'])->name('delete');
         });
+
+        Route::prefix('items')->name('items.')->group(function () {
+
+            Route::get('/', [ItemController::class, 'index'])->name('index');
+            Route::get('/getall', [ItemController::class, 'getAll'])->name('getall');
+
+            Route::get('/create', [ItemController::class, 'create'])->name('create');
+            Route::post('/store', [ItemController::class, 'store'])->name('store');
+
+            Route::get('/edit/{id}', [ItemController::class, 'edit'])->name('edit');
+            Route::post('/update/{id}', [ItemController::class, 'update'])->name('update');
+
+            Route::post('/status', [ItemController::class, 'changeStatus'])->name('status');
+            Route::delete('/delete/{id}', [ItemController::class, 'delete'])->name('delete');
+        });
     });
 
 });
@@ -104,6 +120,5 @@ Route::name('admin.')->prefix('admin')->group(function () {
 Route::middleware(['auth'])->group(function () {
 
 });
-
 
 

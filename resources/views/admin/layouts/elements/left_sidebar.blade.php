@@ -43,6 +43,13 @@
 				<div data-i18n="Customer">Customer</div>
 			</a>
 		</li>
+
+		<li class="menu-item {{ request()->is('admin/items*') ? 'active' : ''}}">
+			<a href="{{route('admin.items.index')}}" class="menu-link">
+				<i class="menu-icon tf-icons bx bx-package"></i>
+				<div data-i18n="Item">Item</div>
+			</a>
+		</li>
 		
 	</ul>
 </aside>
