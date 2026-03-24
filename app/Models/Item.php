@@ -15,4 +15,9 @@ class Item extends Model
         'remark',
         'status',
     ];
+
+    public function purchaseItems()
+    {
+        return $this->hasMany(PurchaseItem::class);
+    }
 }

@@ -10,7 +10,6 @@ class Vendor extends Model
 {
     use HasFactory;
     use SoftDeletes;
-    
 
     protected $fillable = [
         'vendor_name',
@@ -25,4 +24,9 @@ class Vendor extends Model
         'pincode',
         'status'
     ];
+
+    public function purchases()
+    {
+        return $this->hasMany(Purchase::class);
+    }
 }
