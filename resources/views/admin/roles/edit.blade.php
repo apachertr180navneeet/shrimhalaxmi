@@ -38,7 +38,6 @@
 
             <form action="{{ route('admin.roles.update', $role->id) }}" method="POST">
                 @csrf
-                @method('PUT')
 
                 {{-- Role Name --}}
                 <div class="row mb-3">

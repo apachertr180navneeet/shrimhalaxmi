@@ -121,5 +121,14 @@
 			</a>
 		</li>
 		@endcan
+
+		@can('members-list')
+		<li class="menu-item {{ request()->is('admin/members*') ? 'active' : '' }}">
+			<a href="{{ route('admin.members.index') }}" class="menu-link">
+				<i class="menu-icon tf-icons bx bx-user"></i>
+				<div>Members Management</div>
+			</a>
+		</li>
+		@endcan
 	</ul>
 </aside>

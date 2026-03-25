@@ -12,7 +12,8 @@ use App\Http\Controllers\Admin\{
     ItemController,
     PurchaseController,    
     OrderDispatchController,
-    RoleController
+    RoleController,
+    MemberController
 };
 
 Route::get('/', [HomeController::class, 'index'])->name('/');
@@ -129,6 +130,19 @@ Route::name('admin.')->prefix('admin')->group(function () {
             Route::post('/update/{id}', [RoleController::class, 'update'])->name('update');
             Route::delete('/delete/{id}', [RoleController::class, 'destroy'])->name('delete');
             Route::get('roles/getall', [RoleController::class, 'getAll'])->name('getall');
+
+        });
+
+        Route::prefix('members')->name('members.')->group(function () {
+
+            Route::get('/', [MemberController::class, 'index'])->name('index');
+            Route::get('/get-all', [MemberController::class, 'getAll'])->name('getAll');
+            Route::get('/create', [MemberController::class, 'create'])->name('create');
+            Route::post('/store', [MemberController::class, 'store'])->name('store');
+            Route::get('/edit/{id}', [MemberController::class, 'edit'])->name('edit');
+            Route::post('/update/{id}', [MemberController::class, 'update'])->name('update');
+            Route::post('/status', [MemberController::class, 'changeStatus'])->name('status');
+            Route::delete('/delete/{id}', [MemberController::class, 'destroy'])->name('delete');
 
         });
     });
