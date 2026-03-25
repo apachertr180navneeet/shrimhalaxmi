@@ -25,59 +25,99 @@
 		</li>
 
 
+		{{-- Vendor --}}
+		@can('vendor-list')
 		<li class="menu-item {{ request()->is('admin/vendors*') ? 'active' : ''}}">
-			<a href="{{route('admin.vendors.index')}}" class="menu-link">
+			<a href="{{ route('admin.vendors.index') }}" class="menu-link">
 				<i class="menu-icon tf-icons bx bx-store"></i>
-				<div data-i18n="Vendor">Vendor</div>
+				<div>Vendor</div>
 			</a>
 		</li>
+		@endcan
 
+
+		{{-- Job Worker --}}
+		@can('jobworker-list')
 		<li class="menu-item {{ request()->is('admin/jobworkers*') ? 'active' : ''}}">
-			<a href="{{route('admin.jobworkers.index')}}" class="menu-link">
+			<a href="{{ route('admin.jobworkers.index') }}" class="menu-link">
 				<i class="menu-icon tf-icons bx bx-user"></i>
-				<div data-i18n="Job Worker">Job Worker</div>
+				<div>Job Worker</div>
 			</a>
 		</li>
+		@endcan
 
+
+		{{-- Customer --}}
+		@can('customer-list')
 		<li class="menu-item {{ request()->is('admin/customers*') ? 'active' : ''}}">
-			<a href="{{route('admin.customers.index')}}" class="menu-link">
+			<a href="{{ route('admin.customers.index') }}" class="menu-link">
 				<i class="menu-icon tf-icons bx bx-user"></i>
-				<div data-i18n="Customer">Customer</div>
+				<div>Customer</div>
 			</a>
 		</li>
+		@endcan
 
+
+		{{-- Item --}}
+		@can('item-list')
 		<li class="menu-item {{ request()->is('admin/items*') ? 'active' : ''}}">
-			<a href="{{route('admin.items.index')}}" class="menu-link">
+			<a href="{{ route('admin.items.index') }}" class="menu-link">
 				<i class="menu-icon tf-icons bx bx-package"></i>
-				<div data-i18n="Item">Item</div>
+				<div>Item</div>
 			</a>
 		</li>
+		@endcan
 
+
+		{{-- Purchase --}}
+		@can('purchase-list')
 		<li class="menu-item {{ request()->is('admin/purchases*') ? 'active' : ''}}">
-			<a href="{{route('admin.purchases.index')}}" class="menu-link">
+			<a href="{{ route('admin.purchases.index') }}" class="menu-link">
 				<i class="menu-icon tf-icons bx bx-cart"></i>
-				<div data-i18n="Purchase">Purchase</div>
+				<div>Purchase</div>
 			</a>
 		</li>
+		@endcan
 
+
+		{{-- Job Work Assign --}}
+		@can('jobassign-list')
 		<li class="menu-item {{ request()->is('admin/job-work-assignments*') ? 'active' : ''}}">
-			<a href="{{route('admin.jobworkassignments.index')}}" class="menu-link">
+			<a href="{{ route('admin.jobworkassignments.index') }}" class="menu-link">
 				<i class="menu-icon tf-icons bx bx-clipboard"></i>
-				<div data-i18n="Job Work Assign">Job Work Assign</div>
+				<div>Job Work Assign</div>
 			</a>
 		</li>
+		@endcan
 
+
+		{{-- Job Worker Inward --}}
+		@can('inward-list')
 		<li class="menu-item {{ request()->is('admin/job-worker-inwards*') ? 'active' : ''}}">
-			<a href="{{route('admin.jobworkerinwards.index')}}" class="menu-link">
+			<a href="{{ route('admin.jobworkerinwards.index') }}" class="menu-link">
 				<i class="menu-icon tf-icons bx bx-clipboard"></i>
-				<div data-i18n="Job Worker Inward">Job Worker Inward</div>
+				<div>Job Worker Inward</div>
 			</a>
 		</li>
+		@endcan
 
+
+		{{-- Order Dispatch --}}
+		@can('dispatch-list')
 		<li class="menu-item {{ request()->is('admin/order-dispatches*') ? 'active' : ''}}">
-			<a href="{{route('admin.orderdispatches.index')}}" class="menu-link">
+			<a href="{{ route('admin.orderdispatches.index') }}" class="menu-link">
 				<i class="menu-icon tf-icons bx bx-clipboard"></i>
-				<div data-i18n="Order Dispatch">Order Dispatch</div>
+				<div>Order Dispatch</div>
+			</a>
+		</li>
+		@endcan
+
+		{{-- Role & Permission Management --}}
+		<li class="menu-item {{ request()->is('admin/roles*') ? 'active' : '' }}">
+			
+			<a href="{{ route('admin.roles.index') }}" class="menu-link">
+				<i class="menu-icon tf-icons bx bx-lock"></i>
+				<div>Role Management</div>
 			</a>
 		</li>
 		

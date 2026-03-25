@@ -5,11 +5,14 @@ use App\Http\Controllers\Web\HomeController;
 use App\Http\Controllers\Admin\{
     AdminAuthController,
     VendorController,
-    JobWorkerController,    JobWorkerInwardController,    JobWorkAssignmentController,
+    JobWorkerController,    
+    JobWorkerInwardController,    
+    JobWorkAssignmentController,
     CustomerController,
     ItemController,
     PurchaseController,    
-    OrderDispatchController
+    OrderDispatchController,
+    RoleController
 };
 
 Route::get('/', [HomeController::class, 'index'])->name('/');
@@ -114,6 +117,19 @@ Route::name('admin.')->prefix('admin')->group(function () {
             Route::get('/edit/{id}', [JobWorkerInwardController::class, 'edit'])->name('edit');
             Route::post('/update/{id}', [JobWorkerInwardController::class, 'update'])->name('update');
             Route::delete('/delete/{id}', [JobWorkerInwardController::class, 'delete'])->name('delete');
+        });
+
+
+        Route::prefix('roles')->name('roles.')->group(function () {
+
+            Route::get('/', [RoleController::class, 'index'])->name('index');
+            Route::get('/create', [RoleController::class, 'create'])->name('create');
+            Route::post('/store', [RoleController::class, 'store'])->name('store');
+            Route::get('/edit/{id}', [RoleController::class, 'edit'])->name('edit');
+            Route::post('/update/{id}', [RoleController::class, 'update'])->name('update');
+            Route::delete('/delete/{id}', [RoleController::class, 'destroy'])->name('delete');
+            Route::get('roles/getall', [RoleController::class, 'getAll'])->name('getall');
+
         });
     });
 });

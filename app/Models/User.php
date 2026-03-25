@@ -11,9 +11,11 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Carbon\Carbon;
 
+use Spatie\Permission\Traits\HasRoles;
+
 class User extends Authenticatable implements JWTSubject
 {
-    use HasApiTokens, HasFactory, Notifiable ,SoftDeletes;
+    use HasApiTokens, HasFactory, Notifiable ,SoftDeletes, HasRoles;
 
     /**
      * The attributes that are mass assignable.
@@ -64,5 +66,8 @@ class User extends Authenticatable implements JWTSubject
             return "";
         }
     }
+
+
+    protected $guard_name = 'web';
 
 }

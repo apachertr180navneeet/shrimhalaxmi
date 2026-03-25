@@ -11,6 +11,13 @@ use Illuminate\Validation\Rule;
 
 class VendorController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:vendor-list', ['only' => ['index']]);
+        $this->middleware('permission:vendor-create', ['only' => ['create','store']]);
+        $this->middleware('permission:vendor-edit', ['only' => ['edit','update']]);
+        $this->middleware('permission:vendor-delete', ['only' => ['destroy']]);
+    }
     /**
      * Display vendor listing page
      */
