@@ -113,13 +113,13 @@
 		@endcan
 
 		{{-- Role & Permission Management --}}
+		@can('role-list')
 		<li class="menu-item {{ request()->is('admin/roles*') ? 'active' : '' }}">
-			
 			<a href="{{ route('admin.roles.index') }}" class="menu-link">
 				<i class="menu-icon tf-icons bx bx-lock"></i>
 				<div>Role Management</div>
 			</a>
 		</li>
-		
+		@endcan
 	</ul>
 </aside>

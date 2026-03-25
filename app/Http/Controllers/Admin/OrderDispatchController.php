@@ -16,6 +16,14 @@ use Yajra\DataTables\Facades\DataTables;
 
 class OrderDispatchController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:dispatch-list', ['only' => ['index']]);
+        $this->middleware('permission:dispatch-create', ['only' => ['create','store']]);
+        $this->middleware('permission:dispatch-edit', ['only' => ['edit','update']]);
+        $this->middleware('permission:dispatch-delete', ['only' => ['destroy']]);
+    }
+
     private function nextDispatchNo(?int $ignoreId = null): string
     {
         if (! Schema::hasTable('order_dispatches')) {

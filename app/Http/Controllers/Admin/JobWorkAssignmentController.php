@@ -18,6 +18,15 @@ use Yajra\DataTables\Facades\DataTables;
 
 class JobWorkAssignmentController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:jobassign-list', ['only' => ['index']]);
+        $this->middleware('permission:jobassign-create', ['only' => ['create','store']]);
+        $this->middleware('permission:jobassign-edit', ['only' => ['edit','update']]);
+        $this->middleware('permission:jobassign-delete', ['only' => ['destroy']]);
+    }
+
+
     /**
      * Generate the next assignment number (assign_no) for job work assignments.
      * This does not depend on auto-increment IDs, but finds the max assign_no and increments it.

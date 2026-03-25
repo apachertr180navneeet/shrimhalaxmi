@@ -11,6 +11,13 @@ use Illuminate\Validation\Rule;
 
 class JobWorkerController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:jobworker-list', ['only' => ['index']]);
+        $this->middleware('permission:jobworker-create', ['only' => ['create','store']]);
+        $this->middleware('permission:jobworker-edit', ['only' => ['edit','update']]);
+        $this->middleware('permission:jobworker-delete', ['only' => ['destroy']]);
+    }
     /**
      * LIST PAGE
      */

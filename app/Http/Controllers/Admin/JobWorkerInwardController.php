@@ -17,6 +17,14 @@ use Yajra\DataTables\Facades\DataTables;
 
 class JobWorkerInwardController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:inward-list', ['only' => ['index']]);
+        $this->middleware('permission:inward-create', ['only' => ['create','store']]);
+        $this->middleware('permission:inward-edit', ['only' => ['edit','update']]);
+        $this->middleware('permission:inward-delete', ['only' => ['destroy']]);
+    }
+
     private function nextChNo(?int $ignoreId = null): string
     {
         if (! Schema::hasTable('job_worker_inwards')) {

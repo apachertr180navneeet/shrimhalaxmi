@@ -16,6 +16,14 @@ use Yajra\DataTables\Facades\DataTables;
 
 class PurchaseController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:purchase-list', ['only' => ['index']]);
+        $this->middleware('permission:purchase-create', ['only' => ['create','store']]);
+        $this->middleware('permission:purchase-edit', ['only' => ['edit','update']]);
+        $this->middleware('permission:purchase-delete', ['only' => ['destroy']]);
+    }
+
     private function defaultItemAbbr(): string
     {
         return Item::query()->orderBy('item_name')->value('abbr') ?: 'ITEM';
