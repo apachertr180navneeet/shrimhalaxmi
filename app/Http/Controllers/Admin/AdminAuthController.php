@@ -8,6 +8,12 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
+use App\Models\Vendor;
+use App\Models\JobWorker;
+use App\Models\Item;
+use App\Models\Customer;
+use App\Models\JobWorkAssignment;
+use App\Models\JobWorkerInward;
 use Mail, DB, Hash, Validator, Session, File,Exception;
 
 class AdminAuthController extends Controller
@@ -269,7 +275,65 @@ class AdminAuthController extends Controller
 
     public function adminDashboard()
     {
-        return view("admin.dashboard.index");
+        // Vendors
+        $vendors = [
+            'total' => Vendor::count(),
+            'active' => Vendor::where('status', 'active')->count(),
+            'inactive' => Vendor::where('status', 'inactive')->count(),
+        ];
+
+        // Job Workers
+        $jobWorkers = [
+            'total' => JobWorker::count(),
+            'active' => JobWorker::where('status', 'active')->count(),
+            'inactive' => JobWorker::where('status', 'inactive')->count(),
+        ];
+
+        // Items
+        $items = [
+            'total' => Item::count(),
+        ];
+
+        // Customers
+        $customers = [
+            'total' => Customer::count(),
+            'active' => Customer::where('status', 'active')->count(),
+            'inactive' => Customer::where('status', 'inactive')->count(),
+        ];
+
+        // Monthly Job Assign
+        $monthlyJobAssign = [
+            'total' => JobWorkAssignment::whereMonth('assignment_date', now()->month)->whereYear('assignment_date', now()->year)->count(),
+            'completed' => JobWorkAssignment::whereMonth('assignment_date', now()->month)->whereYear('assignment_date', now()->year)->where('status', 'completed')->count(),
+            'processing' => JobWorkAssignment::whereMonth('assignment_date', now()->month)->whereYear('assignment_date', now()->year)->whereIn('status', ['processing', 'active'])->count(),
+        ];
+
+        // Today Job Assign
+        $todayJobAssign = [
+            'total' => JobWorkAssignment::whereDate('assignment_date', today())->count(),
+            'completed' => JobWorkAssignment::whereDate('assignment_date', today())->where('status', 'completed')->count(),
+            'processing' => JobWorkAssignment::whereDate('assignment_date', today())->whereIn('status', ['processing', 'active'])->count(),
+        ];
+
+        // Monthly Dispatch (assuming JobWorkerInward as dispatch)
+        $monthlyDispatch = [
+            'total' => JobWorkerInward::whereMonth('inward_date', now()->month)->whereYear('inward_date', now()->year)->count(),
+            'completed' => JobWorkerInward::whereMonth('inward_date', now()->month)->whereYear('inward_date', now()->year)->where('status', 'completed')->count(),
+            'pending' => JobWorkerInward::whereMonth('inward_date', now()->month)->whereYear('inward_date', now()->year)->whereIn('status', ['pending', 'active'])->count(),
+        ];
+
+        // Today Dispatch
+        $todayDispatch = [
+            'total' => JobWorkerInward::whereDate('inward_date', today())->count(),
+            'completed' => JobWorkerInward::whereDate('inward_date', today())->where('status', 'completed')->count(),
+            'pending' => JobWorkerInward::whereDate('inward_date', today())->whereIn('status', ['pending', 'active'])->count(),
+        ];
+
+        return view("admin.dashboard.index", compact(
+            'vendors', 'jobWorkers', 'items', 'customers',
+            'monthlyJobAssign', 'todayJobAssign',
+            'monthlyDispatch', 'todayDispatch'
+        ));
     }
 
 

@@ -187,6 +187,12 @@ class PurchaseController extends Controller
                         'net_meter' => $itemRow['net_meter'],
                         'amount' => $itemRow['amount'],
                     ]);
+
+                    // Increase stock for the purchased item
+                    $item = Item::find($itemRow['item_id']);
+                    if ($item) {
+                        $item->increaseStock((float) $itemRow['qty_m'], (float) $itemRow['net_meter']);
+                    }
                 }
             });
 
@@ -264,6 +270,9 @@ class PurchaseController extends Controller
                 $vendor = Vendor::findOrFail($request->vendor_id);
                 $itemsData = collect($request->items_data);
 
+                // Get existing items before deletion for stock adjustment
+                $existingItems = $purchase->items;
+
                 $purchase->update([
                     'purchase_date' => $request->date,
                     'pch_no' => $request->pch_no,
@@ -276,6 +285,14 @@ class PurchaseController extends Controller
                     'total_net_meter' => $itemsData->sum(fn ($item) => (float) $item['net_meter']),
                     'total_amount' => $itemsData->sum(fn ($item) => (float) $item['amount']),
                 ]);
+
+                // Decrease stock for existing items being removed
+                foreach ($existingItems as $existingItem) {
+                    $item = Item::find($existingItem->item_id);
+                    if ($item) {
+                        $item->decreaseStock((float) $existingItem->qty_m, (float) $existingItem->net_meter);
+                    }
+                }
 
                 $purchase->items()->delete();
 
@@ -295,6 +312,12 @@ class PurchaseController extends Controller
                         'net_meter' => $itemRow['net_meter'],
                         'amount' => $itemRow['amount'],
                     ]);
+
+                    // Increase stock for the new/updated item
+                    $item = Item::find($itemRow['item_id']);
+                    if ($item) {
+                        $item->increaseStock((float) $itemRow['qty_m'], (float) $itemRow['net_meter']);
+                    }
                 }
             });
 

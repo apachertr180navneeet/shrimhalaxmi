@@ -163,6 +163,12 @@ class JobWorkerInwardController extends Controller
                         'shrinkage' => $itemRow['shrinkage'] ?? null,
                         'type' => $itemRow['type'] ?? null,
                     ]);
+
+                    // Increase stock for the returned item
+                    $item = Item::find($itemRow['item_id']);
+                    if ($item) {
+                        $item->increaseStock((float) $itemRow['meter'], (float) $itemRow['total_meter']);
+                    }
                 }
             });
 

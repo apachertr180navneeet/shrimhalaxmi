@@ -277,6 +277,12 @@ class JobWorkAssignmentController extends Controller
                         'lr_no' => $itemRow['lr_no'] ?? null,
                         'transport' => $itemRow['transport'] ?? null,
                     ]);
+
+                    // Decrease stock for the assigned item
+                    $item = Item::find($itemRow['item_id']);
+                    if ($item) {
+                        $item->decreaseStock((float) $itemRow['meter'], (float) $itemRow['net_meter']);
+                    }
                 }
             });
 
