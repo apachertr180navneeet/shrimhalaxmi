@@ -99,7 +99,7 @@ class OrderDispatchController extends Controller
         ];
 
         $customers = Customer::orderBy('name')->get(['id', 'name', 'abbr']);
-        $items = Item::orderBy('item_name')->get(['id', 'item_name', 'abbr']);
+        $items = Item::where('stock_net_meter','!=','0')->orderBy('item_name')->get(['id', 'item_name', 'abbr']);
         $dispatchItems = collect();
 
         return view('admin.order_dispatches.create', compact('dispatch', 'customers', 'items', 'dispatchItems'));
