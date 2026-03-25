@@ -3,7 +3,9 @@
 		<a href="{{route('admin.dashboard')}}" class="app-brand-link">
 			<span class="app-brand-logo demo">
 			</span>
-			<span class="app-brand-text demo menu-text fw-bold ms-2">{{ config('app.name') }}</span>
+			<span class="app-brand-text demo menu-text fw-bold ms-2">
+				{{ (string) config('app.name') !== 'nan' && config('app.name') ? config('app.name') : 'Shri Maha Laxmi' }}
+			</span>
 		</a>
 
 		<a href="javascript:void(0);"
@@ -69,6 +71,13 @@
 			<a href="{{route('admin.jobworkerinwards.index')}}" class="menu-link">
 				<i class="menu-icon tf-icons bx bx-clipboard"></i>
 				<div data-i18n="Job Worker Inward">Job Worker Inward</div>
+			</a>
+		</li>
+
+		<li class="menu-item {{ request()->is('admin/order-dispatches*') ? 'active' : ''}}">
+			<a href="{{route('admin.orderdispatches.index')}}" class="menu-link">
+				<i class="menu-icon tf-icons bx bx-clipboard"></i>
+				<div data-i18n="Order Dispatch">Order Dispatch</div>
 			</a>
 		</li>
 		

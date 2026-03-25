@@ -8,7 +8,8 @@ use App\Http\Controllers\Admin\{
     JobWorkerController,    JobWorkerInwardController,    JobWorkAssignmentController,
     CustomerController,
     ItemController,
-    PurchaseController,
+    PurchaseController,    
+    OrderDispatchController
 };
 
 Route::get('/', [HomeController::class, 'index'])->name('/');
@@ -83,6 +84,16 @@ Route::name('admin.')->prefix('admin')->group(function () {
             Route::get('/edit/{id}', [PurchaseController::class, 'edit'])->name('edit');
             Route::post('/update/{id}', [PurchaseController::class, 'update'])->name('update');
             Route::delete('/delete/{id}', [PurchaseController::class, 'delete'])->name('delete');
+        });
+
+        Route::prefix('order-dispatches')->name('orderdispatches.')->group(function () {
+            Route::get('/', [OrderDispatchController::class, 'index'])->name('index');
+            Route::get('/getall', [OrderDispatchController::class, 'getAll'])->name('getall');
+            Route::get('/create', [OrderDispatchController::class, 'create'])->name('create');
+            Route::post('/store', [OrderDispatchController::class, 'store'])->name('store');
+            Route::get('/edit/{id}', [OrderDispatchController::class, 'edit'])->name('edit');
+            Route::post('/update/{id}', [OrderDispatchController::class, 'update'])->name('update');
+            Route::delete('/delete/{id}', [OrderDispatchController::class, 'delete'])->name('delete');
         });
 
         Route::prefix('job-work-assignments')->name('jobworkassignments.')->group(function () {

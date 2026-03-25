@@ -196,24 +196,5 @@
 @endsection
 
 @section('script')
-<script>
-    // Animate numbers on load
-    document.addEventListener('DOMContentLoaded', function() {
-        const counters = document.querySelectorAll('.fw-bold');
-        counters.forEach(counter => {
-            const target = parseInt(counter.textContent);
-            let count = 0;
-            const increment = target / 100;
-            const timer = setInterval(() => {
-                count += increment;
-                if (count >= target) {
-                    counter.textContent = target;
-                    clearInterval(timer);
-                } else {
-                    counter.textContent = Math.floor(count);
-                }
-            }, 20);
-        });
-    });
-</script>
+
 @endsection
