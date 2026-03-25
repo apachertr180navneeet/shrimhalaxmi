@@ -273,13 +273,12 @@
         <label>Net Meter</label>
         <input type="text" id="net_meter" class="form-control">
     </div>
-
     <div class="assignment-field-grid">
         <label>Process</label>
         <select id="process" class="form-select">
             <option value="">Select Process</option>
             @foreach ($processOptions as $process)
-                <option value="{{ $process->id }}">{{ $process->name }}</option>
+                <option value="{{ $process->item_name }}">{{ $process->item_name }}</option>
             @endforeach
         </select>
     </div>
@@ -344,7 +343,7 @@
                         data-meter="{{ $row['meter'] }}"
                         data-fold="{{ $row['fold'] }}"
                         data-net-meter="{{ $row['net_meter'] }}"
-                        data-process-id="{{ $row['process_id'] }}"
+                        data-process-id="{{ $row['process_name'] }}"
                         data-process-name="{{ $row['process_name'] }}"
                         data-lr-no="{{ $row['lr_no'] }}"
                         data-transport="{{ $row['transport'] }}"
@@ -368,7 +367,7 @@
                             <input type="hidden" name="items_data[{{ $index }}][meter]" value="{{ $row['meter'] }}">
                             <input type="hidden" name="items_data[{{ $index }}][fold]" value="{{ $row['fold'] }}">
                             <input type="hidden" name="items_data[{{ $index }}][net_meter]" value="{{ $row['net_meter'] }}">
-                            <input type="hidden" name="items_data[{{ $index }}][process_id]" value="{{ $row['process_id'] }}">
+                            <input type="hidden" name="items_data[{{ $index }}][process_id]" value="{{ $row['process_name'] }}">
                             <input type="hidden" name="items_data[{{ $index }}][lr_no]" value="{{ $row['lr_no'] }}">
                             <input type="hidden" name="items_data[{{ $index }}][transport]" value="{{ $row['transport'] }}">
                             <input type="hidden" name="items_data[{{ $index }}][sort_order]" value="{{ $row['sort_order'] }}">
@@ -385,256 +384,236 @@
 </div>
 
 <script>
-// =============================
-// Assignment Form JavaScript Logic
-// =============================
-// Handles dynamic population of dropdowns, adding/removing items, and syncing hidden inputs
-document.addEventListener('DOMContentLoaded', function () {
-    // Lot sources and process options are passed from PHP as JSON
-    const lotSources = @json($lotSources);
-    const processOptions = @json($processOptions);
-    // Get references to all form fields
-    const lotSelect = document.getElementById('lot_no');
-    const purchaseItemSelect = document.getElementById('purchase_item_id');
-    const qualityInput = document.getElementById('quality');
-    const meterInput = document.getElementById('meter');
-    const foldInput = document.getElementById('fold');
-    const netMeterInput = document.getElementById('net_meter');
-    const processSelect = document.getElementById('process');
-    const lrNoInput = document.getElementById('lr_no');
-    const transportInput = document.getElementById('transport');
-    const addItemButton = document.getElementById('add_assignment_item');
-    const tableBody = document.getElementById('assignment_items_body');
-    const emptyRowId = 'assignment_empty_row';
+    document.addEventListener('DOMContentLoaded', function () {
 
-    // Get all data rows in the table (excluding the empty state row)
-    function getDataRows() {
-        return Array.from(tableBody.querySelectorAll('tr')).filter(function (row) {
-            return row.id !== emptyRowId;
-        });
-    }
+        const lotSources = @json($lotSources);
+        const processOptions = @json($processOptions);
 
-    // Get the currently selected purchase item source object
-    function currentSource() {
-        const purchaseItemId = purchaseItemSelect.value;
-        if (!purchaseItemId) {
-            return null;
+        const lotSelect = document.getElementById('lot_no');
+        const purchaseItemSelect = document.getElementById('purchase_item_id');
+        const qualityInput = document.getElementById('quality');
+        const meterInput = document.getElementById('meter');
+        const foldInput = document.getElementById('fold');
+        const netMeterInput = document.getElementById('net_meter');
+        const processSelect = document.getElementById('process');
+        const lrNoInput = document.getElementById('lr_no');
+        const transportInput = document.getElementById('transport');
+        const addItemButton = document.getElementById('add_assignment_item');
+        const tableBody = document.getElementById('assignment_items_body');
+        const emptyRowId = 'assignment_empty_row';
+
+        function getDataRows() {
+            return Array.from(tableBody.querySelectorAll('tr')).filter(row => row.id !== emptyRowId);
         }
-        return lotSources.find(function (row) {
-            return String(row.purchase_item_id) === String(purchaseItemId);
-        }) || null;
-    }
 
-    // Populate the process dropdown (independent of lot/item selection)
-    function populateProcessOptions() {
-        const selectedValue = processSelect.value;
-        processSelect.innerHTML = '<option value="">Select Process</option>';
-        processOptions.forEach(function (row) {
-            const option = document.createElement('option');
-            option.value = row.id;
-            option.textContent = row.name;
-            if (String(row.id) === String(selectedValue)) {
-                option.selected = true;
+        function currentSource() {
+            const purchaseItemId = purchaseItemSelect.value;
+            if (!purchaseItemId) return null;
+
+            return lotSources.find(row => String(row.purchase_item_id) === String(purchaseItemId)) || null;
+        }
+
+        // ✅ FIXED (item_name based)
+        function populateProcessOptions() {
+            const selectedValue = processSelect.value;
+
+            processSelect.innerHTML = '<option value="">Select Process</option>';
+
+            processOptions.forEach(function (row) {
+                const option = document.createElement('option');
+
+                option.value = row.item_name;
+                option.textContent = row.item_name;
+
+                if (String(row.item_name) === String(selectedValue)) {
+                    option.selected = true;
+                }
+
+                processSelect.appendChild(option);
+            });
+        }
+
+        function populateItemOptions() {
+            const selectedLotNo = lotSelect.value;
+
+            purchaseItemSelect.innerHTML = '<option value="">Select Item</option>';
+
+            if (!selectedLotNo) {
+                fillSourceFields(null);
+                populateProcessOptions();
+                return;
             }
-            processSelect.appendChild(option);
-        });
-    }
 
-    // Populate the item dropdown based on selected lot number
-    function populateItemOptions() {
-        const selectedLotNo = lotSelect.value;
-        purchaseItemSelect.innerHTML = '<option value="">Select Item</option>';
-        if (!selectedLotNo) {
+            lotSources
+                .filter(row => row.lot_no === selectedLotNo)
+                .forEach(function (row) {
+                    const option = document.createElement('option');
+                    option.value = row.purchase_item_id;
+                    option.textContent = row.item_name;
+                    purchaseItemSelect.appendChild(option);
+                });
+
             fillSourceFields(null);
             populateProcessOptions();
-            return;
         }
-        lotSources
-            .filter(function (row) {
-                return row.lot_no === selectedLotNo;
-            })
-            .forEach(function (row) {
-                const option = document.createElement('option');
-                option.value = row.purchase_item_id;
-                option.textContent = row.item_name;
-                option.dataset.itemId = row.item_id;
-                purchaseItemSelect.appendChild(option);
+
+        function fillSourceFields(source) {
+            qualityInput.value = source ? source.quality : '';
+            meterInput.value = source ? source.meter : '';
+            foldInput.value = source ? source.fold : '';
+            netMeterInput.value = source ? source.net_meter : '';
+            lrNoInput.value = '';
+            transportInput.value = '';
+        }
+
+        // ✅ FIXED hidden input (process_name)
+        function updateRowHiddenInputs(row, index) {
+            const holder = row.querySelector('.row-hidden-inputs');
+
+            holder.innerHTML = ''
+                + `<input type="hidden" name="items_data[${index}][purchase_item_id]" value="${row.dataset.purchaseItemId || ''}">`
+                + `<input type="hidden" name="items_data[${index}][item_id]" value="${row.dataset.itemId || ''}">`
+                + `<input type="hidden" name="items_data[${index}][lot_no]" value="${row.dataset.lotNo || ''}">`
+                + `<input type="hidden" name="items_data[${index}][quality]" value="${row.dataset.quality || ''}">`
+                + `<input type="hidden" name="items_data[${index}][meter]" value="${row.dataset.meter || ''}">`
+                + `<input type="hidden" name="items_data[${index}][fold]" value="${row.dataset.fold || ''}">`
+                + `<input type="hidden" name="items_data[${index}][net_meter]" value="${row.dataset.netMeter || ''}">`
+                + `<input type="hidden" name="items_data[${index}][process_id]" value="${row.dataset.processName || ''}">`
+                + `<input type="hidden" name="items_data[${index}][lr_no]" value="${row.dataset.lrNo || ''}">`
+                + `<input type="hidden" name="items_data[${index}][transport]" value="${row.dataset.transport || ''}">`
+                + `<input type="hidden" name="items_data[${index}][sort_order]" value="${index + 1}">`;
+        }
+
+        function reindexRows() {
+            getDataRows().forEach(function (row, index) {
+                row.children[0].textContent = (index + 1) + '.';
+                updateRowHiddenInputs(row, index);
             });
-        fillSourceFields(null);
-        populateProcessOptions();
-    }
+        }
 
-    // Fill quality, meter, fold, net meter fields from the selected source
-    function fillSourceFields(source) {
-        qualityInput.value = source ? source.quality : '';
-        meterInput.value = source ? source.meter : '';
-        foldInput.value = source ? source.fold : '';
-        netMeterInput.value = source ? source.net_meter : '';
-        lrNoInput.value = '';
-        transportInput.value = '';
-    }
+        function ensureEmptyState() {
+            const rows = getDataRows();
+            const emptyRow = document.getElementById(emptyRowId);
 
-    // Update hidden inputs for a table row to match its data attributes
-    function updateRowHiddenInputs(row, index) {
-        const holder = row.querySelector('.row-hidden-inputs');
-        holder.innerHTML = ''
-            + '<input type="hidden" name="items_data[' + index + '][purchase_item_id]" value="' + (row.dataset.purchaseItemId || '') + '">' 
-            + '<input type="hidden" name="items_data[' + index + '][item_id]" value="' + (row.dataset.itemId || '') + '">' 
-            + '<input type="hidden" name="items_data[' + index + '][lot_no]" value="' + (row.dataset.lotNo || '') + '">' 
-            + '<input type="hidden" name="items_data[' + index + '][quality]" value="' + (row.dataset.quality || '') + '">' 
-            + '<input type="hidden" name="items_data[' + index + '][meter]" value="' + (row.dataset.meter || '') + '">' 
-            + '<input type="hidden" name="items_data[' + index + '][fold]" value="' + (row.dataset.fold || '') + '">' 
-            + '<input type="hidden" name="items_data[' + index + '][net_meter]" value="' + (row.dataset.netMeter || '') + '">' 
-            + '<input type="hidden" name="items_data[' + index + '][process_id]" value="' + (row.dataset.processId || '') + '">' 
-            + '<input type="hidden" name="items_data[' + index + '][lr_no]" value="' + (row.dataset.lrNo || '') + '">' 
-            + '<input type="hidden" name="items_data[' + index + '][transport]" value="' + (row.dataset.transport || '') + '">' 
-            + '<input type="hidden" name="items_data[' + index + '][sort_order]" value="' + (index + 1) + '">';
-    }
-
-    // Reindex table rows and update their hidden inputs
-    function reindexRows() {
-        getDataRows().forEach(function (row, index) {
-            row.children[0].textContent = (index + 1) + '.';
-            updateRowHiddenInputs(row, index);
-        });
-    }
-
-    // Show or hide the empty state row depending on table content
-    function ensureEmptyState() {
-        const rows = getDataRows();
-        const emptyRow = document.getElementById(emptyRowId);
-        if (rows.length === 0) {
-            if (!emptyRow) {
-                const row = document.createElement('tr');
-                row.id = emptyRowId;
-                row.innerHTML = '<td colspan="11" class="assignment-empty-state">No items added yet.</td>';
-                tableBody.appendChild(row);
+            if (rows.length === 0) {
+                if (!emptyRow) {
+                    const row = document.createElement('tr');
+                    row.id = emptyRowId;
+                    row.innerHTML = '<td colspan="11" class="assignment-empty-state">No items added yet.</td>';
+                    tableBody.appendChild(row);
+                }
+            } else if (emptyRow) {
+                emptyRow.remove();
             }
-        } else if (emptyRow) {
-            emptyRow.remove();
         }
-    }
 
-    // Clear all entry fields after adding an item
-    function clearEntryFields() {
-        lotSelect.value = '';
-        populateItemOptions();
-        purchaseItemSelect.value = '';
-        processSelect.value = '';
-        fillSourceFields(null);
-        populateProcessOptions();
-    }
+        function clearEntryFields() {
+            lotSelect.value = '';
+            populateItemOptions();
+            purchaseItemSelect.value = '';
+            processSelect.value = '';
+            fillSourceFields(null);
+            populateProcessOptions();
+        }
 
-    // In edit mode, preload the first saved row into the top editor fields
-    function populateEditorFromRow(row) {
-        if (!row) {
-            return;
-        }
-        lotSelect.value = row.dataset.lotNo || '';
-        populateItemOptions();
-        purchaseItemSelect.value = row.dataset.purchaseItemId || '';
-        fillSourceFields(currentSource());
-        meterInput.value = row.dataset.meter || '';
-        foldInput.value = row.dataset.fold || '';
-        netMeterInput.value = row.dataset.netMeter || '';
-        lrNoInput.value = row.dataset.lrNo || '';
-        transportInput.value = row.dataset.transport || '';
-        processSelect.value = row.dataset.processId || '';
-    }
+        // ✅ FIXED EDIT MODE
+        function populateEditorFromRow(row) {
+            if (!row) return;
 
-    // Add the staged entry into the detail table
-    function addRow() {
-        const source = currentSource();
-        const processId = processSelect.value;
-        const processName = processSelect.options[processSelect.selectedIndex] ? processSelect.options[processSelect.selectedIndex].text : '';
-        // Validate required fields
-        if (!lotSelect.value) {
-            toastr.error('Select lot no first');
-            return;
+            lotSelect.value = row.dataset.lotNo || '';
+            populateItemOptions();
+
+            purchaseItemSelect.value = row.dataset.purchaseItemId || '';
+            fillSourceFields(currentSource());
+
+            meterInput.value = row.dataset.meter || '';
+            foldInput.value = row.dataset.fold || '';
+            netMeterInput.value = row.dataset.netMeter || '';
+            lrNoInput.value = row.dataset.lrNo || '';
+            transportInput.value = row.dataset.transport || '';
+
+            // ✅ MAIN FIX
+            processSelect.value = row.dataset.processName || '';
         }
-        if (!source) {
-            toastr.error('Select item first');
-            return;
+
+        function addRow() {
+            const source = currentSource();
+            const processName = processSelect.value;
+
+            if (!lotSelect.value) return toastr.error('Select lot no first');
+            if (!source) return toastr.error('Select item first');
+            if (!processName) return toastr.error('Select process first');
+
+            const duplicateRow = getDataRows().find(row =>
+                String(row.dataset.purchaseItemId) === String(source.purchase_item_id)
+            );
+
+            if (duplicateRow) {
+                toastr.error('This item is already added');
+                return;
+            }
+
+            const row = document.createElement('tr');
+
+            row.dataset.purchaseItemId = source.purchase_item_id;
+            row.dataset.itemId = source.item_id;
+            row.dataset.lotNo = source.lot_no;
+            row.dataset.itemName = source.item_name;
+            row.dataset.quality = source.quality || '';
+            row.dataset.meter = meterInput.value || '';
+            row.dataset.fold = foldInput.value || '';
+            row.dataset.netMeter = netMeterInput.value || '';
+            row.dataset.processName = processName;
+            row.dataset.lrNo = lrNoInput.value || '';
+            row.dataset.transport = transportInput.value || '';
+
+            row.innerHTML = `
+                <td></td>
+                <td>${source.lot_no || ''}</td>
+                <td>${source.item_name || ''}</td>
+                <td>${source.quality || ''}</td>
+                <td>${meterInput.value || ''}</td>
+                <td>${foldInput.value || ''}</td>
+                <td>${netMeterInput.value || ''}</td>
+                <td>${processName}</td>
+                <td>${lrNoInput.value || ''}</td>
+                <td>${transportInput.value || ''}</td>
+                <td><a href="javascript:void(0)" class="remove-link remove-row">Remove</a></td>
+                <td class="d-none row-hidden-inputs"></td>
+            `;
+
+            tableBody.appendChild(row);
+            ensureEmptyState();
+            reindexRows();
+            clearEntryFields();
         }
-        if (!processId) {
-            toastr.error('Select process first');
-            return;
-        }
-        // Prevent duplicate items
-        const duplicateRow = getDataRows().find(function (row) {
-            return String(row.dataset.purchaseItemId) === String(source.purchase_item_id);
+
+        lotSelect.addEventListener('change', populateItemOptions);
+
+        purchaseItemSelect.addEventListener('change', function () {
+            fillSourceFields(currentSource());
+            populateProcessOptions();
         });
-        if (duplicateRow) {
-            toastr.error('This item is already added');
-            return;
-        }
-        ensureEmptyState();
-        // Create new table row with all data attributes
-        const row = document.createElement('tr');
-        row.dataset.purchaseItemId = source.purchase_item_id;
-        row.dataset.itemId = source.item_id;
-        row.dataset.lotNo = source.lot_no;
-        row.dataset.itemName = source.item_name;
-        row.dataset.quality = source.quality || '';
-        row.dataset.meter = meterInput.value || '';
-        row.dataset.fold = foldInput.value || '';
-        row.dataset.netMeter = netMeterInput.value || '';
-        row.dataset.processId = processId;
-        row.dataset.processName = processName;
-        row.dataset.lrNo = lrNoInput.value || '';
-        row.dataset.transport = transportInput.value || '';
-        row.innerHTML = ''
-            + '<td></td>'
-            + '<td>' + (source.lot_no || '') + '</td>'
-            + '<td>' + (source.item_name || '') + '</td>'
-            + '<td>' + (source.quality || '') + '</td>'
-            + '<td>' + (meterInput.value || '') + '</td>'
-            + '<td>' + (foldInput.value || '') + '</td>'
-            + '<td>' + (netMeterInput.value || '') + '</td>'
-            + '<td>' + processName + '</td>'
-            + '<td>' + (lrNoInput.value || '') + '</td>'
-            + '<td>' + (transportInput.value || '') + '</td>'
-            + '<td><a href="javascript:void(0)" class="remove-link remove-row">Remove</a></td>'
-            + '<td class="d-none row-hidden-inputs"></td>';
-        tableBody.appendChild(row);
+
+        addItemButton.addEventListener('click', addRow);
+
+        tableBody.addEventListener('click', function (e) {
+            if (!e.target.classList.contains('remove-row')) return;
+
+            e.target.closest('tr').remove();
+            ensureEmptyState();
+            reindexRows();
+        });
+
         ensureEmptyState();
         reindexRows();
-        clearEntryFields();
-    }
-
-    // Event listeners for dropdowns and buttons
-    lotSelect?.addEventListener('change', function () {
-        populateItemOptions();
-    });
-    purchaseItemSelect?.addEventListener('change', function () {
-        const source = currentSource();
-        fillSourceFields(source);
         populateProcessOptions();
-    });
-    addItemButton?.addEventListener('click', addRow);
-    tableBody?.addEventListener('click', function (event) {
-        if (!event.target.classList.contains('remove-row')) {
-            return;
-        }
-        event.preventDefault();
-        const row = event.target.closest('tr');
-        if (!row || row.id === emptyRowId) {
-            return;
-        }
-        row.remove();
-        ensureEmptyState();
-        reindexRows();
-    });
 
-    // Initial setup: show empty state, reindex, populate process options, preload first row if editing
-    ensureEmptyState();
-    reindexRows();
-    populateProcessOptions();
-    const existingRows = getDataRows();
-    if (existingRows.length > 0) {
-        populateEditorFromRow(existingRows[0]);
-    }
-});
+        const existingRows = getDataRows();
+        if (existingRows.length > 0) {
+            populateEditorFromRow(existingRows[0]);
+        }
+    });
 </script>
 
 

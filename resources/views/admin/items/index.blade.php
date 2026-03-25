@@ -128,7 +128,7 @@ $(function () {
             { data: 'DT_RowIndex', orderable: false, searchable: false },
             { data: 'short_code', name: 'abbr' },
             { data: 'item_name', name: 'item_name' },
-            { data: 'qty_balance', orderable: false, searchable: false },
+            { data: 'stock_net_meter', orderable: false, searchable: false },
             { data: 'status', orderable: false, searchable: false },
             { data: 'action', orderable: false, searchable: false }
         ]

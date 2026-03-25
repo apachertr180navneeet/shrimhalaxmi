@@ -53,4 +53,9 @@ class Item extends Model
     {
         return $this->stock_qty_m >= $qtyM && $this->stock_net_meter >= $netMeter;
     }
+
+    public function decreaseStocknew(float $qtyM): void
+    {
+        $this->decrement('stock_net_meter', $qtyM);
+    }
 }

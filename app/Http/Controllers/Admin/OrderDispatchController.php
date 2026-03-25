@@ -155,11 +155,18 @@ class OrderDispatchController extends Controller
                         'amount' => $itemRow['amount'],
                         'sort_order' => $itemRow['sort_order'],
                     ]);
+
+                    // Decrease stock for the assigned item
+                    $item = Item::find($itemRow['item_id']);
+                    if ($item) {
+                        $item->decreaseStocknew((float) $itemRow['meter']);
+                    }
                 }
             });
 
             return redirect()->route('admin.orderdispatches.index')->with('success', 'Order dispatch added successfully');
         } catch (\Exception $e) {
+            dd($e);
             \Log::error('OrderDispatch Store Error: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Something went wrong!')->withInput();
         }
@@ -220,6 +227,12 @@ class OrderDispatchController extends Controller
                 $dispatch = OrderDispatch::findOrFail($id);
                 $itemsData = collect($request->items_data);
 
+                // Restore old qty before update
+                $oldItems = $dispatch->items;
+                foreach ($oldItems as $oldItem) {
+                    Item::where('id', $oldItem->item_id)->increment('stock_net_meter', $oldItem->meter);
+                }
+
                 $dispatch->update([
                     'dispatch_date' => $request->dispatch_date,
                     'dispatch_no' => $request->dispatch_no,
@@ -245,11 +258,18 @@ class OrderDispatchController extends Controller
                         'amount' => $itemRow['amount'],
                         'sort_order' => $itemRow['sort_order'],
                     ]);
+
+                    // Decrease stock for the assigned item
+                    $item = Item::find($itemRow['item_id']);
+                    if ($item) {
+                        $item->decreaseStocknew((float) $itemRow['meter']);
+                    }
                 }
             });
 
             return redirect()->route('admin.orderdispatches.index')->with('success', 'Order dispatch updated successfully');
         } catch (\Exception $e) {
+            dd($e);
             \Log::error('OrderDispatch Update Error: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Something went wrong!')->withInput();
         }
