@@ -67,8 +67,18 @@ class OrderDispatchController extends Controller
             return DataTables::of($query)
                 ->addColumn('date', fn ($row) => optional($row->dispatch_date)->format('d/m/Y') ?: '-')
                 ->addColumn('customer_name', fn ($row) => $row->customer?->name ?: '-')
+                ->addColumn('status', function ($row) {
+                    $color = 'secondary';
+                    switch ($row->status) {
+                        case 'Pending': $color = 'warning'; break;
+                        case 'In Transit': $color = 'info'; break;
+                        case 'Complete': $color = 'success'; break;
+                        case 'Cancelled': $color = 'danger'; break;
+                    }
+                    return '<button class="btn btn-sm btn-' . $color . '" disabled>' . htmlspecialchars($row->status) . '</button>';
+                })
                 ->addColumn('action', fn ($row) => '<a href="' . route('admin.orderdispatches.edit', $row->id) . '" class="btn btn-sm btn-primary">Edit</a>   <button class="btn btn-sm btn-danger deleteBtn" data-id="' . $row->id . '">Delete</button>')
-                ->rawColumns(['action'])
+                ->rawColumns(['action', 'status'])
                 ->make(true);
         } catch (\Exception $e) {
             \Log::error('OrderDispatch DataTable Error: ' . $e->getMessage());

@@ -74,7 +74,6 @@ $(function () {
     let table = $('#jobWorkerInwardTable').DataTable({
         processing: true,
         serverSide: true,
-        pageLength: parseInt($('#showEntries').val()),
         lengthChange: false,
         ajax: {
             url: "{{ route('admin.jobworkerinwards.getall') }}",

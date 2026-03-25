@@ -42,7 +42,6 @@
             </div>
             <div class="d-flex gap-2 col-md-5">
                 <input type="text" id="customerName" class="form-control search-box" placeholder="Customer Name">
-                <input type="date" id="dispatchDate" class="form-control search-box">
                 <input type="text" id="globalSearch" class="form-control search-box" placeholder="Search here">
             </div>
             <div class="col-md-2 text-end">
