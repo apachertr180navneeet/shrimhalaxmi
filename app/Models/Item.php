@@ -16,6 +16,7 @@ class Item extends Model
         'status',
         'stock_qty_m',
         'stock_net_meter',
+        'unit',
     ];
 
     protected $casts = [

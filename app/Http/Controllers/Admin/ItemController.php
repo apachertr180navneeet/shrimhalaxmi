@@ -93,6 +93,7 @@ class ItemController extends Controller
                 'item_name' => 'required|string|max:100|unique:items,item_name',
                 'abbr' => 'nullable|string|max:20|unique:items,abbr',
                 'remark' => 'nullable|string|max:255',
+                'unit' => 'nullable'
             ]);
 
             if ($validator->fails()) {
@@ -103,6 +104,7 @@ class ItemController extends Controller
                 'item_name',
                 'abbr',
                 'remark',
+                'unit'
             ]));
 
             return redirect()->route('admin.items.index')
@@ -155,6 +157,7 @@ class ItemController extends Controller
                 'item_name',
                 'abbr',
                 'remark',
+                'unit'
             ]));
 
             return redirect()->route('admin.items.index')

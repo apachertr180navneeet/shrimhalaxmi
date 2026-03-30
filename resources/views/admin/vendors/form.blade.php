@@ -107,10 +107,7 @@
         <div class="form-group-custom">
 
             <!-- Input: Address (Textarea) -->
-            <textarea name="address" class="form-control">
-                {{ old('address', $vendor->address ?? '') }}
-            </textarea>
-
+            <textarea name="address" class="form-control">{{ trim(old('address', $vendor->address ?? '')) }}</textarea>
         </div>
 
     </div>

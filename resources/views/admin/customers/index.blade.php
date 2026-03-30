@@ -145,7 +145,7 @@ input:checked + .slider:before {
                         <th>Customer Name</th>
                         <th>Mobile</th>
                         <th>Email</th>
-                        <th>Location</th>
+                        <th>Address</th>
                         <th>Status</th>
                         <th>Action</th>
                     </tr>
