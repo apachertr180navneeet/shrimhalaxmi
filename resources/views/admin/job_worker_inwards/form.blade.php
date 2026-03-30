@@ -40,17 +40,19 @@
     <div class="row g-3 align-items-end">
 
         <div class="col-md-2">
-            <label>LOT NO</label>
-            <input type="text" id="lot_no" class="form-control" readonly>
-        </div>
-
-        <div class="col-md-2">
             <label>Item</label>
             <select id="item_id" class="form-control">
                 <option value="">Select</option>
                 @foreach ($items as $item)
                     <option value="{{ $item->id }}">{{ $item->item_name }}</option>
                 @endforeach
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <label>LOT NO</label>
+            <select id="lot_no" class="form-control" disabled>
+                <option value="">Select</option>
             </select>
         </div>
 
@@ -153,7 +155,14 @@
     const itemTableBody = $('#itemTableBody');
 
     function calculateValues() {
-        
+        const meter = parseFloat($('#meter').val()) || 0;
+        const fold = parseFloat($('#fold').val()) || 0;
+        const shrinkagePercent = parseFloat($('#shrinkage').val()) || 0;
+        const adjustedMeter = meter - ((meter * shrinkagePercent) / 100);
+        const finalMeter = adjustedMeter > 0 ? adjustedMeter : 0;
+        const totalMeter = (finalMeter * fold) / 100;
+
+        $('#total_meter').val(totalMeter ? totalMeter.toFixed(2) : '');
     }
 
     function getNextLotNo() {
@@ -175,22 +184,42 @@
         return 'LOT' + String(next).padStart(4, '0');
     }
 
-    function findSourceByItem(itemId) {
-        if (!itemId) return null;
+    function findSourceByItemAndLot(itemId, lotNo) {
+        if (!itemId || !lotNo) return null;
         return lotSources.find(function (source) {
-            return String(source.item_id) === String(itemId);
+            return String(source.item_id) === String(itemId) && String(source.lot_no) === String(lotNo);
         }) || null;
     }
 
-    function autoFillFromItem(itemId) {
-        const source = findSourceByItem(itemId);
-        if (source) {
-            $('#lot_no').val(getNextLotNo());
-           
-        } else {
-            $('#lot_no').val(getNextLotNo());
-        
+    function populateLotDropdown(itemId) {
+        const lotSelect = $('#lot_no');
+        lotSelect.empty().append('<option value="">Select</option>');
+
+        if (!itemId) {
+            lotSelect.prop('disabled', true);
+            return;
         }
+
+        const seenLots = new Set();
+        lotSources.forEach(function (source) {
+            if (String(source.item_id) !== String(itemId)) return;
+            const lotNo = (source.lot_no || '').toString().trim();
+            if (!lotNo || seenLots.has(lotNo)) return;
+            seenLots.add(lotNo);
+            lotSelect.append('<option value="' + lotNo + '">' + lotNo + '</option>');
+        });
+
+        lotSelect.prop('disabled', seenLots.size === 0);
+    }
+
+    function autoFillFromSelection() {
+        const itemId = $('#item_id').val();
+        const lotNo = $('#lot_no').val();
+        const source = findSourceByItemAndLot(itemId, lotNo);
+        $('#quality').val(source ? (source.quality || '') : '');
+        $('#meter').val(source ? (source.meter || '') : '');
+        $('#fold').val(source ? (source.fold || '') : '');
+        calculateValues();
     }
 
     function setRowHiddenInputs(row, index) {
@@ -217,7 +246,7 @@
             '<input type="hidden" name="items_data[' + index + '][fold]" value="' + fold + '">' +
             '<input type="hidden" name="items_data[' + index + '][total_meter]" value="' + total + '">' +
             '<input type="hidden" name="items_data[' + index + '][shrinkage]" value="' + shrinkage + '">' +
-            '<input type="hidden" name="items_data[' + index + '][type]" value="' + type + '">' 
+            '<input type="hidden" name="items_data[' + index + '][type]" value="' + type + '">'
         );
     }
 
@@ -243,22 +272,35 @@
         $('#item_id').val('');
         $('#type').val('LOT TO LOT');
         $('#quality, #meter, #fold, #total_meter, #shrinkage').val('');
-        $('#lot_no').val(getNextLotNo());
+        $('#lot_no').empty().append('<option value="">Select</option>').val('').prop('disabled', true);
     }
 
-    $('#meter, #fold').on('input', calculateValues);
+    $('#meter').on('input', calculateValues);
+    $('#fold, #shrinkage').on('input', calculateValues);
 
     $('#item_id').on('change', function () {
-        autoFillFromItem($(this).val());
+        const itemId = $(this).val();
+        populateLotDropdown(itemId);
+        $('#lot_no').val('');
+        autoFillFromSelection();
+    });
+
+    $('#lot_no').on('change', function () {
+        autoFillFromSelection();
     });
 
     $('#addItem').on('click', function () {
         const itemId = $('#item_id').val();
         const itemText = $('#item_id option:selected').text();
-        const lotNo = $('#lot_no').val() || getNextLotNo();
+        const lotNo = $('#lot_no').val();
 
         if (!itemId) {
             alert('Please select an item first.');
+            return;
+        }
+
+        if (!lotNo) {
+            alert('Please select LOT NO.');
             return;
         }
 
@@ -321,7 +363,7 @@
 
     $(document).ready(function () {
         reindexRows();
-        $('#lot_no').val(getNextLotNo());
+        $('#lot_no').empty().append('<option value="">Select</option>').val('').prop('disabled', true);
     });
 </script>
 @endsection

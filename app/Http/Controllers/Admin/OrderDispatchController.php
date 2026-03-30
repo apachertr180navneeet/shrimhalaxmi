@@ -7,6 +7,7 @@ use App\Models\Customer;
 use App\Models\Item;
 use App\Models\OrderDispatch;
 use App\Models\OrderDispatchItem;
+use App\Models\PurchaseItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -39,6 +40,25 @@ class OrderDispatchController extends Controller
         $max = $query->pluck('dispatch_no')->map(fn ($dispatchNo) => (int) preg_replace('/\D/', '', (string) $dispatchNo))->max() ?? 0;
 
         return str_pad((string) ($max + 1), 4, '0', STR_PAD_LEFT);
+    }
+
+    private function lotSources()
+    {
+        return PurchaseItem::query()
+            ->with('item:id,item_name')
+            ->whereNotNull('lot_no')
+            ->where('lot_no', '!=', '')
+            ->orderBy('lot_no')
+            ->orderBy('id')
+            ->get()
+            ->map(function (PurchaseItem $row) {
+                return [
+                    'lot_no' => (string) $row->lot_no,
+                    'item_id' => $row->item_id,
+                    'item_name' => $row->item?->item_name ?: '',
+                ];
+            })
+            ->values();
     }
 
     public function index()
@@ -108,9 +128,10 @@ class OrderDispatchController extends Controller
 
         $customers = Customer::orderBy('name')->get(['id', 'name', 'abbr']);
         $items = Item::where('stock_net_meter','!=','0')->orderBy('item_name')->get(['id', 'item_name', 'abbr']);
+        $lotSources = $this->lotSources();
         $dispatchItems = collect();
 
-        return view('admin.order_dispatches.create', compact('dispatch', 'customers', 'items', 'dispatchItems'));
+        return view('admin.order_dispatches.create', compact('dispatch', 'customers', 'items', 'lotSources', 'dispatchItems'));
     }
 
     public function store(Request $request)
@@ -198,9 +219,10 @@ class OrderDispatchController extends Controller
 
             $customers = Customer::orderBy('name')->get(['id', 'name', 'abbr']);
             $items = Item::orderBy('item_name')->get(['id', 'item_name', 'abbr']);
+            $lotSources = $this->lotSources();
             $dispatchItems = $dispatchRecord->items()->orderBy('sort_order')->get();
 
-            return view('admin.order_dispatches.edit', compact('dispatch', 'customers', 'items', 'dispatchItems'));
+            return view('admin.order_dispatches.edit', compact('dispatch', 'customers', 'items', 'lotSources', 'dispatchItems'));
         } catch (\Exception $e) {
             \Log::error('OrderDispatch Edit Error: ' . $e->getMessage());
             return redirect()->route('admin.orderdispatches.index')->with('error', 'Record not found');

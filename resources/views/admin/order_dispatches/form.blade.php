@@ -2,6 +2,7 @@
     $dispatch = $dispatch ?? [];
     $customers = $customers ?? collect();
     $items = $items ?? collect();
+    $lotSources = $lotSources ?? collect();
     $dispatchItems = $dispatchItems ?? collect();
 
     $dispatchDate = old('dispatch_date', $dispatch['dispatch_date'] ?? now()->format('Y-m-d'));
@@ -82,7 +83,9 @@
     </div>
     <div class="col-md-3">
         <label class="form-label">Lot No</label>
-        <input type="text" id="lot_no" class="form-control" placeholder="Lot No" readonly>
+        <select id="lot_no" class="form-select" disabled>
+            <option value="">Select lot</option>
+        </select>
     </div>
     <div class="col-md-2">
         <label class="form-label">Meter</label>
@@ -155,6 +158,8 @@
 
 <script>
 (function () {
+    var lotSources = @json($lotSources->toArray());
+
     function toNumber(value) {
         var n = parseFloat(value);
         return Number.isFinite(n) ? n : 0;
@@ -166,47 +171,36 @@
         document.getElementById('amount').value = (meter * rate).toFixed(2);
     }
 
-    function getCustomerAbbr() {
-        var selected = document.querySelector('#customer_id option:checked');
-        if (!selected) {
-            return 'CUST';
-        }
-
-        if (selected.dataset.abbr && selected.dataset.abbr.trim() !== '') {
-            return selected.dataset.abbr.trim();
-        }
-
-        // If label is like "Customer 1 (C1)", prefers bracket value.
-        var label = selected.textContent.trim();
-        var match = label.match(/\(([^)]+)\)/);
-        if (match && match[1]) {
-            return match[1].trim();
-        }
-
-        // fallback to simple upper-case text without spaces
-        return label.replace(/\s+/g, '').toUpperCase() || 'CUST';
-    }
-
-    function getDispatchNo() {
-        return document.querySelector('input[name="dispatch_no"]').value || '0000';
-    }
-
-    function generateLotNo(index) {
-        var custAbbr = getCustomerAbbr();
-        var dispatchNo = getDispatchNo();
-        var serial = String(index).padStart(5, '0');
-        return custAbbr + ' / ' + dispatchNo + ' / ' + serial;
-    }
-
     function getDataRows() {
         return Array.from(document.querySelectorAll('#dispatchItemsBody tr')).filter(function (row) {
             return row.id !== 'noItemsRow';
         });
     }
 
-    function updateLotNoInput() {
-        var nextSerial = getDataRows().length + 1;
-        document.getElementById('lot_no').value = generateLotNo(nextSerial);
+    function populateLotDropdown(itemId) {
+        var lotSelect = document.getElementById('lot_no');
+        if (!lotSelect) return;
+
+        lotSelect.innerHTML = '<option value="">Select lot</option>';
+
+        if (!itemId) {
+            lotSelect.disabled = true;
+            return;
+        }
+
+        var seenLots = new Set();
+        lotSources.forEach(function (source) {
+            if (String(source.item_id) !== String(itemId)) return;
+            var lotNo = (source.lot_no || '').toString().trim();
+            if (!lotNo || seenLots.has(lotNo)) return;
+            seenLots.add(lotNo);
+            var option = document.createElement('option');
+            option.value = lotNo;
+            option.textContent = lotNo;
+            lotSelect.appendChild(option);
+        });
+
+        lotSelect.disabled = seenLots.size === 0;
     }
 
     function updateTotals() {
@@ -244,19 +238,10 @@
         });
     }
 
-    var customerSelect = document.getElementById('customer_id');
-    if (customerSelect) {
-        customerSelect.addEventListener('change', function () {
-            updateLotNoInput();
-        });
-    }
-
-    var dispatchForm = document.getElementById('dispatchForm');
-    if (dispatchForm) {
-        dispatchForm.addEventListener('change', function (e) {
-            if (e.target.name === 'dispatch_no') {
-                updateLotNoInput();
-            }
+    var itemSelectForLots = document.getElementById('item_id');
+    if (itemSelectForLots) {
+        itemSelectForLots.addEventListener('change', function () {
+            populateLotDropdown(this.value);
         });
     }
 
@@ -274,7 +259,8 @@
         var itemSelect = document.getElementById('item_id');
         var itemId = itemSelect.value;
         var itemName = itemSelect.selectedOptions.length ? itemSelect.selectedOptions[0].text : '';
-        var lotNo = document.getElementById('lot_no').value.trim();
+        var lotSelect = document.getElementById('lot_no');
+        var lotNo = lotSelect.value.trim();
         var meter = toNumber(document.getElementById('meter').value);
         var rate = toNumber(document.getElementById('rate').value);
         var amount = toNumber(document.getElementById('amount').value);
@@ -312,12 +298,13 @@
         body.appendChild(row);
 
         document.getElementById('item_id').value = '';
+        document.getElementById('lot_no').innerHTML = '<option value="">Select lot</option>';
+        document.getElementById('lot_no').disabled = true;
         document.getElementById('meter').value = '';
         document.getElementById('rate').value = '';
         document.getElementById('amount').value = '';
 
         updateTotals();
-        updateLotNoInput();
     });
 
     document.getElementById('dispatchItemsBody').addEventListener('click', function (event) {
@@ -332,12 +319,11 @@
             }
             reIndexItems();
             updateTotals();
-            updateLotNoInput();
         }
     });
 
-    // initial totals and lot-number setup in case editing existing dispatch
+    // initial totals and lot dropdown setup in case editing existing dispatch
     updateTotals();
-    updateLotNoInput();
+    populateLotDropdown(document.getElementById('item_id').value);
 })();
 </script>

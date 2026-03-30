@@ -238,19 +238,19 @@
 --}}
 <div class="assignment-inline-grid">
     <div class="assignment-field-grid">
-        <label>LOT NO.</label>
-        <select id="lot_no" class="form-select">
-            <option value="">Select Lot No.</option>
-            @foreach ($uniqueLots as $lotNo)
-                <option value="{{ $lotNo }}">{{ $lotNo }}</option>
-            @endforeach
+        <label>Item</label>
+        <select id="purchase_item_id" class="form-select">
+            <option value="">Select Item</option>
         </select>
     </div>
 
     <div class="assignment-field-grid">
-        <label>Item</label>
-        <select id="purchase_item_id" class="form-select">
-            <option value="">Select Item</option>
+        <label>LOT NO.</label>
+        <select id="lot_no" class="form-select" disabled>
+            <option value="">Select Lot No.</option>
+            @foreach ($uniqueLots as $lotNo)
+                <option value="{{ $lotNo }}">{{ $lotNo }}</option>
+            @endforeach
         </select>
     </div>
 
@@ -407,10 +407,14 @@
         }
 
         function currentSource() {
-            const purchaseItemId = purchaseItemSelect.value;
-            if (!purchaseItemId) return null;
+            const itemId = purchaseItemSelect.value;
+            const lotNo = lotSelect.value;
+            if (!itemId || !lotNo) return null;
 
-            return lotSources.find(row => String(row.purchase_item_id) === String(purchaseItemId)) || null;
+            return lotSources.find(row =>
+                String(row.item_id) === String(itemId) &&
+                String(row.lot_no) === String(lotNo)
+            ) || null;
         }
 
         // ✅ FIXED (item_name based)
@@ -434,27 +438,59 @@
         }
 
         function populateItemOptions() {
-            const selectedLotNo = lotSelect.value;
-
+            const selectedItemId = purchaseItemSelect.value;
+            const uniqueItems = [];
+            const seen = new Set();
             purchaseItemSelect.innerHTML = '<option value="">Select Item</option>';
 
-            if (!selectedLotNo) {
-                fillSourceFields(null);
-                populateProcessOptions();
+            lotSources.forEach(function (row) {
+                const key = String(row.item_id);
+                if (!key || seen.has(key)) return;
+                seen.add(key);
+                uniqueItems.push(row);
+            });
+
+            uniqueItems.forEach(function (row) {
+                const option = document.createElement('option');
+                option.value = row.item_id;
+                option.textContent = row.item_name;
+                option.selected = String(row.item_id) === String(selectedItemId);
+                purchaseItemSelect.appendChild(option);
+            });
+
+            populateLotOptions();
+            fillSourceFields(currentSource());
+            populateProcessOptions();
+        }
+
+        function populateLotOptions() {
+            const selectedItemId = purchaseItemSelect.value;
+            const selectedLotNo = lotSelect.value;
+
+            lotSelect.innerHTML = '<option value="">Select Lot No.</option>';
+            lotSelect.disabled = !selectedItemId;
+
+            if (!selectedItemId) {
+                lotSelect.value = '';
                 return;
             }
 
+            const seenLots = new Set();
             lotSources
-                .filter(row => row.lot_no === selectedLotNo)
+                .filter(row => String(row.item_id) === String(selectedItemId))
                 .forEach(function (row) {
+                    if (!row.lot_no || seenLots.has(String(row.lot_no))) return;
+                    seenLots.add(String(row.lot_no));
                     const option = document.createElement('option');
-                    option.value = row.purchase_item_id;
-                    option.textContent = row.item_name;
-                    purchaseItemSelect.appendChild(option);
+                    option.value = row.lot_no;
+                    option.textContent = row.lot_no;
+                    option.selected = String(row.lot_no) === String(selectedLotNo);
+                    lotSelect.appendChild(option);
                 });
 
-            fillSourceFields(null);
-            populateProcessOptions();
+            if (!Array.from(lotSelect.options).some(option => option.value === selectedLotNo)) {
+                lotSelect.value = '';
+            }
         }
 
         function fillSourceFields(source) {
@@ -508,9 +544,10 @@
         }
 
         function clearEntryFields() {
-            lotSelect.value = '';
             populateItemOptions();
             purchaseItemSelect.value = '';
+            populateLotOptions();
+            lotSelect.value = '';
             processSelect.value = '';
             fillSourceFields(null);
             populateProcessOptions();
@@ -520,10 +557,9 @@
         function populateEditorFromRow(row) {
             if (!row) return;
 
+            purchaseItemSelect.value = row.dataset.itemId || '';
+            populateLotOptions();
             lotSelect.value = row.dataset.lotNo || '';
-            populateItemOptions();
-
-            purchaseItemSelect.value = row.dataset.purchaseItemId || '';
             fillSourceFields(currentSource());
 
             meterInput.value = row.dataset.meter || '';
@@ -540,8 +576,9 @@
             const source = currentSource();
             const processName = processSelect.value;
 
+            if (!purchaseItemSelect.value) return toastr.error('Select item first');
             if (!lotSelect.value) return toastr.error('Select lot no first');
-            if (!source) return toastr.error('Select item first');
+            if (!source) return toastr.error('Invalid item and lot selection');
             if (!processName) return toastr.error('Select process first');
 
             const duplicateRow = getDataRows().find(row =>
@@ -588,9 +625,13 @@
             clearEntryFields();
         }
 
-        lotSelect.addEventListener('change', populateItemOptions);
-
         purchaseItemSelect.addEventListener('change', function () {
+            populateLotOptions();
+            lotSelect.value = '';
+            fillSourceFields(currentSource());
+            populateProcessOptions();
+        });
+        lotSelect.addEventListener('change', function () {
             fillSourceFields(currentSource());
             populateProcessOptions();
         });
@@ -608,6 +649,7 @@
         ensureEmptyState();
         reindexRows();
         populateProcessOptions();
+        populateItemOptions();
 
         const existingRows = getDataRows();
         if (existingRows.length > 0) {
