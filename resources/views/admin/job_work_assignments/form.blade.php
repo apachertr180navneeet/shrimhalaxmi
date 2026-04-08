@@ -78,6 +78,7 @@
     }
 
     @media (max-width: 991.98px) {
+
         .assignment-form-grid,
         .assignment-inline-grid {
             grid-template-columns: 1fr;
@@ -108,24 +109,26 @@
 
     // Prepare form rows: use old input if validation failed, otherwise use existing assignment items
     if (old('items_data')) {
-        $formRows = collect(old('items_data'))->values()->map(function ($row) use ($itemNameMap, $lotSources, $processIdByName, $processNameById) {
-            $source = $lotSources->firstWhere('purchase_item_id', (int) ($row['purchase_item_id'] ?? 0));
-            return [
-                'purchase_item_id' => $row['purchase_item_id'] ?? '',
-                'item_id' => $row['item_id'] ?? '',
-                'lot_no' => $row['lot_no'] ?? '',
-                'item_name' => $source['item_name'] ?? ($itemNameMap[$row['item_id'] ?? ''] ?? ''),
-                'quality' => $row['quality'] ?? '',
-                'meter' => $row['meter'] ?? '',
-                'fold' => $row['fold'] ?? '',
-                'net_meter' => $row['net_meter'] ?? '',
-                'process_id' => $row['process_id'] ?? ($processIdByName[$row['process'] ?? ''] ?? ''),
-                'process_name' => $row['process_name'] ?? ($row['process'] ?? ''),
-                'lr_no' => $row['lr_no'] ?? '',
-                'transport' => $row['transport'] ?? '',
-                'sort_order' => $row['sort_order'] ?? 1,
-            ];
-        });
+        $formRows = collect(old('items_data'))
+            ->values()
+            ->map(function ($row) use ($itemNameMap, $lotSources, $processIdByName, $processNameById) {
+                $source = $lotSources->firstWhere('purchase_item_id', (int) ($row['purchase_item_id'] ?? 0));
+                return [
+                    'purchase_item_id' => $row['purchase_item_id'] ?? '',
+                    'item_id' => $row['item_id'] ?? '',
+                    'lot_no' => $row['lot_no'] ?? '',
+                    'item_name' => $source['item_name'] ?? ($itemNameMap[$row['item_id'] ?? ''] ?? ''),
+                    'quality' => $row['quality'] ?? '',
+                    'meter' => $row['meter'] ?? '',
+                    'fold' => $row['fold'] ?? '',
+                    'net_meter' => $row['net_meter'] ?? '',
+                    'process_id' => $row['process_id'] ?? ($processIdByName[$row['process'] ?? ''] ?? ''),
+                    'process_name' => $row['process_name'] ?? ($row['process'] ?? ''),
+                    'lr_no' => $row['lr_no'] ?? '',
+                    'transport' => $row['transport'] ?? '',
+                    'sort_order' => $row['sort_order'] ?? 1,
+                ];
+            });
     } else {
         $formRows = $assignmentItems->map(function ($row) use ($processIdByName) {
             return [
@@ -177,7 +180,8 @@
     <div>
         <div class="assignment-field-grid">
             <label>Date</label>
-            <input type="date" name="date" class="form-control @error('date') is-invalid @enderror" value="{{ old('date', $assignment['date'] ?? '') }}">
+            <input type="date" name="date" class="form-control @error('date') is-invalid @enderror"
+                value="{{ old('date', $assignment['date'] ?? '') }}">
             @error('date')
                 <div class="text-danger small">{{ $message }}</div>
             @enderror
@@ -188,7 +192,8 @@
             <select name="job_worker_id" class="form-select @error('job_worker_id') is-invalid @enderror">
                 <option value="">Select Job Worker</option>
                 @foreach ($jobWorkers as $jobWorker)
-                    <option value="{{ $jobWorker->id }}" {{ (string) old('job_worker_id', $assignment['job_worker_id'] ?? '') === (string) $jobWorker->id ? 'selected' : '' }}>
+                    <option value="{{ $jobWorker->id }}"
+                        {{ (string) old('job_worker_id', $assignment['job_worker_id'] ?? '') === (string) $jobWorker->id ? 'selected' : '' }}>
                         {{ $jobWorker->name }}
                     </option>
                 @endforeach
@@ -202,7 +207,8 @@
     <div>
         <div class="assignment-field-grid">
             <label>Assign No.</label>
-            <input type="text" name="assign_no" class="form-control @error('assign_no') is-invalid @enderror" value="{{ old('assign_no', $assignment['assign_no'] ?? '') }}" readonly>
+            <input type="text" name="assign_no" class="form-control @error('assign_no') is-invalid @enderror"
+                value="{{ old('assign_no', $assignment['assign_no'] ?? '') }}" readonly>
             @error('assign_no')
                 <div class="text-danger small">{{ $message }}</div>
             @enderror
@@ -212,9 +218,14 @@
             <label>Freight</label>
             <select name="freight" class="form-select">
                 <option value="">Select Freight</option>
-                <option value="Paid" {{ old('freight', $assignment['freight'] ?? '') === 'Paid' ? 'selected' : '' }}>Paid</option>
-                <option value="To be Paid" {{ old('freight', $assignment['freight'] ?? '') === 'To be Paid' ? 'selected' : '' }}>To be Paid</option>
-                <option value="To be Shiped" {{ old('freight', $assignment['freight'] ?? '') === 'To be Shiped' ? 'selected' : '' }}>To be Shiped</option>
+                <option value="Paid" {{ old('freight', $assignment['freight'] ?? '') === 'Paid' ? 'selected' : '' }}>
+                    Paid</option>
+                <option value="To be Paid"
+                    {{ old('freight', $assignment['freight'] ?? '') === 'To be Paid' ? 'selected' : '' }}>To be Paid
+                </option>
+                <option value="To be Shiped"
+                    {{ old('freight', $assignment['freight'] ?? '') === 'To be Shiped' ? 'selected' : '' }}>To be
+                    Shiped</option>
             </select>
             @error('freight')
                 <div class="text-danger small">{{ $message }}</div>
@@ -260,8 +271,8 @@
     </div>
 
     <div class="assignment-field-grid">
-        <label>Quality</label>
-        <input type="text" id="quality" class="form-control" readonly>
+        <label>Colour</label>
+        <input type="text" id="colour" class="form-control" readonly>
     </div>
 
     <div class="assignment-field-grid">
@@ -306,7 +317,7 @@
     =============================
 --}}
 @error('items_data')
-<div class="text-danger small mb-2">{{ $message }}</div>
+    <div class="text-danger small mb-2">{{ $message }}</div>
 @enderror
 
 {{--
@@ -339,20 +350,12 @@
             </thead>
             <tbody id="assignment_items_body">
                 @forelse ($formRows as $index => $row)
-                    <tr
-                        data-purchase-item-id="{{ $row['purchase_item_id'] }}"
-                        data-item-id="{{ $row['item_id'] }}"
-                        data-lot-no="{{ $row['lot_no'] }}"
-                        data-item-name="{{ $row['item_name'] }}"
-                        data-quality="{{ $row['quality'] }}"
-                        data-meter="{{ $row['meter'] }}"
-                        data-fold="{{ $row['fold'] }}"
-                        data-net-meter="{{ $row['net_meter'] }}"
-                        data-process-id="{{ $row['process_name'] }}"
-                        data-process-name="{{ $row['process_name'] }}"
-                        data-lr-no="{{ $row['lr_no'] }}"
-                        data-transport="{{ $row['transport'] }}"
-                    >
+                    <tr data-purchase-item-id="{{ $row['purchase_item_id'] }}" data-item-id="{{ $row['item_id'] }}"
+                        data-lot-no="{{ $row['lot_no'] }}" data-item-name="{{ $row['item_name'] }}"
+                        data-quality="{{ $row['quality'] }}" data-meter="{{ $row['meter'] }}"
+                        data-fold="{{ $row['fold'] }}" data-net-meter="{{ $row['net_meter'] }}"
+                        data-process-id="{{ $row['process_name'] }}" data-process-name="{{ $row['process_name'] }}"
+                        data-lr-no="{{ $row['lr_no'] }}" data-transport="{{ $row['transport'] }}">
                         <td>{{ $index + 1 }}.</td>
                         <td>{{ $row['lot_no'] }}</td>
                         <td>{{ $row['item_name'] }}</td>
@@ -365,17 +368,28 @@
                         <td>{{ $row['transport'] }}</td>
                         <td><a href="javascript:void(0)" class="remove-link remove-row">Remove</a></td>
                         <td class="d-none row-hidden-inputs">
-                            <input type="hidden" name="items_data[{{ $index }}][purchase_item_id]" value="{{ $row['purchase_item_id'] }}">
-                            <input type="hidden" name="items_data[{{ $index }}][item_id]" value="{{ $row['item_id'] }}">
-                            <input type="hidden" name="items_data[{{ $index }}][lot_no]" value="{{ $row['lot_no'] }}">
-                            <input type="hidden" name="items_data[{{ $index }}][quality]" value="{{ $row['quality'] }}">
-                            <input type="hidden" name="items_data[{{ $index }}][meter]" value="{{ $row['meter'] }}">
-                            <input type="hidden" name="items_data[{{ $index }}][fold]" value="{{ $row['fold'] }}">
-                            <input type="hidden" name="items_data[{{ $index }}][net_meter]" value="{{ $row['net_meter'] }}">
-                            <input type="hidden" name="items_data[{{ $index }}][process_id]" value="{{ $row['process_name'] }}">
-                            <input type="hidden" name="items_data[{{ $index }}][lr_no]" value="{{ $row['lr_no'] }}">
-                            <input type="hidden" name="items_data[{{ $index }}][transport]" value="{{ $row['transport'] }}">
-                            <input type="hidden" name="items_data[{{ $index }}][sort_order]" value="{{ $row['sort_order'] }}">
+                            <input type="hidden" name="items_data[{{ $index }}][purchase_item_id]"
+                                value="{{ $row['purchase_item_id'] }}">
+                            <input type="hidden" name="items_data[{{ $index }}][item_id]"
+                                value="{{ $row['item_id'] }}">
+                            <input type="hidden" name="items_data[{{ $index }}][lot_no]"
+                                value="{{ $row['lot_no'] }}">
+                            <input type="hidden" name="items_data[{{ $index }}][quality]"
+                                value="{{ $row['quality'] }}">
+                            <input type="hidden" name="items_data[{{ $index }}][meter]"
+                                value="{{ $row['meter'] }}">
+                            <input type="hidden" name="items_data[{{ $index }}][fold]"
+                                value="{{ $row['fold'] }}">
+                            <input type="hidden" name="items_data[{{ $index }}][net_meter]"
+                                value="{{ $row['net_meter'] }}">
+                            <input type="hidden" name="items_data[{{ $index }}][process_id]"
+                                value="{{ $row['process_name'] }}">
+                            <input type="hidden" name="items_data[{{ $index }}][lr_no]"
+                                value="{{ $row['lr_no'] }}">
+                            <input type="hidden" name="items_data[{{ $index }}][transport]"
+                                value="{{ $row['transport'] }}">
+                            <input type="hidden" name="items_data[{{ $index }}][sort_order]"
+                                value="{{ $row['sort_order'] }}">
                         </td>
                     </tr>
                 @empty
@@ -389,7 +403,7 @@
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', function() {
 
         const lotSources = @json($lotSources);
         const processOptions = @json($processOptions);
@@ -428,7 +442,7 @@
 
             processSelect.innerHTML = '<option value="">Select Process</option>';
 
-            processOptions.forEach(function (row) {
+            processOptions.forEach(function(row) {
                 const option = document.createElement('option');
 
                 option.value = row.item_name;
@@ -448,14 +462,14 @@
             const seen = new Set();
             purchaseItemSelect.innerHTML = '<option value="">Select Item</option>';
 
-            lotSources.forEach(function (row) {
+            lotSources.forEach(function(row) {
                 const key = String(row.item_id);
                 if (!key || seen.has(key)) return;
                 seen.add(key);
                 uniqueItems.push(row);
             });
 
-            uniqueItems.forEach(function (row) {
+            uniqueItems.forEach(function(row) {
                 const option = document.createElement('option');
                 option.value = row.item_id;
                 option.textContent = row.item_name;
@@ -483,7 +497,7 @@
             const seenLots = new Set();
             lotSources
                 .filter(row => String(row.item_id) === String(selectedItemId))
-                .forEach(function (row) {
+                .forEach(function(row) {
                     if (!row.lot_no || seenLots.has(String(row.lot_no))) return;
                     seenLots.add(String(row.lot_no));
                     const option = document.createElement('option');
@@ -511,22 +525,22 @@
         function updateRowHiddenInputs(row, index) {
             const holder = row.querySelector('.row-hidden-inputs');
 
-            holder.innerHTML = ''
-                + `<input type="hidden" name="items_data[${index}][purchase_item_id]" value="${row.dataset.purchaseItemId || ''}">`
-                + `<input type="hidden" name="items_data[${index}][item_id]" value="${row.dataset.itemId || ''}">`
-                + `<input type="hidden" name="items_data[${index}][lot_no]" value="${row.dataset.lotNo || ''}">`
-                + `<input type="hidden" name="items_data[${index}][quality]" value="${row.dataset.quality || ''}">`
-                + `<input type="hidden" name="items_data[${index}][meter]" value="${row.dataset.meter || ''}">`
-                + `<input type="hidden" name="items_data[${index}][fold]" value="${row.dataset.fold || ''}">`
-                + `<input type="hidden" name="items_data[${index}][net_meter]" value="${row.dataset.netMeter || ''}">`
-                + `<input type="hidden" name="items_data[${index}][process_id]" value="${row.dataset.processName || ''}">`
-                + `<input type="hidden" name="items_data[${index}][lr_no]" value="${row.dataset.lrNo || ''}">`
-                + `<input type="hidden" name="items_data[${index}][transport]" value="${row.dataset.transport || ''}">`
-                + `<input type="hidden" name="items_data[${index}][sort_order]" value="${index + 1}">`;
+            holder.innerHTML = '' +
+                `<input type="hidden" name="items_data[${index}][purchase_item_id]" value="${row.dataset.purchaseItemId || ''}">` +
+                `<input type="hidden" name="items_data[${index}][item_id]" value="${row.dataset.itemId || ''}">` +
+                `<input type="hidden" name="items_data[${index}][lot_no]" value="${row.dataset.lotNo || ''}">` +
+                `<input type="hidden" name="items_data[${index}][quality]" value="${row.dataset.quality || ''}">` +
+                `<input type="hidden" name="items_data[${index}][meter]" value="${row.dataset.meter || ''}">` +
+                `<input type="hidden" name="items_data[${index}][fold]" value="${row.dataset.fold || ''}">` +
+                `<input type="hidden" name="items_data[${index}][net_meter]" value="${row.dataset.netMeter || ''}">` +
+                `<input type="hidden" name="items_data[${index}][process_id]" value="${row.dataset.processName || ''}">` +
+                `<input type="hidden" name="items_data[${index}][lr_no]" value="${row.dataset.lrNo || ''}">` +
+                `<input type="hidden" name="items_data[${index}][transport]" value="${row.dataset.transport || ''}">` +
+                `<input type="hidden" name="items_data[${index}][sort_order]" value="${index + 1}">`;
         }
 
         function reindexRows() {
-            getDataRows().forEach(function (row, index) {
+            getDataRows().forEach(function(row, index) {
                 row.children[0].textContent = (index + 1) + '.';
                 updateRowHiddenInputs(row, index);
             });
@@ -630,20 +644,20 @@
             clearEntryFields();
         }
 
-        purchaseItemSelect.addEventListener('change', function () {
+        purchaseItemSelect.addEventListener('change', function() {
             populateLotOptions();
             lotSelect.value = '';
             fillSourceFields(currentSource());
             populateProcessOptions();
         });
-        lotSelect.addEventListener('change', function () {
+        lotSelect.addEventListener('change', function() {
             fillSourceFields(currentSource());
             populateProcessOptions();
         });
 
         addItemButton.addEventListener('click', addRow);
 
-        tableBody.addEventListener('click', function (e) {
+        tableBody.addEventListener('click', function(e) {
             if (!e.target.classList.contains('remove-row')) return;
 
             e.target.closest('tr').remove();
@@ -662,5 +676,3 @@
         }
     });
 </script>
-
-

@@ -17,7 +17,7 @@ class JobWorkAssignmentItem extends Model
         'item_id',
         'sort_order',
         'lot_no',
-        'quality',
+        'color',
         'meter',
         'fold',
         'net_meter',
