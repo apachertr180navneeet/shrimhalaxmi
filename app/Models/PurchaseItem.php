@@ -18,7 +18,7 @@ class PurchaseItem extends Model
         'sort_order',
         'lot_no',
         'lot_roll_no',
-        'quality',
+        'color',
         'qty_m',
         'fold',
         'rate',

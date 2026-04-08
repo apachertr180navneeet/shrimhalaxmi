@@ -63,7 +63,7 @@
 		<li class="menu-item {{ request()->is('admin/items*') ? 'active' : ''}}">
 			<a href="{{ route('admin.items.index') }}" class="menu-link">
 				<i class="menu-icon tf-icons bx bx-package"></i>
-				<div>Item</div>
+				<div>Item/Quality</div>
 			</a>
 		</li>
 		@endcan

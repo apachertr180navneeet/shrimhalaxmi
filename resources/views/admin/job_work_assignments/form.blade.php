@@ -210,7 +210,12 @@
 
         <div class="assignment-field-grid">
             <label>Freight</label>
-            <input type="text" name="freight" class="form-control @error('freight') is-invalid @enderror" value="{{ old('freight', $assignment['freight'] ?? '') }}">
+            <select name="freight" class="form-select">
+                <option value="">Select Freight</option>
+                <option value="Paid" {{ old('freight', $assignment['freight'] ?? '') === 'Paid' ? 'selected' : '' }}>Paid</option>
+                <option value="To be Paid" {{ old('freight', $assignment['freight'] ?? '') === 'To be Paid' ? 'selected' : '' }}>To be Paid</option>
+                <option value="To be Shiped" {{ old('freight', $assignment['freight'] ?? '') === 'To be Shiped' ? 'selected' : '' }}>To be Shiped</option>
+            </select>
             @error('freight')
                 <div class="text-danger small">{{ $message }}</div>
             @enderror
@@ -238,7 +243,7 @@
 --}}
 <div class="assignment-inline-grid">
     <div class="assignment-field-grid">
-        <label>Item</label>
+        <label>Item/Quality</label>
         <select id="purchase_item_id" class="form-select">
             <option value="">Select Item</option>
         </select>

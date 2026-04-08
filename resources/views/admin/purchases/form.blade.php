@@ -72,6 +72,7 @@
     }
 
     @media (max-width: 991.98px) {
+
         .purchase-form-grid,
         .purchase-inline-grid {
             grid-template-columns: 1fr;
@@ -95,7 +96,10 @@
     $pchNo = old('pch_no', $purchase['pch_no'] ?? '0001');
     $itemAbbr = old('item_abbr', $purchase['item_abbr'] ?? $defaultItemAbbr);
     $vendorAbbr = old('vendor_abbr', $purchase['vendor_abbr'] ?? $defaultVendorAbbr);
-    $lotNo = old('lot_no', $purchase['lot_no'] ?? (($vendorAbbr ?: $defaultVendorAbbr) . ' / ' . ($pchNo ?: '0001') . ' / 0001'));
+    $lotNo = old(
+        'lot_no',
+        $purchase['lot_no'] ?? ($vendorAbbr ?: $defaultVendorAbbr) . ' / ' . ($pchNo ?: '0001') . ' / 0001',
+    );
 @endphp
 
 <input type="hidden" name="vendor_abbr" id="vendor_abbr" value="{{ $vendorAbbr }}">
@@ -106,19 +110,22 @@
     <div>
         <div class="purchase-field-grid">
             <label>Date</label>
-            <input type="date" name="date" class="form-control @error('date') is-invalid @enderror" value="{{ old('date', $purchase['date'] ?? '') }}">
+            <input type="date" name="date" class="form-control @error('date') is-invalid @enderror"
+                value="{{ old('date', $purchase['date'] ?? '') }}">
         </div>
 
         <div class="purchase-field-grid">
             <label>BNO</label>
-            <input type="text" name="bno" class="form-control @error('bno') is-invalid @enderror" value="{{ old('bno', $purchase['bno'] ?? '') }}">
+            <input type="text" name="bno" class="form-control @error('bno') is-invalid @enderror"
+                value="{{ old('bno', $purchase['bno'] ?? '') }}">
         </div>
     </div>
 
     <div>
         <div class="purchase-field-grid">
             <label>PCH. NO.</label>
-            <input type="text" name="pch_no" id="pch_no" class="form-control @error('pch_no') is-invalid @enderror" value="{{ $pchNo }}" readonly>
+            <input type="text" name="pch_no" id="pch_no"
+                class="form-control @error('pch_no') is-invalid @enderror" value="{{ $pchNo }}" readonly>
         </div>
 
         <div class="purchase-field-grid">
@@ -126,7 +133,8 @@
             <select name="vendor_id" id="vendor_id" class="form-select @error('vendor_id') is-invalid @enderror">
                 <option value="">Select Vendor</option>
                 @foreach ($vendors as $vendor)
-                    <option value="{{ $vendor->id }}" data-abbr="{{ $vendor->abbr ?: $defaultVendorAbbr }}" {{ (string) old('vendor_id', $purchase['vendor_id'] ?? '') === (string) $vendor->id ? 'selected' : '' }}>
+                    <option value="{{ $vendor->id }}" data-abbr="{{ $vendor->abbr ?: $defaultVendorAbbr }}"
+                        {{ (string) old('vendor_id', $purchase['vendor_id'] ?? '') === (string) $vendor->id ? 'selected' : '' }}>
                         {{ $vendor->vendor_name }}{{ $vendor->abbr ? ' (' . $vendor->abbr . ')' : '' }}
                     </option>
                 @endforeach
@@ -148,9 +156,14 @@
             <label>Freight</label>
             <select name="freight" class="form-select">
                 <option value="">Select Freight</option>
-                <option value="Paid" {{ old('freight', $purchase['freight'] ?? '') === 'Paid' ? 'selected' : '' }}>Paid</option>
-                <option value="To be Paid" {{ old('freight', $purchase['freight'] ?? '') === 'To be Paid' ? 'selected' : '' }}>To be Paid</option>
-                <option value="To be Shiped" {{ old('freight', $purchase['freight'] ?? '') === 'To be Shiped' ? 'selected' : '' }}>To be Shiped</option>
+                <option value="Paid" {{ old('freight', $purchase['freight'] ?? '') === 'Paid' ? 'selected' : '' }}>
+                    Paid</option>
+                <option value="To be Paid"
+                    {{ old('freight', $purchase['freight'] ?? '') === 'To be Paid' ? 'selected' : '' }}>To be Paid
+                </option>
+                <option value="To be Shiped"
+                    {{ old('freight', $purchase['freight'] ?? '') === 'To be Shiped' ? 'selected' : '' }}>To be Shiped
+                </option>
             </select>
         </div>
     </div>
@@ -163,11 +176,12 @@
     </div>
 
     <div class="purchase-field-grid">
-        <label>Item Name</label>
+        <label>Item/Quality</label>
         <select id="item_id" class="form-select">
             <option value="">Select Item</option>
             @foreach ($items as $item)
-                <option value="{{ $item->id }}" data-abbr="{{ $item->abbr ?: $defaultItemAbbr }}" data-name="{{ $item->item_name }}">
+                <option value="{{ $item->id }}" data-abbr="{{ $item->abbr ?: $defaultItemAbbr }}"
+                    data-name="{{ $item->item_name }}">
                     {{ $item->item_name }}{{ $item->abbr ? ' (' . $item->abbr . ')' : '' }}
                 </option>
             @endforeach
@@ -175,8 +189,8 @@
     </div>
 
     <div class="purchase-field-grid">
-        <label>Quality</label>
-        <input type="text" id="quality" class="form-control" value="{{ old('quality', $purchase['quality'] ?? '') }}">
+        <label>Color</label>
+        <input type="text" id="color" class="form-control" value="{{ old('color', $purchase['color'] ?? '') }}">
     </div>
 
     <div class="purchase-field-grid">
@@ -196,7 +210,8 @@
 
     <div class="purchase-field-grid">
         <label>Transport</label>
-        <input type="text" id="transport" class="form-control" value="{{ old('transport', $purchase['transport'] ?? '') }}">
+        <input type="text" id="transport" class="form-control"
+            value="{{ old('transport', $purchase['transport'] ?? '') }}">
     </div>
 
     <div class="purchase-field-grid">
@@ -206,12 +221,13 @@
 
     <div class="purchase-field-grid">
         <label>Net Meter</label>
-        <input type="text" id="net_meter" class="form-control" value="{{ old('net_meter', $purchase['net_meter'] ?? '') }}" readonly>
+        <input type="text" id="net_meter" class="form-control"
+            value="{{ old('net_meter', $purchase['net_meter'] ?? '') }}" readonly>
     </div>
 </div>
 
 @error('items_data')
-<div class="text-danger small mb-2">{{ $message }}</div>
+    <div class="text-danger small mb-2">{{ $message }}</div>
 @enderror
 
 <div class="purchase-bottom-grid">
@@ -226,7 +242,7 @@
                     <th>Sr. No.</th>
                     <th>LOT No.</th>
                     <th>Item Name</th>
-                    <th>Quality</th>
+                    <th>Color</th>
                     <th>Rate</th>
                     <th>Qty. (M)</th>
                     <th>Fold</th>
@@ -239,11 +255,15 @@
             </thead>
             <tbody id="purchase_items_body">
                 @forelse ($purchaseItems as $index => $row)
-                    <tr data-index="{{ $index }}" data-item-id="{{ $row->item_id }}" data-quality="{{ $row->quality }}" data-qty="{{ $row->qty_m }}" data-fold="{{ $row->fold }}" data-rate="{{ $row->rate }}" data-transport="{{ $row->transport }}" data-lr-no="{{ $row->lr_no }}" data-net-meter="{{ $row->net_meter }}" data-amount="{{ $row->amount }}">
+                    <tr data-index="{{ $index }}" data-item-id="{{ $row->item_id }}"
+                        data-color="{{ $row->color }}" data-qty="{{ $row->qty_m }}"
+                        data-fold="{{ $row->fold }}" data-rate="{{ $row->rate }}"
+                        data-transport="{{ $row->transport }}" data-lr-no="{{ $row->lr_no }}"
+                        data-net-meter="{{ $row->net_meter }}" data-amount="{{ $row->amount }}">
                         <td>{{ $index + 1 }}.</td>
                         <td>{{ $row->lot_no }}</td>
                         <td>{{ $row->item?->item_name }}</td>
-                        <td>{{ $row->quality }}</td>
+                        <td>{{ $row->color }}</td>
                         <td>{{ rtrim(rtrim(number_format((float) $row->rate, 2, '.', ''), '0'), '.') }}</td>
                         <td>{{ rtrim(rtrim(number_format((float) $row->qty_m, 2, '.', ''), '0'), '.') }}</td>
                         <td>{{ rtrim(rtrim(number_format((float) $row->fold, 2, '.', ''), '0'), '.') }}</td>
@@ -253,18 +273,30 @@
                         <td>{{ number_format((float) $row->amount, 2, '.', '') }}</td>
                         <td><a href="javascript:void(0)" class="remove-link remove-row">Remove</a></td>
                         <td class="d-none row-hidden-inputs">
-                            <input type="hidden" name="items_data[{{ $index }}][item_id]" value="{{ $row->item_id }}">
-                            <input type="hidden" name="items_data[{{ $index }}][lot_no]" value="{{ $row->lot_no }}">
-                            <input type="hidden" name="items_data[{{ $index }}][item_code]" value="{{ $row->item_code ?: $row->lot_no }}">
-                            <input type="hidden" name="items_data[{{ $index }}][quality]" value="{{ $row->quality }}">
-                            <input type="hidden" name="items_data[{{ $index }}][qty_m]" value="{{ $row->qty_m }}">
-                            <input type="hidden" name="items_data[{{ $index }}][fold]" value="{{ $row->fold }}">
-                            <input type="hidden" name="items_data[{{ $index }}][rate]" value="{{ $row->rate }}">
-                            <input type="hidden" name="items_data[{{ $index }}][transport]" value="{{ $row->transport }}">
-                            <input type="hidden" name="items_data[{{ $index }}][lr_no]" value="{{ $row->lr_no }}">
-                            <input type="hidden" name="items_data[{{ $index }}][net_meter]" value="{{ $row->net_meter }}">
-                            <input type="hidden" name="items_data[{{ $index }}][amount]" value="{{ $row->amount }}">
-                            <input type="hidden" name="items_data[{{ $index }}][sort_order]" value="{{ $row->sort_order }}">
+                            <input type="hidden" name="items_data[{{ $index }}][item_id]"
+                                value="{{ $row->item_id }}">
+                            <input type="hidden" name="items_data[{{ $index }}][lot_no]"
+                                value="{{ $row->lot_no }}">
+                            <input type="hidden" name="items_data[{{ $index }}][item_code]"
+                                value="{{ $row->item_code ?: $row->lot_no }}">
+                            <input type="hidden" name="items_data[{{ $index }}][color]"
+                                value="{{ $row->color }}">
+                            <input type="hidden" name="items_data[{{ $index }}][qty_m]"
+                                value="{{ $row->qty_m }}">
+                            <input type="hidden" name="items_data[{{ $index }}][fold]"
+                                value="{{ $row->fold }}">
+                            <input type="hidden" name="items_data[{{ $index }}][rate]"
+                                value="{{ $row->rate }}">
+                            <input type="hidden" name="items_data[{{ $index }}][transport]"
+                                value="{{ $row->transport }}">
+                            <input type="hidden" name="items_data[{{ $index }}][lr_no]"
+                                value="{{ $row->lr_no }}">
+                            <input type="hidden" name="items_data[{{ $index }}][net_meter]"
+                                value="{{ $row->net_meter }}">
+                            <input type="hidden" name="items_data[{{ $index }}][amount]"
+                                value="{{ $row->amount }}">
+                            <input type="hidden" name="items_data[{{ $index }}][sort_order]"
+                                value="{{ $row->sort_order }}">
                         </td>
                     </tr>
                 @empty
@@ -278,111 +310,169 @@
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', function() {
+
+        /* =====================================================
+           📌 ELEMENT REFERENCES (CACHE FOR PERFORMANCE)
+        ===================================================== */
         const itemSelect = document.getElementById('item_id');
         const vendorSelect = document.getElementById('vendor_id');
+
         const vendorAbbrInput = document.getElementById('vendor_abbr');
         const itemAbbrInput = document.getElementById('item_abbr');
+
         const pchNoInput = document.getElementById('pch_no');
         const lotNoInput = document.getElementById('lot_no');
+
         const qtyInput = document.getElementById('qty_m');
         const foldInput = document.getElementById('fold');
         const rateInput = document.getElementById('rate');
+
         const transportInput = document.getElementById('transport');
         const lrNoInput = document.getElementById('lr_no');
+
         const netMeterInput = document.getElementById('net_meter');
         const amountInput = document.getElementById('amount');
-        const qualityInput = document.getElementById('quality');
+
+        const colorInput = document.getElementById('color');
+
         const addMoreButton = document.getElementById('add_more_item');
         const tableBody = document.getElementById('purchase_items_body');
+
         const emptyRowId = 'purchase_empty_row';
+
         const defaultItemAbbr = '{{ $defaultItemAbbr }}';
         const defaultVendorAbbr = '{{ $defaultVendorAbbr }}';
 
+
+        /* =====================================================
+           🔢 HELPER FUNCTIONS
+        ===================================================== */
+
+        // Convert value to number safely
         function toNumber(value) {
             const number = parseFloat(value);
             return Number.isFinite(number) ? number : 0;
         }
 
+        // Format to 2 decimal places
         function formatFixed(value) {
             return (Math.round(value * 100) / 100).toFixed(2);
         }
 
+        // Get selected item option
         function currentItemOption() {
             return itemSelect ? itemSelect.options[itemSelect.selectedIndex] : null;
         }
 
+        // Get item abbreviation
         function currentItemAbbr() {
             const option = currentItemOption();
-            return option && option.dataset.abbr ? option.dataset.abbr : defaultItemAbbr;
+            return option?.dataset.abbr || defaultItemAbbr;
         }
 
+        // Get vendor abbreviation
         function currentVendorAbbr() {
-            const option = vendorSelect ? vendorSelect.options[vendorSelect.selectedIndex] : null;
-            return option && option.dataset.abbr ? option.dataset.abbr : defaultVendorAbbr;
+            const option = vendorSelect?.options[vendorSelect.selectedIndex];
+            return option?.dataset.abbr || defaultVendorAbbr;
         }
 
+        // Get item name
         function currentItemName() {
             const option = currentItemOption();
-            return option && option.dataset.name ? option.dataset.name : '';
+            return option?.dataset.name || '';
         }
 
+
+        /* =====================================================
+           🔤 LOT NUMBER GENERATOR
+        ===================================================== */
         function buildLotNo(serial) {
             const paddedSerial = String(serial).padStart(4, '0');
-            const pchNo = pchNoInput && pchNoInput.value ? pchNoInput.value : '0001';
+            const pchNo = pchNoInput.value || '0001';
+
             return currentVendorAbbr() + ' / ' + pchNo + ' / ' + paddedSerial;
         }
 
+
+        /* =====================================================
+           📊 GET TABLE ROWS
+        ===================================================== */
         function getDataRows() {
-            return Array.from(tableBody.querySelectorAll('tr')).filter(function (row) {
-                return row.id !== emptyRowId;
-            });
+            return Array.from(tableBody.querySelectorAll('tr'))
+                .filter(row => row.id !== emptyRowId);
         }
 
+
+        /* =====================================================
+           📊 CALCULATE NET METER & AMOUNT
+        ===================================================== */
         function recalculate() {
             const qty = toNumber(qtyInput.value);
             const fold = toNumber(foldInput.value);
             const rate = toNumber(rateInput.value);
+
             const netMeter = (qty * fold) / 100;
             const amount = netMeter * rate;
 
-            netMeterInput.value = qtyInput.value || foldInput.value ? formatFixed(netMeter) : '';
-            amountInput.value = netMeterInput.value && rateInput.value ? formatFixed(amount) : '';
+            netMeterInput.value = (qty || fold) ? formatFixed(netMeter) : '';
+            amountInput.value = (netMeterInput.value && rateInput.value) ? formatFixed(amount) : '';
         }
 
+
+        /* =====================================================
+           🔁 SYNC ABBREVIATIONS
+        ===================================================== */
         function syncAbbrFields() {
             vendorAbbrInput.value = currentVendorAbbr();
             itemAbbrInput.value = currentItemAbbr();
         }
 
+
+        /* =====================================================
+           🔄 UPDATE LOT NUMBER FIELD
+        ===================================================== */
         function updateCurrentLotNo() {
             const serial = getDataRows().length + 1;
             lotNoInput.value = buildLotNo(serial);
         }
 
+
+        /* =====================================================
+           📦 UPDATE HIDDEN INPUTS (FOR BACKEND)
+        ===================================================== */
         function updateRowHiddenInputs(row, index, data) {
             const holder = row.querySelector('.row-hidden-inputs');
-            holder.innerHTML = '' +
-                '<input type="hidden" name="items_data[' + index + '][item_id]" value="' + data.item_id + '">' +
-                '<input type="hidden" name="items_data[' + index + '][lot_no]" value="' + data.lot_no + '">' +
-                '<input type="hidden" name="items_data[' + index + '][item_code]" value="' + data.item_code + '">' +
-                '<input type="hidden" name="items_data[' + index + '][quality]" value="' + data.quality + '">' +
-                '<input type="hidden" name="items_data[' + index + '][qty_m]" value="' + data.qty_m + '">' +
-                '<input type="hidden" name="items_data[' + index + '][fold]" value="' + data.fold + '">' +
-                '<input type="hidden" name="items_data[' + index + '][rate]" value="' + data.rate + '">' +
-                '<input type="hidden" name="items_data[' + index + '][transport]" value="' + data.transport + '">' +
-                '<input type="hidden" name="items_data[' + index + '][lr_no]" value="' + data.lr_no + '">' +
-                '<input type="hidden" name="items_data[' + index + '][net_meter]" value="' + data.net_meter + '">' +
-                '<input type="hidden" name="items_data[' + index + '][amount]" value="' + data.amount + '">' +
-                '<input type="hidden" name="items_data[' + index + '][sort_order]" value="' + data.sort_order + '">';
+
+            holder.innerHTML = `
+            <input type="hidden" name="items_data[${index}][item_id]" value="${data.item_id}">
+            <input type="hidden" name="items_data[${index}][lot_no]" value="${data.lot_no}">
+            <input type="hidden" name="items_data[${index}][item_code]" value="${data.item_code}">
+            <input type="hidden" name="items_data[${index}][color]" value="${data.color}">
+            <input type="hidden" name="items_data[${index}][qty_m]" value="${data.qty_m}">
+            <input type="hidden" name="items_data[${index}][fold]" value="${data.fold}">
+            <input type="hidden" name="items_data[${index}][rate]" value="${data.rate}">
+            <input type="hidden" name="items_data[${index}][transport]" value="${data.transport}">
+            <input type="hidden" name="items_data[${index}][lr_no]" value="${data.lr_no}">
+            <input type="hidden" name="items_data[${index}][net_meter]" value="${data.net_meter}">
+            <input type="hidden" name="items_data[${index}][amount]" value="${data.amount}">
+            <input type="hidden" name="items_data[${index}][sort_order]" value="${data.sort_order}">
+        `;
         }
 
+
+        /* =====================================================
+           🔄 REINDEX TABLE ROWS
+        ===================================================== */
         function reindexRows() {
             const rows = getDataRows();
-            rows.forEach(function (row, index) {
+
+            rows.forEach((row, index) => {
                 const serial = index + 1;
-                row.setAttribute('data-index', index);
                 const lotNo = buildLotNo(serial);
+
+                row.setAttribute('data-index', index);
+
                 row.children[0].textContent = serial + '.';
                 row.children[1].textContent = lotNo;
 
@@ -390,7 +480,7 @@
                     item_id: row.dataset.itemId,
                     lot_no: lotNo,
                     item_code: lotNo,
-                    quality: row.dataset.quality,
+                    color: row.dataset.color,
                     qty_m: row.dataset.qty,
                     fold: row.dataset.fold,
                     rate: row.dataset.rate,
@@ -401,9 +491,14 @@
                     sort_order: serial,
                 });
             });
+
             updateCurrentLotNo();
         }
 
+
+        /* =====================================================
+           🧹 EMPTY STATE HANDLER
+        ===================================================== */
         function ensureEmptyState() {
             const rows = getDataRows();
             const emptyRow = document.getElementById(emptyRowId);
@@ -412,17 +507,21 @@
                 if (!emptyRow) {
                     const row = document.createElement('tr');
                     row.id = emptyRowId;
-                    row.innerHTML = '<td colspan="12" class="purchase-empty-state">No items added yet.</td>';
+                    row.innerHTML = `<td colspan="12" class="purchase-empty-state">No items added yet.</td>`;
                     tableBody.appendChild(row);
                 }
-            } else if (emptyRow) {
-                emptyRow.remove();
+            } else {
+                emptyRow?.remove();
             }
         }
 
+
+        /* =====================================================
+           🧹 CLEAR INPUT FIELDS
+        ===================================================== */
         function clearItemEntryFields() {
             itemSelect.value = '';
-            qualityInput.value = '';
+            colorInput.value = '';
             qtyInput.value = '';
             foldInput.value = '';
             rateInput.value = '';
@@ -433,8 +532,15 @@
             syncAbbrFields();
         }
 
+
+        /* =====================================================
+           ➕ ADD NEW ROW
+        ===================================================== */
         function addRow() {
+
             const itemOption = currentItemOption();
+
+            // Validation
             if (!itemOption || !itemOption.value) {
                 toastr.error('Select item first');
                 return;
@@ -454,9 +560,12 @@
             const nextIndex = getDataRows().length;
             const serial = nextIndex + 1;
             const lotNo = buildLotNo(serial);
+
             const row = document.createElement('tr');
+
+            // Store data in dataset
             row.dataset.itemId = itemOption.value;
-            row.dataset.quality = qualityInput.value || '';
+            row.dataset.color = colorInput.value || '';
             row.dataset.qty = qty;
             row.dataset.fold = fold;
             row.dataset.rate = rate;
@@ -465,28 +574,31 @@
             row.dataset.netMeter = netMeterInput.value || '0.00';
             row.dataset.amount = amountInput.value || '0.00';
 
-            row.innerHTML = '' +
-                '<td>' + serial + '.</td>' +
-                '<td>' + lotNo + '</td>' +
-                '<td>' + currentItemName() + '</td>' +
-                '<td>' + (qualityInput.value || '') + '</td>' +
-                '<td>' + rate + '</td>' +
-                '<td>' + qty + '</td>' +
-                '<td>' + fold + '</td>' +
-                '<td>' + (transportInput.value || '') + '</td>' +
-                '<td>' + (lrNoInput.value || '') + '</td>' +
-                '<td>' + (netMeterInput.value || '0.00') + '</td>' +
-                '<td>' + (amountInput.value || '0.00') + '</td>' +
-                '<td><a href="javascript:void(0)" class="remove-link remove-row">Remove</a></td>' +
-                '<td class="d-none row-hidden-inputs"></td>';
+            // Row UI
+            row.innerHTML = `
+            <td>${serial}.</td>
+            <td>${lotNo}</td>
+            <td>${currentItemName()}</td>
+            <td>${colorInput.value || ''}</td>
+            <td>${rate}</td>
+            <td>${qty}</td>
+            <td>${fold}</td>
+            <td>${transportInput.value || ''}</td>
+            <td>${lrNoInput.value || ''}</td>
+            <td>${netMeterInput.value || '0.00'}</td>
+            <td>${amountInput.value || '0.00'}</td>
+            <td><a href="#" class="remove-link remove-row">Remove</a></td>
+            <td class="d-none row-hidden-inputs"></td>
+        `;
 
             tableBody.appendChild(row);
 
+            // Hidden inputs
             updateRowHiddenInputs(row, nextIndex, {
                 item_id: itemOption.value,
                 lot_no: lotNo,
                 item_code: lotNo,
-                quality: qualityInput.value || '',
+                color: colorInput.value || '',
                 qty_m: qty,
                 fold: fold,
                 rate: rate,
@@ -502,29 +614,45 @@
             updateCurrentLotNo();
         }
 
+
+        /* =====================================================
+           🎯 EVENTS
+        ===================================================== */
+
         qtyInput?.addEventListener('input', recalculate);
         foldInput?.addEventListener('input', recalculate);
         rateInput?.addEventListener('input', recalculate);
+
         itemSelect?.addEventListener('change', syncAbbrFields);
-        vendorSelect?.addEventListener('change', function () {
+
+        vendorSelect?.addEventListener('change', function() {
             syncAbbrFields();
             reindexRows();
         });
+
         addMoreButton?.addEventListener('click', addRow);
 
-        tableBody?.addEventListener('click', function (event) {
+        // Remove row
+        tableBody?.addEventListener('click', function(event) {
             if (!event.target.classList.contains('remove-row')) return;
+
             event.preventDefault();
             const row = event.target.closest('tr');
             if (!row || row.id === emptyRowId) return;
+
             row.remove();
             ensureEmptyState();
             reindexRows();
         });
 
+
+        /* =====================================================
+           🚀 INITIAL LOAD
+        ===================================================== */
         ensureEmptyState();
         syncAbbrFields();
         recalculate();
         reindexRows();
+
     });
 </script>
