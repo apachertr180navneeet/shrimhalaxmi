@@ -4,10 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Item;
+use App\Models\JobWorkAssignmentItem;
 use App\Models\JobWorker;
 use App\Models\JobWorkerInward;
 use App\Models\JobWorkerInwardItem;
-use App\Models\PurchaseItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -46,18 +46,39 @@ class JobWorkerInwardController extends Controller
 
     private function lotSources()
     {
-        return PurchaseItem::with('item')->orderBy('lot_no')->get()->map(function ($row) {
-            return [
-                'purchase_item_id' => $row->id,
-                'lot_no' => $row->lot_no,
-                'item_id' => $row->item_id,
-                'item_name' => $row->item?->item_name ?: '',
-                'quality' => $row->quality ?: '',
-                'meter' => (string) $row->qty_m,
-                'fold' => (string) $row->fold,
-                'total_meter' => (string) $row->net_meter,
-            ];
-        })->values();
+        return JobWorkAssignmentItem::query()
+            ->with([
+                'assignment:id,job_worker_id',
+                'item:id,item_name',
+                'processItem:id,item_name',
+            ])
+            ->orderBy('lot_no')
+            ->orderBy('id')
+            ->get()
+            ->map(function (JobWorkAssignmentItem $row) {
+                $processItemId = is_numeric((string) $row->process) ? (int) $row->process : null;
+                $itemId = $processItemId ?: $row->item_id;
+                $itemName = $processItemId
+                    ? ($row->processItem?->item_name ?: '')
+                    : ($row->item?->item_name ?: '');
+
+                return [
+                    'assignment_item_id' => $row->id,
+                    'job_worker_id' => $row->assignment?->job_worker_id,
+                    'lot_no' => $row->lot_no,
+                    'item_id' => $itemId,
+                    'item_name' => $itemName ?: ($row->item?->item_name ?: ''),
+                    'quality' => ($row->quality ?? $row->colour ?? '') ?: '',
+                    'meter' => (string) $row->meter,
+                    'fold' => (string) $row->fold,
+                    'total_meter' => (string) $row->net_meter,
+                    'process' => (string) $row->process,
+                ];
+            })
+            ->filter(function (array $row) {
+                return ! empty($row['job_worker_id']) && ! empty($row['item_id']) && ! empty($row['lot_no']);
+            })
+            ->values();
     }
 
     public function index()
@@ -117,7 +138,7 @@ class JobWorkerInwardController extends Controller
             'remark' => '',
         ];
 
-        $jobWorkers = JobWorker::query()->orderBy('name')->get(['id', 'name']);
+        $jobWorkers = JobWorker::query()->orderBy('name')->get(['id', 'name', 'abbr']);
         $items = Item::query()->orderBy('item_name')->get(['id', 'item_name']);
         $lotSources = $this->lotSources();
 
@@ -126,6 +147,7 @@ class JobWorkerInwardController extends Controller
 
     public function store(Request $request)
     {
+        dd($request->all());
         $validator = Validator::make($request->all(), [
             'inward_date' => 'required|date',
             'ch_no' => 'required|string|max:30|unique:job_worker_inwards,ch_no',
@@ -200,7 +222,7 @@ class JobWorkerInwardController extends Controller
                 'remark' => $inwardRecord->remark,
             ];
 
-            $jobWorkers = JobWorker::query()->orderBy('name')->get(['id', 'name']);
+            $jobWorkers = JobWorker::query()->orderBy('name')->get(['id', 'name', 'abbr']);
             $items = Item::query()->orderBy('item_name')->get(['id', 'item_name']);
             $lotSources = $this->lotSources();
             $itemRows = $inwardRecord->items;

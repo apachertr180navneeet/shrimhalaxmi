@@ -466,6 +466,23 @@
             ) || null;
         }
 
+        function toNumber(value) {
+            const number = parseFloat(value);
+            return Number.isFinite(number) ? number : 0;
+        }
+
+        function formatFixed(value) {
+            return (Math.round(value * 100) / 100).toFixed(2);
+        }
+
+        function recalculateNetMeter() {
+            const meter = toNumber(meterInput.value);
+            const fold = toNumber(foldInput.value);
+            const netMeter = (meter * fold) / 100;
+
+            netMeterInput.value = (meter || fold) ? formatFixed(netMeter) : '';
+        }
+
         function fillSourceFields(source) {
             if (!source) {
                 colourInput.value = '';
@@ -480,7 +497,7 @@
             colourInput.value = source.colour || source.color || '';
             meterInput.value = source.meter || '';
             foldInput.value = source.fold || '';
-            netMeterInput.value = source.net_meter || '';
+            recalculateNetMeter();
             lrNoInput.value = source.lr_no || '';
             transportInput.value = source.transport || '';
         }
@@ -547,6 +564,8 @@
             if (!source) return toastr.error('Invalid selection');
             if (!processName) return toastr.error('Select process');
 
+            recalculateNetMeter();
+
             const index = rowIndex++;
             const newLotNo = generateLotNumber();
 
@@ -609,6 +628,9 @@
         lotSelect.addEventListener('change', function() {
             fillSourceFields(currentSource());
         });
+
+        meterInput.addEventListener('input', recalculateNetMeter);
+        foldInput.addEventListener('input', recalculateNetMeter);
 
         addItemButton.addEventListener('click', addRow);
 
