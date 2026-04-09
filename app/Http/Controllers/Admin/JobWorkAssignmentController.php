@@ -70,17 +70,6 @@ class JobWorkAssignmentController extends Controller
     }
 
     /**
-     * Resolve a process name by its ID.
-     *
-     * @param int|string $processId
-     * @return string Process name or empty string if not found
-     */
-    private function resolveProcessName($processId): string
-    {
-        return Process::query()->whereKey($processId)->value('name') ?: '';
-    }
-
-    /**
      * Get default values for a new job work assignment form.
      *
      * @return array
@@ -115,7 +104,7 @@ class JobWorkAssignmentController extends Controller
                     'lot_no' => $row->lot_no,
                     'item_id' => $row->item_id,
                     'item_name' => $row->item?->item_name ?: 'Unknown Item',
-                    'quality' => $row->quality ?: '',
+                    'color' => $row->color ?: '',
                     'meter' => (string) $row->qty_m,
                     'fold' => (string) $row->fold,
                     'net_meter' => (string) $row->net_meter,
@@ -146,55 +135,124 @@ class JobWorkAssignmentController extends Controller
      */
     public function getAll(Request $request)
     {
-        try {
-            $query = JobWorkAssignment::with(['jobWorker', 'items'])->latest();
 
-            // Filter by assignment number if provided
+        try {
+            // Base Query with Eager Loading (Optimized)
+            $query = JobWorkAssignment::with([
+                    'jobWorker:id,name',
+                    'items:id,job_work_assignment_id,item_id,process,lr_no,lot_no,transport,sort_order',
+
+                    // Direct item relation
+                    'items.item:id,item_name',
+                    // Process value mapped to items.id
+                    'items.processItem:id,item_name',
+                ])
+                ->latest();
+
+            // 🔍 Filter by Assign No
             if ($request->filled('assign_no')) {
                 $query->where('assign_no', 'like', '%' . $request->assign_no . '%');
             }
 
-            // General search across multiple fields and relations
-            if ($request->filled('search_value')) {
-                $search = $request->search_value;
+            // 🔍 Global Search
+            $search = trim((string) $request->input('search_value'));
 
+            if ($search !== '') {
                 $query->where(function ($q) use ($search) {
+
                     $q->where('assign_no', 'like', "%{$search}%")
                         ->orWhere('freight', 'like', "%{$search}%")
-                        ->orWhereHas('jobWorker', function ($jobWorkerQuery) use ($search) {
-                            $jobWorkerQuery->where('name', 'like', "%{$search}%");
+
+                        ->orWhereHas('jobWorker', function ($jq) use ($search) {
+                            $jq->where('name', 'like', "%{$search}%");
                         })
-                        ->orWhereHas('items', function ($itemQuery) use ($search) {
-                            $itemQuery->where('lot_no', 'like', "%{$search}%")
-                                ->orWhere('process', 'like', "%{$search}%")
+
+                        ->orWhereHas('items', function ($iq) use ($search) {
+                            $iq->where('lot_no', 'like', "%{$search}%")
                                 ->orWhere('lr_no', 'like', "%{$search}%")
                                 ->orWhere('transport', 'like', "%{$search}%");
+                        })
+
+                        ->orWhereHas('items.item', function ($iq) use ($search) {
+                            $iq->where('item_name', 'like', "%{$search}%");
+                        })
+
+                        ->orWhereHas('items.processItem', function ($pq) use ($search) {
+                            $pq->where('item_name', 'like', "%{$search}%");
                         });
                 });
             }
 
-            // Format columns for DataTables
+            // ✅ DataTables Response
             return DataTables::of($query)
-                ->addColumn('date', fn ($row) => optional($row->assignment_date)->format('d/m/Y') ?: '-')
-                ->addColumn('job_worker_name', fn ($row) => $row->jobWorker?->name ?: '-')
-                ->addColumn('lr_no', fn ($row) => optional($row->items->first())->lr_no ?: '-')
-                ->addColumn('process', function ($row) {
-                    $processes = $row->items->pluck('process')->filter()->unique()->values();
-                    return $processes->isEmpty() ? '-' : e($processes->join(', '));
+
+                // 📅 Date Column
+                ->addColumn('date', function ($row) {
+                    return optional($row->assignment_date)->format('d/m/Y') ?: '-';
                 })
+
+                // 👷 Job Worker
+                ->addColumn('job_worker_name', function ($row) {
+                    return $row->jobWorker?->name ?: '-';
+                })
+
+                // 📦 ITEM NAME (item_id + process item दोनों)
+                ->addColumn('item_name', function ($row) {
+
+                    $itemNames = $row->items->map(function ($item) {
+                        // process id ke through item name ko priority do
+                        return $item->item?->item_name ?: $item->item?->item_name;
+                    })
+                    ->filter()
+                    ->unique()
+                    ->values();
+
+                    return $itemNames->isEmpty() ? '-' : e($itemNames->join(', '));
+                })
+
+                // 🚚 LR No
+                ->addColumn('lr_no', function ($row) {
+                    return optional($row->items->first())->lr_no ?: '-';
+                })
+
+                // ⚙️ PROCESS NAME (correct)
+                ->addColumn('process', function ($row) {
+
+                    $processNames = $row->items
+                        ->map(function ($item) {
+                            $processItemName = trim((string) ($item->processItem?->item_name ?? ''));
+                            if ($processItemName !== '') {
+                                return $processItemName;
+                            }
+
+                            $raw = trim((string) $item->process);
+                            return ($raw !== '' && ! is_numeric($raw)) ? $raw : null;
+                        })
+                        ->filter()
+                        ->unique()
+                        ->values();
+
+                    return $processNames->isEmpty() ? '-' : e($processNames->join(', '));
+                })
+
+                // 🎯 ACTION BUTTONS
                 ->addColumn('action', function ($row) {
-                    // Action buttons for edit and delete
                     return '
                         <a href="' . route('admin.jobworkassignments.edit', $row->id) . '" class="btn btn-sm btn-primary">Edit</a>
                         <button class="btn btn-sm btn-danger deleteBtn" data-id="' . $row->id . '">Delete</button>
                     ';
                 })
+
                 ->rawColumns(['action'])
                 ->make(true);
+
         } catch (\Exception $e) {
+
             \Log::error('Job Work Assignment DataTable Error: ' . $e->getMessage());
 
-            return response()->json(['error' => 'Something went wrong!']);
+            return response()->json([
+                'error' => 'Something went wrong!'
+            ]);
         }
     }
 
@@ -206,7 +264,7 @@ class JobWorkAssignmentController extends Controller
     public function create()
     {
         $assignment = $this->assignmentDefaults();
-        $jobWorkers = JobWorker::query()->orderBy('name')->get(['id', 'name']);
+        $jobWorkers = JobWorker::query()->orderBy('name')->get(['id', 'name', 'abbr']);
         $items = Item::query()->orderBy('item_name')->get(['id', 'item_name']);
         $lotSources = $this->lotSources();
         $assignmentItems = collect();
@@ -241,11 +299,11 @@ class JobWorkAssignmentController extends Controller
             'items_data.*.purchase_item_id' => 'nullable|exists:purchase_items,id',
             'items_data.*.item_id' => 'required|exists:items,id',
             'items_data.*.lot_no' => 'required|string|max:100',
-            'items_data.*.color' => 'nullable|string|max:150',
+            'items_data.*.colour' => 'nullable|string|max:150',
             'items_data.*.meter' => 'required|numeric|min:0',
             'items_data.*.fold' => 'required|numeric|min:0',
             'items_data.*.net_meter' => 'required|numeric|min:0',
-            'items_data.*.process_id' => 'required',
+            'items_data.*.process' => 'required|string|max:150',
             'items_data.*.lr_no' => 'nullable|string|max:100',
             'items_data.*.transport' => 'nullable|string|max:150',
             'items_data.*.sort_order' => 'required|integer|min:1',
@@ -278,11 +336,11 @@ class JobWorkAssignmentController extends Controller
                         'item_id' => $itemRow['item_id'],
                         'sort_order' => $itemRow['sort_order'],
                         'lot_no' => $itemRow['lot_no'],
-                        'color' => $itemRow['color'] ?? null,
+                        'colour' => $itemRow['colour'] ?? null,
                         'meter' => $itemRow['meter'],
                         'fold' => $itemRow['fold'],
                         'net_meter' => $itemRow['net_meter'],
-                        'process' => $itemRow['process_id'],
+                        'process' => $itemRow['process'],
                         'lr_no' => $itemRow['lr_no'] ?? null,
                         'transport' => $itemRow['transport'] ?? null,
                     ]);
@@ -324,7 +382,7 @@ class JobWorkAssignmentController extends Controller
                 'remark' => $assignmentRecord->remark,
             ];
 
-            $jobWorkers = JobWorker::query()->orderBy('name')->get(['id', 'name']);
+            $jobWorkers = JobWorker::query()->orderBy('name')->get(['id', 'name', 'abbr']);
             $items = Item::query()->orderBy('item_name')->get(['id', 'item_name']);
             $lotSources = $this->lotSources();
             $assignmentItems = $assignmentRecord->items()->with('item')->orderBy('sort_order')->get();
@@ -365,11 +423,11 @@ class JobWorkAssignmentController extends Controller
             'items_data.*.purchase_item_id' => 'nullable|exists:purchase_items,id',
             'items_data.*.item_id' => 'required|exists:items,id',
             'items_data.*.lot_no' => 'required|string|max:100',
-            'items_data.*.quality' => 'nullable|string|max:150',
+            'items_data.*.colour' => 'nullable|string|max:150',
             'items_data.*.meter' => 'required|numeric|min:0',
             'items_data.*.fold' => 'required|numeric|min:0',
             'items_data.*.net_meter' => 'required|numeric|min:0',
-            'items_data.*.process_id' => 'required',
+            'items_data.*.process' => 'required|string|max:150',
             'items_data.*.lr_no' => 'nullable|string|max:100',
             'items_data.*.transport' => 'nullable|string|max:150',
             'items_data.*.sort_order' => 'required|integer|min:1',
@@ -406,11 +464,11 @@ class JobWorkAssignmentController extends Controller
                         'item_id' => $itemRow['item_id'],
                         'sort_order' => $itemRow['sort_order'],
                         'lot_no' => $itemRow['lot_no'],
-                        'quality' => $itemRow['quality'] ?? null,
+                        'colour' => $itemRow['colour'] ?? null,
                         'meter' => $itemRow['meter'],
                         'fold' => $itemRow['fold'],
                         'net_meter' => $itemRow['net_meter'],
-                        'process' => $itemRow['process_id'],
+                        'process' => $itemRow['process'],
                         'lr_no' => $itemRow['lr_no'] ?? null,
                         'transport' => $itemRow['transport'] ?? null,
                     ]);
@@ -444,3 +502,4 @@ class JobWorkAssignmentController extends Controller
         }
     }
 }
+

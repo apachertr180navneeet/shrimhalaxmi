@@ -60,6 +60,7 @@
                         <th>Date</th>
                         <th>Assign No.</th>
                         <th>Job Worker</th>
+                        <th>Item Name</th>
                         <th>LR No.</th>
                         <th>Process</th>
                         <th>Freight</th>
@@ -90,6 +91,7 @@ $(function () {
             { data: 'date', name: 'assignment_date' },
             { data: 'assign_no', name: 'assign_no' },
             { data: 'job_worker_name', orderable: false, searchable: false },
+            { data: 'item_name', orderable: false, searchable: false },
             { data: 'lr_no', orderable: false, searchable: false },
             { data: 'process', orderable: false, searchable: false },
             { data: 'freight', name: 'freight' },
@@ -130,3 +132,4 @@ $(function () {
 });
 </script>
 @endsection
+

@@ -113,35 +113,37 @@
             ->values()
             ->map(function ($row) use ($itemNameMap, $lotSources, $processIdByName, $processNameById) {
                 $source = $lotSources->firstWhere('purchase_item_id', (int) ($row['purchase_item_id'] ?? 0));
+                $rawProcess = $row['process_id'] ?? ($row['process'] ?? '');
+                $processId = is_numeric((string) $rawProcess) ? (int) $rawProcess : ($processIdByName[$rawProcess] ?? '');
                 return [
                     'purchase_item_id' => $row['purchase_item_id'] ?? '',
                     'item_id' => $row['item_id'] ?? '',
                     'lot_no' => $row['lot_no'] ?? '',
                     'item_name' => $source['item_name'] ?? ($itemNameMap[$row['item_id'] ?? ''] ?? ''),
-                    'quality' => $row['quality'] ?? '',
+                    'colour' => $row['color'] ?? '',
                     'meter' => $row['meter'] ?? '',
                     'fold' => $row['fold'] ?? '',
                     'net_meter' => $row['net_meter'] ?? '',
-                    'process_id' => $row['process_id'] ?? ($processIdByName[$row['process'] ?? ''] ?? ''),
-                    'process_name' => $row['process_name'] ?? ($row['process'] ?? ''),
+                    'process_id' => $processId,
+                    'process_name' => $row['process_name'] ?? ($itemNameMap[$processId] ?? ($processNameById[$processId] ?? ($row['process'] ?? ''))),
                     'lr_no' => $row['lr_no'] ?? '',
                     'transport' => $row['transport'] ?? '',
                     'sort_order' => $row['sort_order'] ?? 1,
                 ];
             });
     } else {
-        $formRows = $assignmentItems->map(function ($row) use ($processIdByName) {
+        $formRows = $assignmentItems->map(function ($row) use ($itemNameMap) {
             return [
                 'purchase_item_id' => $row->purchase_item_id,
                 'item_id' => $row->item_id,
                 'lot_no' => $row->lot_no,
                 'item_name' => $row->item?->item_name ?: '',
-                'quality' => $row->quality,
+                'colour' => $row->colour,
                 'meter' => $row->meter,
                 'fold' => $row->fold,
                 'net_meter' => $row->net_meter,
-                'process_id' => $processIdByName[$row->process] ?? '',
-                'process_name' => $row->process,
+                'process_id' => $row->process,
+                'process_name' => $itemNameMap[$row->process] ?? $row->process,
                 'lr_no' => $row->lr_no,
                 'transport' => $row->transport,
                 'sort_order' => $row->sort_order,
@@ -192,7 +194,7 @@
             <select name="job_worker_id" class="form-select @error('job_worker_id') is-invalid @enderror">
                 <option value="">Select Job Worker</option>
                 @foreach ($jobWorkers as $jobWorker)
-                    <option value="{{ $jobWorker->id }}"
+                    <option value="{{ $jobWorker->id }}" data-abbr="{{ $jobWorker->abbr }}"
                         {{ (string) old('job_worker_id', $assignment['job_worker_id'] ?? '') === (string) $jobWorker->id ? 'selected' : '' }}>
                         {{ $jobWorker->name }}
                     </option>
@@ -293,8 +295,8 @@
         <label>Process</label>
         <select id="process" class="form-select">
             <option value="">Select Process</option>
-            @foreach ($processOptions as $process)
-                <option value="{{ $process->item_name }}">{{ $process->item_name }}</option>
+            @foreach ($items as $item)
+                <option value="{{ $item->id }}" data-name="{{ $item->item_name }}">{{ $item->item_name }}</option>
             @endforeach
         </select>
     </div>
@@ -338,7 +340,7 @@
                     <th>Sr. No.</th>
                     <th>LOT NO.</th>
                     <th>Item</th>
-                    <th>Quality</th>
+                    <th>Colour</th>
                     <th>Meter</th>
                     <th>Fold</th>
                     <th>Net Meter</th>
@@ -352,14 +354,14 @@
                 @forelse ($formRows as $index => $row)
                     <tr data-purchase-item-id="{{ $row['purchase_item_id'] }}" data-item-id="{{ $row['item_id'] }}"
                         data-lot-no="{{ $row['lot_no'] }}" data-item-name="{{ $row['item_name'] }}"
-                        data-quality="{{ $row['quality'] }}" data-meter="{{ $row['meter'] }}"
+                        data-colour="{{ $row['colour'] }}" data-meter="{{ $row['meter'] }}"
                         data-fold="{{ $row['fold'] }}" data-net-meter="{{ $row['net_meter'] }}"
-                        data-process-id="{{ $row['process_name'] }}" data-process-name="{{ $row['process_name'] }}"
+                        data-process-id="{{ $row['process_id'] }}" data-process-name="{{ $row['process_name'] }}"
                         data-lr-no="{{ $row['lr_no'] }}" data-transport="{{ $row['transport'] }}">
                         <td>{{ $index + 1 }}.</td>
                         <td>{{ $row['lot_no'] }}</td>
                         <td>{{ $row['item_name'] }}</td>
-                        <td>{{ $row['quality'] }}</td>
+                        <td>{{ $row['colour'] }}</td>
                         <td>{{ $row['meter'] }}</td>
                         <td>{{ $row['fold'] }}</td>
                         <td>{{ $row['net_meter'] }}</td>
@@ -374,16 +376,16 @@
                                 value="{{ $row['item_id'] }}">
                             <input type="hidden" name="items_data[{{ $index }}][lot_no]"
                                 value="{{ $row['lot_no'] }}">
-                            <input type="hidden" name="items_data[{{ $index }}][quality]"
-                                value="{{ $row['quality'] }}">
+                            <input type="hidden" name="items_data[{{ $index }}][colour]"
+                                value="{{ $row['colour'] }}">
                             <input type="hidden" name="items_data[{{ $index }}][meter]"
                                 value="{{ $row['meter'] }}">
                             <input type="hidden" name="items_data[{{ $index }}][fold]"
                                 value="{{ $row['fold'] }}">
                             <input type="hidden" name="items_data[{{ $index }}][net_meter]"
                                 value="{{ $row['net_meter'] }}">
-                            <input type="hidden" name="items_data[{{ $index }}][process_id]"
-                                value="{{ $row['process_name'] }}">
+                            <input type="hidden" name="items_data[{{ $index }}][process]"
+                                value="{{ $row['process_id'] }}">
                             <input type="hidden" name="items_data[{{ $index }}][lr_no]"
                                 value="{{ $row['lr_no'] }}">
                             <input type="hidden" name="items_data[{{ $index }}][transport]"
@@ -405,29 +407,57 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
 
+        // =============================
+        // DATA
+        // =============================
         const lotSources = @json($lotSources);
-        const processOptions = @json($processOptions);
 
+        // =============================
+        // INPUTS
+        // =============================
         const lotSelect = document.getElementById('lot_no');
         const purchaseItemSelect = document.getElementById('purchase_item_id');
-        const qualityInput = document.getElementById('quality');
+
+        const colourInput = document.getElementById('colour');
         const meterInput = document.getElementById('meter');
         const foldInput = document.getElementById('fold');
         const netMeterInput = document.getElementById('net_meter');
+
         const processSelect = document.getElementById('process');
         const lrNoInput = document.getElementById('lr_no');
         const transportInput = document.getElementById('transport');
+
         const addItemButton = document.getElementById('add_assignment_item');
         const tableBody = document.getElementById('assignment_items_body');
-        const emptyRowId = 'assignment_empty_row';
 
-        function getDataRows() {
-            return Array.from(tableBody.querySelectorAll('tr')).filter(row => row.id !== emptyRowId);
+        const jobWorkerSelect = document.querySelector('[name="job_worker_id"]');
+        const assignNoInput = document.querySelector('[name="assign_no"]');
+
+        // =============================
+        // ✅ START INDEX FROM EXISTING ROWS
+        // =============================
+        let rowIndex = document.querySelectorAll('#assignment_items_body tr').length;
+
+        // =============================
+        // LOT COUNTER
+        // =============================
+        let lotCounter = 1;
+
+        function generateLotNumber() {
+            const selectedOption = jobWorkerSelect.options[jobWorkerSelect.selectedIndex];
+            const jobAbbr = selectedOption?.getAttribute('data-abbr') || 'JW';
+            const assignNo = assignNoInput.value || '0000';
+
+            const serial = String(lotCounter).padStart(5, '0');
+            lotCounter++;
+
+            return `${jobAbbr}/${assignNo}/${serial}`;
         }
 
         function currentSource() {
             const itemId = purchaseItemSelect.value;
             const lotNo = lotSelect.value;
+
             if (!itemId || !lotNo) return null;
 
             return lotSources.find(row =>
@@ -436,243 +466,168 @@
             ) || null;
         }
 
-        // ✅ FIXED (item_name based)
-        function populateProcessOptions() {
-            const selectedValue = processSelect.value;
+        function fillSourceFields(source) {
+            if (!source) {
+                colourInput.value = '';
+                meterInput.value = '';
+                foldInput.value = '';
+                netMeterInput.value = '';
+                lrNoInput.value = '';
+                transportInput.value = '';
+                return;
+            }
 
-            processSelect.innerHTML = '<option value="">Select Process</option>';
-
-            processOptions.forEach(function(row) {
-                const option = document.createElement('option');
-
-                option.value = row.item_name;
-                option.textContent = row.item_name;
-
-                if (String(row.item_name) === String(selectedValue)) {
-                    option.selected = true;
-                }
-
-                processSelect.appendChild(option);
-            });
+            colourInput.value = source.colour || source.color || '';
+            meterInput.value = source.meter || '';
+            foldInput.value = source.fold || '';
+            netMeterInput.value = source.net_meter || '';
+            lrNoInput.value = source.lr_no || '';
+            transportInput.value = source.transport || '';
         }
 
         function populateItemOptions() {
-            const selectedItemId = purchaseItemSelect.value;
-            const uniqueItems = [];
             const seen = new Set();
             purchaseItemSelect.innerHTML = '<option value="">Select Item</option>';
 
-            lotSources.forEach(function(row) {
-                const key = String(row.item_id);
-                if (!key || seen.has(key)) return;
-                seen.add(key);
-                uniqueItems.push(row);
-            });
+            lotSources.forEach(row => {
+                if (!row.item_id || seen.has(row.item_id)) return;
 
-            uniqueItems.forEach(function(row) {
+                seen.add(row.item_id);
+
                 const option = document.createElement('option');
                 option.value = row.item_id;
                 option.textContent = row.item_name;
-                option.selected = String(row.item_id) === String(selectedItemId);
+
                 purchaseItemSelect.appendChild(option);
             });
-
-            populateLotOptions();
-            fillSourceFields(currentSource());
-            populateProcessOptions();
         }
 
         function populateLotOptions() {
-            const selectedItemId = purchaseItemSelect.value;
-            const selectedLotNo = lotSelect.value;
+            const itemId = purchaseItemSelect.value;
 
-            lotSelect.innerHTML = '<option value="">Select Lot No.</option>';
-            lotSelect.disabled = !selectedItemId;
+            lotSelect.innerHTML = '<option value="">Select Lot</option>';
+            lotSelect.disabled = !itemId;
 
-            if (!selectedItemId) {
-                lotSelect.value = '';
-                return;
-            }
+            if (!itemId) return;
 
-            const seenLots = new Set();
+            const seen = new Set();
+
             lotSources
-                .filter(row => String(row.item_id) === String(selectedItemId))
-                .forEach(function(row) {
-                    if (!row.lot_no || seenLots.has(String(row.lot_no))) return;
-                    seenLots.add(String(row.lot_no));
+                .filter(row => String(row.item_id) === String(itemId))
+                .forEach(row => {
+                    if (!row.lot_no || seen.has(row.lot_no)) return;
+
+                    seen.add(row.lot_no);
+
                     const option = document.createElement('option');
                     option.value = row.lot_no;
                     option.textContent = row.lot_no;
-                    option.selected = String(row.lot_no) === String(selectedLotNo);
+
                     lotSelect.appendChild(option);
                 });
-
-            if (!Array.from(lotSelect.options).some(option => option.value === selectedLotNo)) {
-                lotSelect.value = '';
-            }
         }
 
-        function fillSourceFields(source) {
-            qualityInput.value = source ? source.quality : '';
-            meterInput.value = source ? source.meter : '';
-            foldInput.value = source ? source.fold : '';
-            netMeterInput.value = source ? source.net_meter : '';
-            lrNoInput.value = '';
-            transportInput.value = '';
-        }
-
-        // ✅ FIXED hidden input (process_name)
-        function updateRowHiddenInputs(row, index) {
-            const holder = row.querySelector('.row-hidden-inputs');
-
-            holder.innerHTML = '' +
-                `<input type="hidden" name="items_data[${index}][purchase_item_id]" value="${row.dataset.purchaseItemId || ''}">` +
-                `<input type="hidden" name="items_data[${index}][item_id]" value="${row.dataset.itemId || ''}">` +
-                `<input type="hidden" name="items_data[${index}][lot_no]" value="${row.dataset.lotNo || ''}">` +
-                `<input type="hidden" name="items_data[${index}][quality]" value="${row.dataset.quality || ''}">` +
-                `<input type="hidden" name="items_data[${index}][meter]" value="${row.dataset.meter || ''}">` +
-                `<input type="hidden" name="items_data[${index}][fold]" value="${row.dataset.fold || ''}">` +
-                `<input type="hidden" name="items_data[${index}][net_meter]" value="${row.dataset.netMeter || ''}">` +
-                `<input type="hidden" name="items_data[${index}][process_id]" value="${row.dataset.processName || ''}">` +
-                `<input type="hidden" name="items_data[${index}][lr_no]" value="${row.dataset.lrNo || ''}">` +
-                `<input type="hidden" name="items_data[${index}][transport]" value="${row.dataset.transport || ''}">` +
-                `<input type="hidden" name="items_data[${index}][sort_order]" value="${index + 1}">`;
-        }
-
-        function reindexRows() {
-            getDataRows().forEach(function(row, index) {
-                row.children[0].textContent = (index + 1) + '.';
-                updateRowHiddenInputs(row, index);
-            });
-        }
-
-        function ensureEmptyState() {
-            const rows = getDataRows();
-            const emptyRow = document.getElementById(emptyRowId);
-
-            if (rows.length === 0) {
-                if (!emptyRow) {
-                    const row = document.createElement('tr');
-                    row.id = emptyRowId;
-                    row.innerHTML = '<td colspan="11" class="assignment-empty-state">No items added yet.</td>';
-                    tableBody.appendChild(row);
-                }
-            } else if (emptyRow) {
-                emptyRow.remove();
-            }
-        }
-
-        function clearEntryFields() {
-            populateItemOptions();
-            purchaseItemSelect.value = '';
-            populateLotOptions();
-            lotSelect.value = '';
-            processSelect.value = '';
-            fillSourceFields(null);
-            populateProcessOptions();
-        }
-
-        // ✅ FIXED EDIT MODE
-        function populateEditorFromRow(row) {
-            if (!row) return;
-
-            purchaseItemSelect.value = row.dataset.itemId || '';
-            populateLotOptions();
-            lotSelect.value = row.dataset.lotNo || '';
-            fillSourceFields(currentSource());
-
-            meterInput.value = row.dataset.meter || '';
-            foldInput.value = row.dataset.fold || '';
-            netMeterInput.value = row.dataset.netMeter || '';
-            lrNoInput.value = row.dataset.lrNo || '';
-            transportInput.value = row.dataset.transport || '';
-
-            // ✅ MAIN FIX
-            processSelect.value = row.dataset.processName || '';
-        }
-
+        // =============================
+        // ADD ROW
+        // =============================
         function addRow() {
+
+            const emptyRow = document.getElementById('assignment_empty_row');
+            if (emptyRow) emptyRow.remove();
+
             const source = currentSource();
             const processName = processSelect.value;
 
+            let processNamedata = $('#process option:selected').data('name');
+    
+            if (!jobWorkerSelect.value) return toastr.error('Select Job Worker first');
+            if (!assignNoInput.value) return toastr.error('Assign No missing');
             if (!purchaseItemSelect.value) return toastr.error('Select item first');
-            if (!lotSelect.value) return toastr.error('Select lot no first');
-            if (!source) return toastr.error('Invalid item and lot selection');
-            if (!processName) return toastr.error('Select process first');
+            if (!lotSelect.value) return toastr.error('Select lot first');
+            if (!source) return toastr.error('Invalid selection');
+            if (!processName) return toastr.error('Select process');
 
-            const duplicateRow = getDataRows().find(row =>
-                String(row.dataset.purchaseItemId) === String(source.purchase_item_id)
-            );
-
-            if (duplicateRow) {
-                toastr.error('This item is already added');
-                return;
-            }
+            const index = rowIndex++;
+            const newLotNo = generateLotNumber();
 
             const row = document.createElement('tr');
 
-            row.dataset.purchaseItemId = source.purchase_item_id;
-            row.dataset.itemId = source.item_id;
-            row.dataset.lotNo = source.lot_no;
-            row.dataset.itemName = source.item_name;
-            row.dataset.quality = source.quality || '';
-            row.dataset.meter = meterInput.value || '';
-            row.dataset.fold = foldInput.value || '';
-            row.dataset.netMeter = netMeterInput.value || '';
-            row.dataset.processName = processName;
-            row.dataset.lrNo = lrNoInput.value || '';
-            row.dataset.transport = transportInput.value || '';
-
             row.innerHTML = `
-                <td></td>
-                <td>${source.lot_no || ''}</td>
-                <td>${source.item_name || ''}</td>
-                <td>${source.quality || ''}</td>
-                <td>${meterInput.value || ''}</td>
-                <td>${foldInput.value || ''}</td>
-                <td>${netMeterInput.value || ''}</td>
-                <td>${processName}</td>
-                <td>${lrNoInput.value || ''}</td>
-                <td>${transportInput.value || ''}</td>
-                <td><a href="javascript:void(0)" class="remove-link remove-row">Remove</a></td>
-                <td class="d-none row-hidden-inputs"></td>
-            `;
+            <td></td>
+            <td>${newLotNo}</td>
+            <td>${source.item_name}</td>
+            <td>${source.color || ''}</td>
+            <td>${meterInput.value}</td>
+            <td>${foldInput.value}</td>
+            <td>${netMeterInput.value}</td>
+            <td>${processNamedata}</td>
+            <td>${lrNoInput.value}</td>
+            <td>${transportInput.value}</td>
+            <td><a href="#" class="remove-row">Remove</a></td>
+            <td class="d-none">
+                <input type="hidden" name="items_data[${index}][id]" value="">
+                <input type="hidden" name="items_data[${index}][purchase_item_id]" value="${source.purchase_item_id}">
+                <input type="hidden" name="items_data[${index}][item_id]" value="${source.item_id}">
+                <input type="hidden" name="items_data[${index}][lot_no]" value="${newLotNo}">
+                <input type="hidden" name="items_data[${index}][colour]" value="${source.color || ''}">
+                <input type="hidden" name="items_data[${index}][meter]" value="${meterInput.value}">
+                <input type="hidden" name="items_data[${index}][fold]" value="${foldInput.value}">
+                <input type="hidden" name="items_data[${index}][net_meter]" value="${netMeterInput.value}">
+                <input type="hidden" name="items_data[${index}][process]" value="${processName}">
+                <input type="hidden" name="items_data[${index}][lr_no]" value="${lrNoInput.value}">
+                <input type="hidden" name="items_data[${index}][transport]" value="${transportInput.value}">
+                <input type="hidden" name="items_data[${index}][sort_order]" value="${index + 1}">
+            </td>
+        `;
 
             tableBody.appendChild(row);
-            ensureEmptyState();
             reindexRows();
-            clearEntryFields();
+            clearFields();
+        }
+
+        function reindexRows() {
+            const rows = tableBody.querySelectorAll('tr');
+            rows.forEach((row, index) => {
+                row.children[0].textContent = (index + 1) + '.';
+            });
+        }
+
+        function clearFields() {
+            purchaseItemSelect.value = '';
+            lotSelect.innerHTML = '<option value="">Select Lot</option>';
+            lotSelect.disabled = true;
+
+            fillSourceFields(null);
+            processSelect.value = '';
         }
 
         purchaseItemSelect.addEventListener('change', function() {
             populateLotOptions();
-            lotSelect.value = '';
-            fillSourceFields(currentSource());
-            populateProcessOptions();
+            fillSourceFields(null);
         });
+
         lotSelect.addEventListener('change', function() {
             fillSourceFields(currentSource());
-            populateProcessOptions();
         });
 
         addItemButton.addEventListener('click', addRow);
 
         tableBody.addEventListener('click', function(e) {
-            if (!e.target.classList.contains('remove-row')) return;
-
-            e.target.closest('tr').remove();
-            ensureEmptyState();
-            reindexRows();
+            if (e.target.classList.contains('remove-row')) {
+                e.preventDefault();
+                e.target.closest('tr').remove();
+                reindexRows();
+            }
         });
 
-        ensureEmptyState();
-        reindexRows();
-        populateProcessOptions();
+        jobWorkerSelect.addEventListener('change', function() {
+            lotCounter = 1;
+        });
+
         populateItemOptions();
 
-        const existingRows = getDataRows();
-        if (existingRows.length > 0) {
-            populateEditorFromRow(existingRows[0]);
-        }
     });
 </script>
+
+
+

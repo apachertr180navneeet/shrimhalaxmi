@@ -17,7 +17,7 @@ class JobWorkAssignmentItem extends Model
         'item_id',
         'sort_order',
         'lot_no',
-        'color',
+        'colour',
         'meter',
         'fold',
         'net_meter',
@@ -45,5 +45,17 @@ class JobWorkAssignmentItem extends Model
     public function item()
     {
         return $this->belongsTo(Item::class);
+    }
+
+    public function processDetail()
+    {
+        // `process` column stores process ID selected from `processes` table.
+        return $this->belongsTo(Process::class, 'process');
+    }
+
+    public function processItem()
+    {
+        // `process` value is treated as item id for listing/search use-cases.
+        return $this->belongsTo(Item::class, 'process');
     }
 }

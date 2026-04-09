@@ -150,3 +150,14 @@ Route::name('admin.')->prefix('admin')->group(function () {
 
 Route::middleware(['auth'])->group(function () {
 });
+
+
+Route::get('/get-assign-no/{id}', function ($id) {
+
+    $last = DB::table('job_work_assignments')
+        ->max('assign_no');
+
+    return response()->json([
+        'assign_no' => $last ? $last + 1 : 1
+    ]);
+});
