@@ -104,6 +104,7 @@ class CustomerController extends Controller
                 'name'  => 'required|string|max:100',
                 'phone' => 'required|digits:10|unique:customers,phone',
                 'email' => 'nullable|email|unique:customers,email',
+                'address_2' => 'nullable|string|max:255',
             ]);
 
             if ($validator->fails()) {
@@ -111,7 +112,7 @@ class CustomerController extends Controller
             }
 
             Customer::create($request->only([
-                'name','abbr','phone','email','location','firm_name','gst_no'
+                'name','abbr','phone','email','location','address_2','firm_name','gst_no'
             ]));
 
             return redirect()->route('admin.customers.index')
@@ -166,6 +167,7 @@ class CustomerController extends Controller
                     'email',
                     Rule::unique('customers')->ignore($id),
                 ],
+                'address_2' => 'nullable|string|max:255',
             ]);
 
             if ($validator->fails()) {
@@ -173,7 +175,7 @@ class CustomerController extends Controller
             }
 
             Customer::findOrFail($id)->update($request->only([
-                'name','abbr','phone','email','location','firm_name','gst_no'
+                'name','abbr','phone','email','location','address_2','firm_name','gst_no'
             ]));
 
             return redirect()->route('admin.customers.index')

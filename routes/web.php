@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\{
     ItemController,
     PurchaseController,    
     OrderDispatchController,
+    ReportController,
     RoleController,
     MemberController
 };
@@ -144,6 +145,15 @@ Route::name('admin.')->prefix('admin')->group(function () {
             Route::post('/status', [MemberController::class, 'changeStatus'])->name('status');
             Route::delete('/delete/{id}', [MemberController::class, 'destroy'])->name('delete');
 
+        });
+
+        Route::prefix('reports')->name('reports.')->group(function () {
+            Route::get('/slip-book', [ReportController::class, 'slipBook'])->name('slipbook');
+            Route::get('/net-fabric-balance', [ReportController::class, 'netFabricBalance'])->name('netfabricbalance');
+            Route::get('/grey-lot-balance', [ReportController::class, 'greyLotBalance'])->name('greylotbalance');
+            Route::get('/finished-goods-lot-wise', [ReportController::class, 'finishedGoodsLotWise'])->name('finishedgoodslotwise');
+            Route::get('/issued-chalaan-book', [ReportController::class, 'issuedChalaanBook'])->name('issuedchalaanbook');
+            Route::get('/list-report', [ReportController::class, 'listReport'])->name('listreport');
         });
     });
 });

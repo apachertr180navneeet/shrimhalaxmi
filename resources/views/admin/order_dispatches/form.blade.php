@@ -16,6 +16,27 @@
     $totalAmount = old('total_amount', $dispatch['total_amount'] ?? '0');
 @endphp
 
+<style>
+    .dispatch-form-card {
+        border: 1px solid #dde4f0;
+        border-radius: 12px;
+        padding: 18px;
+        background: #f9fbff;
+    }
+    .dispatch-form-card .form-control,
+    .dispatch-form-card .form-select {
+        border: 1px solid #cfd6e4;
+        border-radius: 8px;
+        min-height: 38px;
+        box-shadow: none;
+    }
+    #dispatchItemsTable th {
+        background: #eef3fb;
+        font-weight: 600;
+    }
+</style>
+
+<div class="dispatch-form-card">
 <div class="row g-3">
     <div class="col-md-4">
         <label class="form-label">Date</label>
@@ -23,7 +44,7 @@
         @error('dispatch_date')<div class="invalid-feedback">{{ $message }}</div>@enderror
     </div>
     <div class="col-md-4">
-        <label class="form-label">CH No</label>
+        <label class="form-label">BALE No.</label>
         <input type="text" name="dispatch_no" class="form-control @error('dispatch_no') is-invalid @enderror" value="{{ $dispatchNo }}" readonly required>
         @error('dispatch_no')<div class="invalid-feedback">{{ $message }}</div>@enderror
     </div>
@@ -35,7 +56,7 @@
 </div>
 
 <div class="row g-3 mt-3">
-    <div class="col-md-4">
+    <div class="col-md-6">
         <label class="form-label">Customer</label>
         <select id="customer_id" name="customer_id" class="form-select @error('customer_id') is-invalid @enderror" required>
             <option value="" data-abbr="">Select customer</option>
@@ -45,12 +66,7 @@
         </select>
         @error('customer_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
     </div>
-    <div class="col-md-4">
-        <label class="form-label">Number</label>
-        <input type="text" name="mobile_number" class="form-control @error('mobile_number') is-invalid @enderror" value="{{ $mobileNumber }}">
-        @error('mobile_number')<div class="invalid-feedback">{{ $message }}</div>@enderror
-    </div>
-    <div class="col-md-4">
+    <div class="col-md-6">
         <label class="form-label">Transport</label>
         <input type="text" name="transport" class="form-control @error('transport') is-invalid @enderror" value="{{ $transport }}">
         @error('transport')<div class="invalid-feedback">{{ $message }}</div>@enderror
@@ -109,7 +125,6 @@
     <table class="table table-bordered" id="dispatchItemsTable">
         <thead>
             <tr>
-                <th>#</th>
                 <th>Lot No</th>
                 <th>Item</th>
                 <th>Meter</th>
@@ -121,7 +136,6 @@
         <tbody id="dispatchItemsBody">
             @forelse ($dispatchItems as $index => $row)
                 <tr data-index="{{ $index }}">
-                    <td>{{ $index + 1 }}</td>
                     <td>{{ $row->lot_no }}</td>
                     <td>{{ $row->item?->item_name ?? '-' }}</td>
                     <td>{{ number_format($row->meter, 2, '.', '') }}</td>
@@ -140,11 +154,12 @@
                 </tr>
             @empty
                 <tr id="noItemsRow">
-                    <td colspan="7" class="text-center">No items added yet.</td>
+                    <td colspan="6" class="text-center">No items added yet.</td>
                 </tr>
             @endforelse
         </tbody>
     </table>
+</div>
 </div>
 
 {{--  <div class="row mt-2">
@@ -223,7 +238,6 @@
         rows.forEach(function (row) {
             if (row.id === 'noItemsRow') return;
             count++;
-            row.children[0].textContent = count;
             row.dataset.index = count - 1;
 
             var hiddenInputs = row.querySelector('td.d-none');
@@ -278,7 +292,6 @@
         var row = document.createElement('tr');
         row.dataset.index = rowCount;
         row.innerHTML =
-            '<td>' + (rowCount + 1) + '</td>' +
             '<td>' + lotNo + '</td>' +
             '<td>' + itemName + '</td>' +
             '<td>' + meter.toFixed(2) + '</td>' +
@@ -314,7 +327,7 @@
             if (document.querySelectorAll('#dispatchItemsBody tr').length === 0) {
                 var noItemsRow = document.createElement('tr');
                 noItemsRow.id = 'noItemsRow';
-                noItemsRow.innerHTML = '<td colspan="7" class="text-center">No items added yet.</td>';
+                noItemsRow.innerHTML = '<td colspan="6" class="text-center">No items added yet.</td>';
                 document.getElementById('dispatchItemsBody').appendChild(noItemsRow);
             }
             reIndexItems();

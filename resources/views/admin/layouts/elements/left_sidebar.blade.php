@@ -130,5 +130,47 @@
 			</a>
 		</li>
 		@endcan
+
+		<li class="menu-item {{ request()->is('admin/reports/slip-book') ? 'active' : '' }}">
+			<a href="{{ route('admin.reports.slipbook') }}" class="menu-link">
+				<i class="menu-icon tf-icons bx bx-spreadsheet"></i>
+				<div>Slip Book Report</div>
+			</a>
+		</li>
+
+		<li class="menu-item {{ request()->is('admin/reports/net-fabric-balance') ? 'active' : '' }}">
+			<a href="{{ route('admin.reports.netfabricbalance') }}" class="menu-link">
+				<i class="menu-icon tf-icons bx bx-grid-alt"></i>
+				<div>Net Fabric Balance</div>
+			</a>
+		</li>
+
+		<li class="menu-item {{ request()->is('admin/reports/grey-lot-balance') ? 'active' : '' }}">
+			<a href="{{ route('admin.reports.greylotbalance') }}" class="menu-link">
+				<i class="menu-icon tf-icons bx bx-layer"></i>
+				<div>Grey Lot Balance</div>
+			</a>
+		</li>
+
+		<li class="menu-item {{ request()->is('admin/reports/finished-goods-lot-wise') ? 'active' : '' }}">
+			<a href="{{ route('admin.reports.finishedgoodslotwise') }}" class="menu-link">
+				<i class="menu-icon tf-icons bx bx-box"></i>
+				<div>Finished Goods Stock</div>
+			</a>
+		</li>
+
+		<li class="menu-item {{ request()->is('admin/reports/issued-chalaan-book') ? 'active' : '' }}">
+			<a href="{{ route('admin.reports.issuedchalaanbook') }}" class="menu-link">
+				<i class="menu-icon tf-icons bx bx-book-content"></i>
+				<div>Issued Chalaan Book</div>
+			</a>
+		</li>
+
+		<li class="menu-item {{ request()->is('admin/reports/list-report') ? 'active' : '' }}">
+			<a href="{{ route('admin.reports.listreport') }}" class="menu-link">
+				<i class="menu-icon tf-icons bx bx-list-ul"></i>
+				<div>List Report</div>
+			</a>
+		</li>
 	</ul>
 </aside>

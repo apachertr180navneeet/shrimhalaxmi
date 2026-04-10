@@ -27,8 +27,8 @@
 
     .assignment-field-grid .form-control,
     .assignment-field-grid .form-select {
-        border: 1px solid #2f2f2f;
-        border-radius: 0;
+        border: 1px solid #cfd6e4;
+        border-radius: 8px;
         min-height: 38px;
         box-shadow: none;
     }
@@ -52,11 +52,11 @@
     .assignment-item-table td {
         font-size: 14px;
         vertical-align: middle;
-        border: 1px solid #2f2f2f;
+        border: 1px solid #dfe5ef;
     }
 
     .assignment-item-table thead th {
-        background: #f5f5f9;
+        background: #eef3fb;
         color: #111827;
         font-weight: 600;
     }
@@ -289,7 +289,7 @@
 
     <div class="assignment-field-grid">
         <label>Net Meter</label>
-        <input type="text" id="net_meter" class="form-control">
+        <input type="text" id="net_meter" class="form-control" readonly>
     </div>
     <div class="assignment-field-grid">
         <label>Process</label>
@@ -478,9 +478,12 @@
         function recalculateNetMeter() {
             const meter = toNumber(meterInput.value);
             const fold = toNumber(foldInput.value);
+            if (meter <= 0 || fold <= 0) {
+                netMeterInput.value = '';
+                return;
+            }
             const netMeter = (meter * fold) / 100;
-
-            netMeterInput.value = (meter || fold) ? formatFixed(netMeter) : '';
+            netMeterInput.value = formatFixed(netMeter);
         }
 
         function fillSourceFields(source) {
@@ -565,6 +568,7 @@
             if (!processName) return toastr.error('Select process');
 
             recalculateNetMeter();
+            if (toNumber(netMeterInput.value) <= 0) return toastr.error('Net meter must be greater than zero');
 
             const index = rowIndex++;
             const newLotNo = generateLotNumber();
@@ -575,7 +579,7 @@
             <td></td>
             <td>${newLotNo}</td>
             <td>${source.item_name}</td>
-            <td>${source.color || ''}</td>
+            <td>${colourInput.value || ''}</td>
             <td>${meterInput.value}</td>
             <td>${foldInput.value}</td>
             <td>${netMeterInput.value}</td>
@@ -588,7 +592,7 @@
                 <input type="hidden" name="items_data[${index}][purchase_item_id]" value="${source.purchase_item_id}">
                 <input type="hidden" name="items_data[${index}][item_id]" value="${source.item_id}">
                 <input type="hidden" name="items_data[${index}][lot_no]" value="${newLotNo}">
-                <input type="hidden" name="items_data[${index}][colour]" value="${source.color || ''}">
+                <input type="hidden" name="items_data[${index}][colour]" value="${colourInput.value || ''}">
                 <input type="hidden" name="items_data[${index}][meter]" value="${meterInput.value}">
                 <input type="hidden" name="items_data[${index}][fold]" value="${foldInput.value}">
                 <input type="hidden" name="items_data[${index}][net_meter]" value="${netMeterInput.value}">

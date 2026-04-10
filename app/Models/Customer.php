@@ -17,6 +17,7 @@ class Customer extends Model
         'firm_name',
         'gst_no',
         'location',
-        'status'
+        'address_2',
+        'status',
     ];
 }
