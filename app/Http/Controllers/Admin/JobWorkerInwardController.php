@@ -46,6 +46,29 @@ class JobWorkerInwardController extends Controller
 
     private function lotSources()
     {
+        $hasSourceLotNo = Schema::hasColumn('job_worker_inward_items', 'source_lot_no');
+
+        $inwardedMeterByKey = JobWorkerInwardItem::query()
+            ->with(['inward:id,job_worker_id'])
+            ->get()
+            ->filter(function (JobWorkerInwardItem $row) {
+                return ! empty($row->inward?->job_worker_id) && ! empty($row->item_id);
+            })
+            ->groupBy(function (JobWorkerInwardItem $row) use ($hasSourceLotNo) {
+                $sourceLotNo = $hasSourceLotNo
+                    ? ((string) ($row->source_lot_no ?: $row->lot_no))
+                    : (string) $row->lot_no;
+
+                return implode('|', [
+                    (string) $row->inward->job_worker_id,
+                    (string) $row->item_id,
+                    $sourceLotNo,
+                ]);
+            })
+            ->map(function ($rows) {
+                return (float) $rows->sum(fn (JobWorkerInwardItem $row) => (float) $row->meter);
+            });
+
         return JobWorkAssignmentItem::query()
             ->with([
                 'assignment:id,job_worker_id',
@@ -55,17 +78,24 @@ class JobWorkerInwardController extends Controller
             ->orderBy('lot_no')
             ->orderBy('id')
             ->get()
-            ->map(function (JobWorkAssignmentItem $row) {
+            ->map(function (JobWorkAssignmentItem $row) use ($inwardedMeterByKey) {
                 $processItemId = is_numeric((string) $row->process) ? (int) $row->process : null;
                 $itemId = $processItemId ?: $row->item_id;
                 $itemName = $processItemId
                     ? ($row->processItem?->item_name ?: '')
                     : ($row->item?->item_name ?: '');
+                $jobWorkerId = $row->assignment?->job_worker_id;
+                $sourceLotNo = (string) ($row->lot_no ?? '');
+                $assignedMeter = (float) $row->meter;
+                $inwardedMeterKey = implode('|', [(string) $jobWorkerId, (string) $itemId, $sourceLotNo]);
+                $inwardedMeter = (float) ($inwardedMeterByKey[$inwardedMeterKey] ?? 0);
+                $remainingMeter = max($assignedMeter - $inwardedMeter, 0);
 
                 return [
                     'assignment_item_id' => $row->id,
-                    'job_worker_id' => $row->assignment?->job_worker_id,
+                    'job_worker_id' => $jobWorkerId,
                     'lot_no' => $row->lot_no,
+                    'source_lot_no' => $sourceLotNo,
                     'item_id' => $itemId,
                     'item_name' => $itemName ?: ($row->item?->item_name ?: ''),
                     'quality' => ($row->quality ?? $row->colour ?? '') ?: '',
@@ -73,10 +103,16 @@ class JobWorkerInwardController extends Controller
                     'fold' => (string) $row->fold,
                     'total_meter' => (string) $row->net_meter,
                     'process' => (string) $row->process,
+                    'assigned_meter' => number_format($assignedMeter, 2, '.', ''),
+                    'inwarded_meter' => number_format($inwardedMeter, 2, '.', ''),
+                    'remaining_meter' => number_format($remainingMeter, 2, '.', ''),
                 ];
             })
             ->filter(function (array $row) {
-                return ! empty($row['job_worker_id']) && ! empty($row['item_id']) && ! empty($row['lot_no']);
+                return ! empty($row['job_worker_id'])
+                    && ! empty($row['item_id'])
+                    && ! empty($row['lot_no'])
+                    && (float) ($row['remaining_meter'] ?? 0) > 0;
             })
             ->values();
     }
@@ -147,7 +183,6 @@ class JobWorkerInwardController extends Controller
 
     public function store(Request $request)
     {
-        dd($request->all());
         $validator = Validator::make($request->all(), [
             'inward_date' => 'required|date',
             'ch_no' => 'required|string|max:30|unique:job_worker_inwards,ch_no',
@@ -156,12 +191,14 @@ class JobWorkerInwardController extends Controller
             'items_data' => 'required|array|min:1',
             'items_data.*.item_id' => 'required|exists:items,id',
             'items_data.*.lot_no' => 'required|string|max:100',
+            'items_data.*.source_lot_no' => 'nullable|string|max:100',
             'items_data.*.quality' => 'nullable|string|max:150',
             'items_data.*.meter' => 'required|numeric|min:0',
             'items_data.*.fold' => 'required|numeric|min:0',
             'items_data.*.total_meter' => 'required|numeric|min:0',
             'items_data.*.shrinkage' => 'nullable|string|max:50',
             'items_data.*.type' => 'nullable|string|max:50',
+            'items_data.*.after_shrinkage_meter' => 'nullable|string|max:50',
         ]);
 
         if ($validator->fails()) {
@@ -186,12 +223,14 @@ class JobWorkerInwardController extends Controller
                         'job_worker_inward_id' => $inward->id,
                         'item_id' => $itemRow['item_id'],
                         'lot_no' => $itemRow['lot_no'],
+                        'source_lot_no' => $itemRow['source_lot_no'] ?? $itemRow['lot_no'],
                         'quality' => $itemRow['quality'] ?? null,
                         'meter' => $itemRow['meter'],
                         'fold' => $itemRow['fold'],
                         'total_meter' => $itemRow['total_meter'],
                         'shrinkage' => $itemRow['shrinkage'] ?? null,
                         'type' => $itemRow['type'] ?? null,
+                        'after_shrinkage_meter' => $itemRow['after_shrinkage_meter'] ?? null,
                     ]);
 
                     // Increase stock for the returned item
@@ -244,12 +283,14 @@ class JobWorkerInwardController extends Controller
             'items_data' => 'required|array|min:1',
             'items_data.*.item_id' => 'required|exists:items,id',
             'items_data.*.lot_no' => 'required|string|max:100',
+            'items_data.*.source_lot_no' => 'nullable|string|max:100',
             'items_data.*.quality' => 'nullable|string|max:150',
             'items_data.*.meter' => 'required|numeric|min:0',
             'items_data.*.fold' => 'required|numeric|min:0',
             'items_data.*.total_meter' => 'required|numeric|min:0',
             'items_data.*.shrinkage' => 'nullable|string|max:50',
             'items_data.*.type' => 'nullable|string|max:50',
+            'items_data.*.after_shrinkage_meter' => 'nullable|string|max:50',
         ]);
 
         if ($validator->fails()) {
@@ -277,12 +318,14 @@ class JobWorkerInwardController extends Controller
                         'job_worker_inward_id' => $inward->id,
                         'item_id' => $itemRow['item_id'],
                         'lot_no' => $itemRow['lot_no'],
+                        'source_lot_no' => $itemRow['source_lot_no'] ?? $itemRow['lot_no'],
                         'quality' => $itemRow['quality'] ?? null,
                         'meter' => $itemRow['meter'],
                         'fold' => $itemRow['fold'],
                         'total_meter' => $itemRow['total_meter'],
                         'shrinkage' => $itemRow['shrinkage'] ?? null,
                         'type' => $itemRow['type'] ?? null,
+                        'after_shrinkage_meter' => $itemRow['after_shrinkage_meter'] ?? null,
                     ]);
                 }
             });

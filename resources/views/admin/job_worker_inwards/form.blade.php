@@ -132,7 +132,7 @@
                     $rowMeter = (float) ($row->meter ?? 0);
                     $rowAfterShrinkage = $rowMeter - (($rowMeter * $rowShrinkage) / 100);
                 @endphp
-                <tr data-item-id="{{ $row->item_id }}" data-lot-no="{{ $row->lot_no }}" data-quality="{{ $row->quality }}" data-meter="{{ $row->meter }}" data-fold="{{ $row->fold }}" data-total="{{ $row->total_meter }}" data-shrinkage="{{ $row->shrinkage }}" data-after-shrinkage="{{ number_format($rowAfterShrinkage, 2, '.', '') }}" data-type="{{ $row->type }}">
+                <tr data-item-id="{{ $row->item_id }}" data-lot-no="{{ $row->lot_no }}" data-source-lot="{{ $row->source_lot_no ?? $row->lot_no }}" data-quality="{{ $row->quality }}" data-meter="{{ $row->meter }}" data-fold="{{ $row->fold }}" data-total="{{ $row->total_meter }}" data-shrinkage="{{ $row->shrinkage }}" data-after-shrinkage="{{ number_format($rowAfterShrinkage, 2, '.', '') }}" data-type="{{ $row->type }}">
                     <td>{{ $rowIndex + 1 }}</td>
                     <td>{{ $row->lot_no }}</td>
                     <td>{{ $row->item?->item_name }}</td>
@@ -147,6 +147,7 @@
                     <td class="d-none row-hidden-inputs">
                         <input type="hidden" name="items_data[{{ $rowIndex }}][item_id]" value="{{ $row->item_id }}">
                         <input type="hidden" name="items_data[{{ $rowIndex }}][lot_no]" value="{{ $row->lot_no }}">
+                        <input type="hidden" name="items_data[{{ $rowIndex }}][source_lot_no]" value="{{ $row->source_lot_no ?? $row->lot_no }}">
                         <input type="hidden" name="items_data[{{ $rowIndex }}][quality]" value="{{ $row->quality }}">
                         <input type="hidden" name="items_data[{{ $rowIndex }}][meter]" value="{{ $row->meter }}">
                         <input type="hidden" name="items_data[{{ $rowIndex }}][fold]" value="{{ $row->fold }}">
@@ -168,6 +169,18 @@
     const jobWorkerSelect = $('[name="job_worker_id"]');
     const itemSelect = $('#item_id');
 
+    function toNumber(value) {
+        const n = parseFloat(value);
+        return isNaN(n) ? 0 : n;
+    }
+
+    function sourceRemainingMeter(source) {
+        if (!source) return 0;
+        const remaining = toNumber(source.remaining_meter);
+        if (remaining > 0) return remaining;
+        return toNumber(source.meter);
+    }
+
     function calculateValues(triggerField = '') {
         const meter = parseFloat($('#meter').val()) || 0;
         const fold = parseFloat($('#fold').val()) || 0;
@@ -188,9 +201,8 @@
             }
 
             if (meter > 0) {
-                // As requested: if meter=10000 and after-shrinkage input=500 then shrinkage=5%
-                // Formula: Shrinkage % = (AfterShrinkageInput / Meter) * 100
-                shrinkagePercent = (afterShrinkageMeter / meter) * 100;
+                // Shrinkage % = ((Meter - AfterShrinkageMeter) / Meter) * 100
+                shrinkagePercent = ((meter - afterShrinkageMeter) / meter) * 100;
             } else {
                 shrinkagePercent = 0;
             }
@@ -249,7 +261,8 @@
         if (!jobWorkerId) return [];
 
         return lotSources.filter(function (source) {
-            return String(source.job_worker_id) === String(jobWorkerId);
+            return String(source.job_worker_id) === String(jobWorkerId)
+                && sourceRemainingMeter(source) > 0;
         });
     }
 
@@ -294,7 +307,8 @@
             const lotNo = (source.lot_no || '').toString().trim();
             if (!lotNo || seenLots.has(lotNo)) return;
             seenLots.add(lotNo);
-            lotSelect.append('<option value="' + lotNo + '">' + lotNo + '</option>');
+            const remaining = sourceRemainingMeter(source);
+            lotSelect.append('<option value="' + lotNo + '">' + lotNo + ' (Remain: ' + remaining.toFixed(2) + ')</option>');
         });
 
         lotSelect.prop('disabled', seenLots.size === 0);
@@ -305,8 +319,9 @@
         const lotNo = $('#lot_no').val();
         const source = findSourceByItemAndLot(itemId, lotNo);
         const colorValue = source ? (source.quality || source.colour || source.color || '') : '';
+        const remainingMeter = sourceRemainingMeter(source);
         $('#quality').val(colorValue);
-        $('#meter').val(source ? (source.meter || '') : '');
+        $('#meter').val(source ? (remainingMeter ? remainingMeter.toFixed(2) : '') : '');
         $('#fold').val(source ? (source.fold || '') : '');
         calculateValues();
     }
@@ -314,6 +329,7 @@
     function setRowHiddenInputs(row, index) {
         const itemId = row.data('item-id') || '';
         const lotNo = row.data('lot-no') || '';
+        const sourceLotNo = row.data('source-lot') || lotNo;
         const quality = row.data('quality') || '';
         const meter = row.data('meter') || '';
         const fold = row.data('fold') || '';
@@ -331,6 +347,7 @@
         hidden.html(
             '<input type="hidden" name="items_data[' + index + '][item_id]" value="' + itemId + '">' +
             '<input type="hidden" name="items_data[' + index + '][lot_no]" value="' + lotNo + '">' +
+            '<input type="hidden" name="items_data[' + index + '][source_lot_no]" value="' + sourceLotNo + '">' +
             '<input type="hidden" name="items_data[' + index + '][quality]" value="' + quality + '">' +
             '<input type="hidden" name="items_data[' + index + '][meter]" value="' + meter + '">' +
             '<input type="hidden" name="items_data[' + index + '][fold]" value="' + fold + '">' +
@@ -416,9 +433,16 @@
         let meter = parseFloat($('#meter').val()) || 0;
         let fold = parseFloat($('#fold').val()) || 0;
         let totalMeter = parseFloat($('#total_meter').val()) || 0;
+        const selectedSource = findSourceByItemAndLot(itemId, sourceLotNo);
+        const remainingMeter = sourceRemainingMeter(selectedSource);
 
         if (meter <= 0 && fold <= 0 && totalMeter <= 0) {
             alert('Please enter meter or fold values.');
+            return;
+        }
+
+        if (remainingMeter > 0 && meter > (remainingMeter + 0.0001)) {
+            alert('Inward meter cannot be greater than remaining meter (' + remainingMeter.toFixed(2) + ').');
             return;
         }
 

@@ -15,12 +15,14 @@ class JobWorkerInwardItem extends Model
         'job_worker_inward_id',
         'item_id',
         'lot_no',
+        'source_lot_no',
         'quality',
         'meter',
         'fold',
         'total_meter',
         'shrinkage',
         'type',
+        'after_shrinkage_meter',
     ];
 
     protected $casts = [
