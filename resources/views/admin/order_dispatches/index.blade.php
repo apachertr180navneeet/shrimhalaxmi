@@ -57,7 +57,7 @@
                         <th>Date</th>
                         <th>CH No</th>
                         <th>Customer</th>
-                        <th>Number</th>
+                        <th>Mobile Number</th>
                         <th>Transport</th>
                         <th>Status</th>
                         <th>Action</th>
@@ -90,7 +90,7 @@ $(function () {
             { data: 'date', name: 'dispatch_date' },
             { data: 'dispatch_no', name: 'dispatch_no' },
             { data: 'customer_name', orderable: false, searchable: false },
-            { data: 'mobile_number', name: 'mobile_number' },
+            { data: 'customer_phone', name: 'customer_phone' },
             { data: 'transport', name: 'transport' },
             { data: 'status', orderable: false, searchable: false },
             { data: 'action', orderable: false, searchable: false }

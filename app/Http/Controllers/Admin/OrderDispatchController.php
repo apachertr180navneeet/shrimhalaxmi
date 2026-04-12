@@ -95,6 +95,7 @@ class OrderDispatchController extends Controller
             return DataTables::of($query)
                 ->addColumn('date', fn ($row) => optional($row->dispatch_date)->format('d/m/Y') ?: '-')
                 ->addColumn('customer_name', fn ($row) => $row->customer?->name ?: '-')
+                ->addColumn('customer_phone', fn ($row) => $row->customer?->phone ?: '-')
                 ->addColumn('status', function ($row) {
                     $color = 'secondary';
                     switch ($row->status) {
