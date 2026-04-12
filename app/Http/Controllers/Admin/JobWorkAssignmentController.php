@@ -91,14 +91,27 @@ class JobWorkAssignmentController extends Controller
      *
      * @return \Illuminate\Support\Collection
      */
-    private function lotSources()
+    private function lotSources(?int $excludeAssignmentId = null)
     {
+        $assignedByPurchaseItem = JobWorkAssignmentItem::query()
+            ->selectRaw('purchase_item_id, SUM(meter) as assigned_meter')
+            ->whereNotNull('purchase_item_id')
+            ->when($excludeAssignmentId, function ($query, $excludeAssignmentId) {
+                $query->where('job_work_assignment_id', '!=', $excludeAssignmentId);
+            })
+            ->groupBy('purchase_item_id')
+            ->pluck('assigned_meter', 'purchase_item_id');
+
         return PurchaseItem::query()
             ->with(['item:id,item_name', 'purchase:id,purchase_date'])
             ->orderBy('lot_no')
             ->orderBy('id')
             ->get()
-            ->map(function (PurchaseItem $row) {
+            ->map(function (PurchaseItem $row) use ($assignedByPurchaseItem) {
+                $purchasedMeter = (float) $row->qty_m;
+                $assignedMeter = (float) ($assignedByPurchaseItem[$row->id] ?? 0);
+                $remainingMeter = max(0, $purchasedMeter - $assignedMeter);
+
                 return [
                     'purchase_item_id' => $row->id,
                     'lot_no' => $row->lot_no,
@@ -108,12 +121,71 @@ class JobWorkAssignmentController extends Controller
                     'meter' => (string) $row->qty_m,
                     'fold' => (string) $row->fold,
                     'net_meter' => (string) $row->net_meter,
+                    'purchased_meter' => (string) $purchasedMeter,
+                    'assigned_meter' => (string) $assignedMeter,
+                    'remaining_meter' => (string) $remainingMeter,
                     'transport' => $row->transport ?: '',
                     'lr_no' => $row->lr_no ?: '',
                     'purchase_date' => optional($row->purchase?->purchase_date)->format('d/m/Y'),
                 ];
             })
             ->values();
+    }
+
+    /**
+     * Validate lot-wise assigned meter does not exceed purchased meter.
+     *
+     * @param \Illuminate\Support\Collection<int, array<string, mixed>> $itemsData
+     * @param int|null $excludeAssignmentId
+     * @return array<int, string>
+     */
+    private function lotAvailabilityErrors($itemsData, ?int $excludeAssignmentId = null): array
+    {
+        $requestedByPurchaseItem = $itemsData
+            ->filter(fn ($row) => ! empty($row['purchase_item_id']))
+            ->groupBy(fn ($row) => (int) $row['purchase_item_id'])
+            ->map(fn ($rows) => $rows->sum(fn ($row) => (float) ($row['meter'] ?? 0)));
+
+        if ($requestedByPurchaseItem->isEmpty()) {
+            return [];
+        }
+
+        $purchaseItems = PurchaseItem::query()
+            ->whereIn('id', $requestedByPurchaseItem->keys())
+            ->get(['id', 'lot_no', 'qty_m'])
+            ->keyBy('id');
+
+        $assignedByPurchaseItem = JobWorkAssignmentItem::query()
+            ->selectRaw('purchase_item_id, SUM(meter) as assigned_meter')
+            ->whereIn('purchase_item_id', $requestedByPurchaseItem->keys())
+            ->when($excludeAssignmentId, function ($query, $excludeAssignmentId) {
+                $query->where('job_work_assignment_id', '!=', $excludeAssignmentId);
+            })
+            ->groupBy('purchase_item_id')
+            ->pluck('assigned_meter', 'purchase_item_id');
+
+        $errors = [];
+
+        foreach ($requestedByPurchaseItem as $purchaseItemId => $requestedMeter) {
+            $purchaseItem = $purchaseItems->get((int) $purchaseItemId);
+            if (! $purchaseItem) {
+                continue;
+            }
+
+            $purchasedMeter = (float) $purchaseItem->qty_m;
+            $alreadyAssignedMeter = (float) ($assignedByPurchaseItem[(int) $purchaseItemId] ?? 0);
+            $availableMeter = max(0, $purchasedMeter - $alreadyAssignedMeter);
+
+            if ($requestedMeter > $availableMeter + 0.0001) {
+                $errors[] = sprintf(
+                    'Lot %s: You do not have more meters to assign on same lot. Available meter: %s',
+                    (string) ($purchaseItem->lot_no ?: '-'),
+                    number_format($availableMeter, 2, '.', '')
+                );
+            }
+        }
+
+        return $errors;
     }
 
     /**
@@ -309,6 +381,11 @@ class JobWorkAssignmentController extends Controller
             'items_data.*.sort_order' => 'required|integer|min:1',
         ]);
 
+        $itemsData = collect($request->input('items_data', []))->values();
+        foreach ($this->lotAvailabilityErrors($itemsData) as $error) {
+            $validator->errors()->add('items_data', $error);
+        }
+
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();
         }
@@ -384,7 +461,7 @@ class JobWorkAssignmentController extends Controller
 
             $jobWorkers = JobWorker::query()->orderBy('name')->get(['id', 'name', 'abbr']);
             $items = Item::query()->orderBy('item_name')->get(['id', 'item_name']);
-            $lotSources = $this->lotSources();
+            $lotSources = $this->lotSources((int) $assignmentRecord->id);
             $assignmentItems = $assignmentRecord->items()->with('item')->orderBy('sort_order')->get();
             $processOptions = $this->processOptions();
 
@@ -432,6 +509,11 @@ class JobWorkAssignmentController extends Controller
             'items_data.*.transport' => 'nullable|string|max:150',
             'items_data.*.sort_order' => 'required|integer|min:1',
         ]);
+
+        $itemsData = collect($request->input('items_data', []))->values();
+        foreach ($this->lotAvailabilityErrors($itemsData, (int) $id) as $error) {
+            $validator->errors()->add('items_data', $error);
+        }
 
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();

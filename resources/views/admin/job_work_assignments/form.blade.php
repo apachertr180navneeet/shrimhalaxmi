@@ -466,6 +466,25 @@
             ) || null;
         }
 
+        function sourceRemainingMeter(source) {
+            if (!source) return 0;
+
+            const serverRemaining = toNumber(source.remaining_meter ?? source.meter ?? 0);
+            let assignedInForm = 0;
+
+            tableBody.querySelectorAll('tr').forEach(row => {
+                const purchaseItemInput = row.querySelector('input[name$="[purchase_item_id]"]');
+                const meterHiddenInput = row.querySelector('input[name$="[meter]"]');
+
+                if (!purchaseItemInput || !meterHiddenInput) return;
+                if (String(purchaseItemInput.value) !== String(source.purchase_item_id)) return;
+
+                assignedInForm += toNumber(meterHiddenInput.value);
+            });
+
+            return Math.max(0, serverRemaining - assignedInForm);
+        }
+
         function toNumber(value) {
             const number = parseFloat(value);
             return Number.isFinite(number) ? number : 0;
@@ -497,8 +516,10 @@
                 return;
             }
 
+            const remainingMeter = sourceRemainingMeter(source);
+
             colourInput.value = source.colour || source.color || '';
-            meterInput.value = source.meter || '';
+            meterInput.value = remainingMeter > 0 ? formatFixed(remainingMeter) : '';
             foldInput.value = source.fold || '';
             recalculateNetMeter();
             lrNoInput.value = source.lr_no || '';
@@ -510,6 +531,7 @@
             purchaseItemSelect.innerHTML = '<option value="">Select Item</option>';
 
             lotSources.forEach(row => {
+                if (sourceRemainingMeter(row) <= 0) return;
                 if (!row.item_id || seen.has(row.item_id)) return;
 
                 seen.add(row.item_id);
@@ -535,6 +557,7 @@
             lotSources
                 .filter(row => String(row.item_id) === String(itemId))
                 .forEach(row => {
+                    if (sourceRemainingMeter(row) <= 0) return;
                     if (!row.lot_no || seen.has(row.lot_no)) return;
 
                     seen.add(row.lot_no);
@@ -567,8 +590,16 @@
             if (!source) return toastr.error('Invalid selection');
             if (!processName) return toastr.error('Select process');
 
+            const availableMeter = sourceRemainingMeter(source);
+            if (availableMeter <= 0) {
+                return toastr.error('You do not have more meters to assign on same lot.');
+            }
+
             recalculateNetMeter();
             if (toNumber(netMeterInput.value) <= 0) return toastr.error('Net meter must be greater than zero');
+            if (toNumber(meterInput.value) > availableMeter + 0.0001) {
+                return toastr.error(`You do not have more meters to assign on same lot. Available meter: ${formatFixed(availableMeter)}`);
+            }
 
             const index = rowIndex++;
             const newLotNo = generateLotNumber();
@@ -605,6 +636,7 @@
 
             tableBody.appendChild(row);
             reindexRows();
+            populateItemOptions();
             clearFields();
         }
 
@@ -643,6 +675,7 @@
                 e.preventDefault();
                 e.target.closest('tr').remove();
                 reindexRows();
+                populateItemOptions();
             }
         });
 
