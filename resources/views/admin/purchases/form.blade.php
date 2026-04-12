@@ -310,349 +310,302 @@
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', () => {
 
-        /* =====================================================
-           📌 ELEMENT REFERENCES (CACHE FOR PERFORMANCE)
-        ===================================================== */
-        const itemSelect = document.getElementById('item_id');
-        const vendorSelect = document.getElementById('vendor_id');
+    const $ = id => document.getElementById(id);
+    const q = sel => document.querySelector(sel);
 
-        const vendorAbbrInput = document.getElementById('vendor_abbr');
-        const itemAbbrInput = document.getElementById('item_abbr');
+    const item = $('item_id');
+    const vendor = $('vendor_id');
+    const table = $('purchase_items_body');
+    const addBtn = $('add_more_item');
 
-        const pchNoInput = document.getElementById('pch_no');
-        const lotNoInput = document.getElementById('lot_no');
+    const i = {
+        vendorAbbr: $('vendor_abbr'),
+        itemAbbr: $('item_abbr'),
+        pch: $('pch_no'),
+        lot: $('lot_no'),
+        bno: q('[name="bno"]'),
+        qty: $('qty_m'),
+        fold: $('fold'),
+        rate: $('rate'),
+        transport: $('transport'),
+        lr: $('lr_no'),
+        net: $('net_meter'),
+        amt: $('amount'),
+        color: $('color')
+    };
 
-        const qtyInput = document.getElementById('qty_m');
-        const foldInput = document.getElementById('fold');
-        const rateInput = document.getElementById('rate');
+    const defaults = {
+        item: '{{ $defaultItemAbbr }}',
+        vendor: '{{ $defaultVendorAbbr }}'
+    };
 
-        const transportInput = document.getElementById('transport');
-        const lrNoInput = document.getElementById('lr_no');
+    /* =========================
+       EMPTY STATE
+    ========================= */
+    function ensureEmptyState() {
+        const existingRows = rows();
+        const emptyRow = document.getElementById('purchase_empty_row');
 
-        const netMeterInput = document.getElementById('net_meter');
-        const amountInput = document.getElementById('amount');
-
-        const colorInput = document.getElementById('color');
-
-        const addMoreButton = document.getElementById('add_more_item');
-        const tableBody = document.getElementById('purchase_items_body');
-
-        const emptyRowId = 'purchase_empty_row';
-
-        const defaultItemAbbr = '{{ $defaultItemAbbr }}';
-        const defaultVendorAbbr = '{{ $defaultVendorAbbr }}';
-
-
-        /* =====================================================
-           🔢 HELPER FUNCTIONS
-        ===================================================== */
-
-        // Convert value to number safely
-        function toNumber(value) {
-            const number = parseFloat(value);
-            return Number.isFinite(number) ? number : 0;
-        }
-
-        // Format to 2 decimal places
-        function formatFixed(value) {
-            return (Math.round(value * 100) / 100).toFixed(2);
-        }
-
-        // Get selected item option
-        function currentItemOption() {
-            return itemSelect ? itemSelect.options[itemSelect.selectedIndex] : null;
-        }
-
-        // Get item abbreviation
-        function currentItemAbbr() {
-            const option = currentItemOption();
-            return option?.dataset.abbr || defaultItemAbbr;
-        }
-
-        // Get vendor abbreviation
-        function currentVendorAbbr() {
-            const option = vendorSelect?.options[vendorSelect.selectedIndex];
-            return option?.dataset.abbr || defaultVendorAbbr;
-        }
-
-        // Get item name
-        function currentItemName() {
-            const option = currentItemOption();
-            return option?.dataset.name || '';
-        }
-
-
-        /* =====================================================
-           🔤 LOT NUMBER GENERATOR
-        ===================================================== */
-        function buildLotNo(serial) {
-            const paddedSerial = String(serial).padStart(4, '0');
-            const pchNo = pchNoInput.value || '0001';
-
-            return currentVendorAbbr() + ' / ' + pchNo + ' / ' + paddedSerial;
-        }
-
-
-        /* =====================================================
-           📊 GET TABLE ROWS
-        ===================================================== */
-        function getDataRows() {
-            return Array.from(tableBody.querySelectorAll('tr'))
-                .filter(row => row.id !== emptyRowId);
-        }
-
-
-        /* =====================================================
-           📊 CALCULATE NET METER & AMOUNT
-        ===================================================== */
-        function recalculate() {
-            const qty = toNumber(qtyInput.value);
-            const fold = toNumber(foldInput.value);
-            const rate = toNumber(rateInput.value);
-
-            const netMeter = (qty * fold) / 100;
-            const amount = netMeter * rate;
-
-            netMeterInput.value = (qty || fold) ? formatFixed(netMeter) : '';
-            amountInput.value = (netMeterInput.value && rateInput.value) ? formatFixed(amount) : '';
-        }
-
-
-        /* =====================================================
-           🔁 SYNC ABBREVIATIONS
-        ===================================================== */
-        function syncAbbrFields() {
-            vendorAbbrInput.value = currentVendorAbbr();
-            itemAbbrInput.value = currentItemAbbr();
-        }
-
-
-        /* =====================================================
-           🔄 UPDATE LOT NUMBER FIELD
-        ===================================================== */
-        function updateCurrentLotNo() {
-            const serial = getDataRows().length + 1;
-            lotNoInput.value = buildLotNo(serial);
-        }
-
-
-        /* =====================================================
-           📦 UPDATE HIDDEN INPUTS (FOR BACKEND)
-        ===================================================== */
-        function updateRowHiddenInputs(row, index, data) {
-            const holder = row.querySelector('.row-hidden-inputs');
-
-            holder.innerHTML = `
-            <input type="hidden" name="items_data[${index}][item_id]" value="${data.item_id}">
-            <input type="hidden" name="items_data[${index}][lot_no]" value="${data.lot_no}">
-            <input type="hidden" name="items_data[${index}][item_code]" value="${data.item_code}">
-            <input type="hidden" name="items_data[${index}][color]" value="${data.color}">
-            <input type="hidden" name="items_data[${index}][qty_m]" value="${data.qty_m}">
-            <input type="hidden" name="items_data[${index}][fold]" value="${data.fold}">
-            <input type="hidden" name="items_data[${index}][rate]" value="${data.rate}">
-            <input type="hidden" name="items_data[${index}][transport]" value="${data.transport}">
-            <input type="hidden" name="items_data[${index}][lr_no]" value="${data.lr_no}">
-            <input type="hidden" name="items_data[${index}][net_meter]" value="${data.net_meter}">
-            <input type="hidden" name="items_data[${index}][amount]" value="${data.amount}">
-            <input type="hidden" name="items_data[${index}][sort_order]" value="${data.sort_order}">
-        `;
-        }
-
-
-        /* =====================================================
-           🔄 REINDEX TABLE ROWS
-        ===================================================== */
-        function reindexRows() {
-            const rows = getDataRows();
-
-            rows.forEach((row, index) => {
-                const serial = index + 1;
-                const lotNo = buildLotNo(serial);
-
-                row.setAttribute('data-index', index);
-
-                row.children[0].textContent = serial + '.';
-                row.children[1].textContent = lotNo;
-
-                updateRowHiddenInputs(row, index, {
-                    item_id: row.dataset.itemId,
-                    lot_no: lotNo,
-                    item_code: lotNo,
-                    color: row.dataset.color,
-                    qty_m: row.dataset.qty,
-                    fold: row.dataset.fold,
-                    rate: row.dataset.rate,
-                    transport: row.dataset.transport || '',
-                    lr_no: row.dataset.lrNo || '',
-                    net_meter: row.dataset.netMeter,
-                    amount: row.dataset.amount,
-                    sort_order: serial,
-                });
-            });
-
-            updateCurrentLotNo();
-        }
-
-
-        /* =====================================================
-           🧹 EMPTY STATE HANDLER
-        ===================================================== */
-        function ensureEmptyState() {
-            const rows = getDataRows();
-            const emptyRow = document.getElementById(emptyRowId);
-
-            if (rows.length === 0) {
-                if (!emptyRow) {
-                    const row = document.createElement('tr');
-                    row.id = emptyRowId;
-                    row.innerHTML = `<td colspan="12" class="purchase-empty-state">No items added yet.</td>`;
-                    tableBody.appendChild(row);
-                }
-            } else {
-                emptyRow?.remove();
+        if (existingRows.length === 0) {
+            if (!emptyRow) {
+                const tr = document.createElement('tr');
+                tr.id = 'purchase_empty_row';
+                tr.innerHTML = `<td colspan="12" class="text-center">No items added yet.</td>`;
+                table.appendChild(tr);
             }
+        } else {
+            emptyRow?.remove();
         }
+    }
 
+    /* =========================
+       HELPERS
+    ========================= */
+    const num = v => parseFloat(v) || 0;
+    const fix = v => (Math.round(v * 100) / 100).toFixed(2);
 
-        /* =====================================================
-           🧹 CLEAR INPUT FIELDS
-        ===================================================== */
-        function clearItemEntryFields() {
-            itemSelect.value = '';
-            colorInput.value = '';
-            qtyInput.value = '';
-            foldInput.value = '';
-            rateInput.value = '';
-            transportInput.value = '';
-            lrNoInput.value = '';
-            netMeterInput.value = '';
-            amountInput.value = '';
-            syncAbbrFields();
-        }
+    const opt = el => el?.options[el.selectedIndex];
+    const abbr = (el, d) => opt(el)?.dataset.abbr || d;
+    const name = el => opt(el)?.dataset.name || '';
 
+    const rows = () =>
+        [...table.querySelectorAll('tr')].filter(r => r.id !== 'purchase_empty_row');
 
-        /* =====================================================
-           ➕ ADD NEW ROW
-        ===================================================== */
-        function addRow() {
+    const rowData = r => {
+        const d = r.dataset;
+        return {
+            item_id: d.itemId || d.item_id || '',
+            lot_no: d.lotNo || d.lot_no || '',
+            item_code: d.itemCode || d.item_code || d.lotNo || d.lot_no || '',
+            color: d.color || '',
+            qty_m: d.qtyM || d.qty_m || d.qty || '',
+            fold: d.fold || '',
+            rate: d.rate || '',
+            transport: d.transport || '',
+            lr_no: d.lrNo || d.lr_no || '',
+            net_meter: d.netMeter || d.net_meter || '',
+            amount: d.amount || '',
+            sort_order: d.sortOrder || d.sort_order || ''
+        };
+    };
 
-            const itemOption = currentItemOption();
+    const setRowData = (r, data) => {
+        r.dataset.itemId = data.item_id ?? '';
+        r.dataset.lotNo = data.lot_no ?? '';
+        r.dataset.itemCode = data.item_code ?? '';
+        r.dataset.color = data.color ?? '';
+        r.dataset.qtyM = data.qty_m ?? '';
+        r.dataset.fold = data.fold ?? '';
+        r.dataset.rate = data.rate ?? '';
+        r.dataset.transport = data.transport ?? '';
+        r.dataset.lrNo = data.lr_no ?? '';
+        r.dataset.netMeter = data.net_meter ?? '';
+        r.dataset.amount = data.amount ?? '';
+        r.dataset.sortOrder = data.sort_order ?? '';
+    };
 
-            // Validation
-            if (!itemOption || !itemOption.value) {
-                toastr.error('Select item first');
-                return;
-            }
+    /* =========================
+       DUPLICATE CHECK (UPDATED)
+    ========================= */
+    function isDuplicateItem(itemId, color) {
+        return rows().some(r =>
+            rowData(r).item_id == itemId &&
+            (rowData(r).color || '').toLowerCase() === (color || '').toLowerCase()
+        );
+    }
 
-            const qty = qtyInput.value.trim();
-            const fold = foldInput.value.trim();
-            const rate = rateInput.value.trim();
+    /* =========================
+       LOT NUMBER
+    ========================= */
+    const lotNo = s =>
+        `${abbr(vendor, defaults.vendor).toLowerCase()}/${
+            String(i.bno?.value || 0).padStart(4,'0')
+        }/${String(i.pch.value || 1).padStart(4,'0')}/${
+            String(s).padStart(4,'0')
+        }`;
 
-            if (!qty || !fold || !rate) {
-                toastr.error('Enter qty, fold and rate');
-                return;
-            }
+    const updatePreview = () => {
+        i.lot.value = lotNo(rows().length + 1);
+    };
 
-            ensureEmptyState();
+    /* =========================
+       CALCULATION
+    ========================= */
+    const calc = () => {
+        const net = (num(i.qty.value) * num(i.fold.value)) / 100;
+        i.net.value = net ? fix(net) : '';
+        i.amt.value = (net && i.rate.value) ? fix(net * num(i.rate.value)) : '';
+    };
 
-            const nextIndex = getDataRows().length;
-            const serial = nextIndex + 1;
-            const lotNo = buildLotNo(serial);
+    /* =========================
+       SYNC
+    ========================= */
+    const sync = () => {
+        i.vendorAbbr.value = abbr(vendor, defaults.vendor);
+        i.itemAbbr.value = abbr(item, defaults.item);
+    };
 
-            const row = document.createElement('tr');
-
-            // Store data in dataset
-            row.dataset.itemId = itemOption.value;
-            row.dataset.color = colorInput.value || '';
-            row.dataset.qty = qty;
-            row.dataset.fold = fold;
-            row.dataset.rate = rate;
-            row.dataset.transport = transportInput.value || '';
-            row.dataset.lrNo = lrNoInput.value || '';
-            row.dataset.netMeter = netMeterInput.value || '0.00';
-            row.dataset.amount = amountInput.value || '0.00';
-
-            // Row UI
-            row.innerHTML = `
-            <td>${serial}.</td>
-            <td>${lotNo}</td>
-            <td>${currentItemName()}</td>
-            <td>${colorInput.value || ''}</td>
-            <td>${rate}</td>
-            <td>${qty}</td>
-            <td>${fold}</td>
-            <td>${transportInput.value || ''}</td>
-            <td>${lrNoInput.value || ''}</td>
-            <td>${netMeterInput.value || '0.00'}</td>
-            <td>${amountInput.value || '0.00'}</td>
-            <td><a href="#" class="remove-link remove-row">Remove</a></td>
-            <td class="d-none row-hidden-inputs"></td>
-        `;
-
-            tableBody.appendChild(row);
-
-            // Hidden inputs
-            updateRowHiddenInputs(row, nextIndex, {
-                item_id: itemOption.value,
-                lot_no: lotNo,
-                item_code: lotNo,
-                color: colorInput.value || '',
-                qty_m: qty,
-                fold: fold,
-                rate: rate,
-                transport: transportInput.value || '',
-                lr_no: lrNoInput.value || '',
-                net_meter: netMeterInput.value || '0.00',
-                amount: amountInput.value || '0.00',
-                sort_order: serial,
-            });
-
-            ensureEmptyState();
-            clearItemEntryFields();
-            updateCurrentLotNo();
-        }
-
-
-        /* =====================================================
-           🎯 EVENTS
-        ===================================================== */
-
-        qtyInput?.addEventListener('input', recalculate);
-        foldInput?.addEventListener('input', recalculate);
-        rateInput?.addEventListener('input', recalculate);
-
-        itemSelect?.addEventListener('change', syncAbbrFields);
-
-        vendorSelect?.addEventListener('change', function() {
-            syncAbbrFields();
-            reindexRows();
-        });
-
-        addMoreButton?.addEventListener('click', addRow);
-
-        // Remove row
-        tableBody?.addEventListener('click', function(event) {
-            if (!event.target.classList.contains('remove-row')) return;
-
-            event.preventDefault();
-            const row = event.target.closest('tr');
-            if (!row || row.id === emptyRowId) return;
-
-            row.remove();
-            ensureEmptyState();
-            reindexRows();
-        });
-
-
-        /* =====================================================
-           🚀 INITIAL LOAD
-        ===================================================== */
-        ensureEmptyState();
-        syncAbbrFields();
-        recalculate();
-        reindexRows();
-
+    /* =========================
+       BUILD DATA
+    ========================= */
+    const buildData = (lot, s) => ({
+        item_id: item.value,
+        lot_no: lot,
+        item_code: lot,
+        color: i.color.value || '',
+        qty_m: i.qty.value,
+        fold: i.fold.value,
+        rate: i.rate.value,
+        transport: i.transport.value || '',
+        lr_no: i.lr.value || '',
+        net_meter: i.net.value || '0.00',
+        amount: i.amt.value || '0.00',
+        sort_order: s
     });
+
+    /* =========================
+       HIDDEN INPUTS
+    ========================= */
+    const hidden = (idx, data) =>
+        Object.entries(data).map(([k,v]) =>
+            `<input type="hidden" name="items_data[${idx}][${k}]" value="${v}">`
+        ).join('');
+
+    /* =========================
+       REINDEX
+    ========================= */
+    const reindex = () => {
+        rows().forEach((r, iIdx) => {
+            const s = iIdx + 1;
+            const lot = lotNo(s);
+            const data = rowData(r);
+
+            data.lot_no = lot;
+            data.item_code = lot;
+            data.sort_order = s;
+
+            r.children[0].textContent = s + '.';
+            r.children[1].textContent = lot;
+
+            setRowData(r, data);
+
+            r.querySelector('.row-hidden-inputs').innerHTML =
+                hidden(iIdx, data);
+        });
+
+        updatePreview();
+        ensureEmptyState();
+    };
+
+    /* =========================
+       CLEAR
+    ========================= */
+    const clearInputs = () => {
+        ['qty','fold','rate','transport','lr','net','amt','color']
+            .forEach(k => i[k] && (i[k].value = ''));
+        item.value = '';
+    };
+
+    /* =========================
+       ADD ROW
+    ========================= */
+    const addRow = () => {
+
+        if (!item.value) return toastr.error('Select item');
+
+        // OPTIONAL: require color
+        if (!i.color.value.trim()) {
+            toastr.error('Enter color');
+            return;
+        }
+
+        // DUPLICATE CHECK (ITEM + COLOR)
+        if (isDuplicateItem(item.value, i.color.value)) {
+            toastr.error('Same item with same color already added');
+            return;
+        }
+
+        if (!i.qty.value || !i.fold.value || !i.rate.value)
+            return toastr.error('Enter qty, fold, rate');
+
+        ensureEmptyState();
+
+        const s = rows().length + 1;
+        const lot = lotNo(s);
+        const data = buildData(lot, s);
+
+        const r = document.createElement('tr');
+        setRowData(r, data);
+
+        r.innerHTML = `
+            <td>${s}.</td>
+            <td>${lot}</td>
+            <td>${name(item)}</td>
+            <td>${data.color}</td>
+            <td>${data.rate}</td>
+            <td>${data.qty_m}</td>
+            <td>${data.fold}</td>
+            <td>${data.transport}</td>
+            <td>${data.lr_no}</td>
+            <td>${data.net_meter}</td>
+            <td>${data.amount}</td>
+            <td><a href="#" class="remove-row">Remove</a></td>
+            <td class="d-none row-hidden-inputs">${hidden(s-1,data)}</td>
+        `;
+
+        table.appendChild(r);
+
+        clearInputs();
+        sync();
+        reindex();
+    };
+
+    /* =========================
+       EVENTS
+    ========================= */
+
+    ['qty','fold','rate'].forEach(k =>
+        i[k]?.addEventListener('input', calc)
+    );
+
+    item?.addEventListener('change', sync);
+
+    vendor?.addEventListener('change', function() {
+        sync();
+        reindex();
+
+        const vendorHidden = $('vendor_id_hidden');
+        if (this.value && vendorHidden) {
+            vendorHidden.value = this.value;
+            this.disabled = true;
+        }
+    });
+
+    addBtn?.addEventListener('click', addRow);
+
+    table?.addEventListener('click', e => {
+        if (!e.target.classList.contains('remove-row')) return;
+        e.preventDefault();
+
+        e.target.closest('tr').remove();
+        reindex();
+    });
+
+    i.bno?.addEventListener('change', function() {
+        if (this.value.trim()) this.readOnly = true;
+        updatePreview();
+        reindex();
+    });
+
+    /* =========================
+       INIT
+    ========================= */
+    sync();
+    calc();
+    reindex();
+    ensureEmptyState();
+
+});
 </script>
