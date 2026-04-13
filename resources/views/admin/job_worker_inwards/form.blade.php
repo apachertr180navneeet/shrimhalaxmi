@@ -81,7 +81,7 @@
 
         <div class="col-md-2">
             <label>Total Meter</label>
-            <input type="number" id="total_meter" class="form-control">
+            <input type="number" id="total_meter" class="form-control" readonly>
         </div>
 
         <div class="col-md-2">
@@ -219,7 +219,8 @@
             }
 
             shrinkagePercent = Math.max(0, Math.min(99.99, shrinkagePercent));
-            afterShrinkageMeter = meter - ((meter * shrinkagePercent) / 100);
+            const denominator = 100 - shrinkagePercent;
+            afterShrinkageMeter = denominator > 0 ? ((total * 100) / denominator) : 0;
             $('#shrinkage').val(shrinkagePercent.toFixed(2));
             $('#after_shrinkage_meter').val(afterShrinkageMeter.toFixed(2));
         }
