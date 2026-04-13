@@ -19,6 +19,8 @@ class OrderDispatchItem extends Model
         'meter',
         'rate',
         'amount',
+        'gst',
+        'total_amount',
         'sort_order',
     ];
 
@@ -26,6 +28,8 @@ class OrderDispatchItem extends Model
         'meter' => 'decimal:2',
         'rate' => 'decimal:2',
         'amount' => 'decimal:2',
+        'gst' => 'decimal:2',
+        'total_amount' => 'decimal:2',
     ];
 
     public function orderDispatch()

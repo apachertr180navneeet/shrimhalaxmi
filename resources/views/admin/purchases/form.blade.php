@@ -84,6 +84,25 @@
             grid-template-columns: 1fr;
         }
     }
+
+    /* =========================
+    FOCUS HIGHLIGHT EFFECT
+    ========================= */
+    .form-control:focus,
+    .form-select:focus {
+        border: 2px solid #007bff !important;
+        outline: none;
+        box-shadow: 0 0 6px rgba(0, 123, 255, 0.5);
+        background-color: #f0f8ff;
+        transform: scale(1.02);
+        transition: all 0.2s ease;
+    }
+
+    /* Active field class (extra strong highlight) */
+    .active-field {
+        border: 2px solid #28a745 !important;
+        background-color: #eaffea !important;
+    }
 </style>
 
 @php
@@ -606,6 +625,42 @@ document.addEventListener('DOMContentLoaded', () => {
     calc();
     reindex();
     ensureEmptyState();
+
+    /* =========================
+    FOCUS HIGHLIGHT (TAB SUPPORT)
+    ========================= */
+    document.querySelectorAll('.form-control, .form-select').forEach(el => {
+
+        el.addEventListener('focus', function () {
+
+            // Remove previous highlight
+            document.querySelectorAll('.active-field').forEach(e => {
+                e.classList.remove('active-field');
+            });
+
+            // Add highlight to current field
+            this.classList.add('active-field');
+        });
+
+    });
+
+    /* =========================
+    ENTER KEY = NEXT FIELD
+    ========================= */
+    const fields = document.querySelectorAll('.form-control, .form-select');
+
+    fields.forEach((field, index) => {
+        field.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+
+                let next = fields[index + 1];
+                if (next) {
+                    next.focus();
+                }
+            }
+        });
+    });
 
 });
 </script>

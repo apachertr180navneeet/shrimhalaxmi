@@ -88,7 +88,7 @@
 
 <h6 class="mt-4">Items Details</h6>
 <div class="row g-3">
-    <div class="col-md-3">
+    <div class="col-md-2">
         <label class="form-label">Item</label>
         <select id="item_id" class="form-select">
             <option value="">Select item</option>
@@ -97,23 +97,31 @@
             @endforeach
         </select>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-2">
         <label class="form-label">Lot No</label>
         <select id="lot_no" class="form-select" disabled>
             <option value="">Select lot</option>
         </select>
     </div>
-    <div class="col-md-2">
+    <div class="col-md-1">
         <label class="form-label">Meter</label>
         <input type="number" step="0.01" id="meter" class="form-control" placeholder="Meter">
     </div>
-    <div class="col-md-2">
+    <div class="col-md-1">
         <label class="form-label">Rate</label>
         <input type="number" step="0.01" id="rate" class="form-control" placeholder="Rate">
     </div>
     <div class="col-md-2">
         <label class="form-label">Amount</label>
         <input type="number" step="0.01" id="amount" class="form-control" placeholder="Amount" readonly>
+    </div>
+    <div class="col-md-2">
+        <label class="form-label">GST (18%)</label>
+        <input type="number" step="0.01" id="gst" class="form-control" placeholder="GST" readonly>
+    </div>
+    <div class="col-md-2">
+        <label class="form-label">Total Amount</label>
+        <input type="number" step="0.01" id="item_total_amount" class="form-control" placeholder="Total Amount" readonly>
     </div>
 </div>
 
@@ -130,6 +138,8 @@
                 <th>Meter</th>
                 <th>Rate</th>
                 <th>Amount</th>
+                <th>GST (18%)</th>
+                <th>Total Amount</th>
                 <th>Action</th>
             </tr>
         </thead>
@@ -141,6 +151,8 @@
                     <td>{{ number_format($row->meter, 2, '.', '') }}</td>
                     <td>{{ number_format($row->rate, 2, '.', '') }}</td>
                     <td>{{ number_format($row->amount, 2, '.', '') }}</td>
+                    <td>{{ number_format((float) ($row->gst ?? 0), 2, '.', '') }}</td>
+                    <td>{{ number_format((float) ($row->total_amount ?? $row->amount), 2, '.', '') }}</td>
                     <td><button type="button" class="btn btn-sm btn-danger removeItemBtn">Remove</button></td>
                     <td class="d-none">
                         <input type="hidden" name="items_data[{{ $index }}][item_id]" value="{{ $row->item_id }}">
@@ -149,12 +161,14 @@
                         <input type="hidden" name="items_data[{{ $index }}][meter]" value="{{ $row->meter }}">
                         <input type="hidden" name="items_data[{{ $index }}][rate]" value="{{ $row->rate }}">
                         <input type="hidden" name="items_data[{{ $index }}][amount]" value="{{ $row->amount }}">
+                        <input type="hidden" name="items_data[{{ $index }}][gst]" value="{{ $row->gst ?? 0 }}">
+                        <input type="hidden" name="items_data[{{ $index }}][total_amount]" value="{{ $row->total_amount ?? $row->amount }}">
                         <input type="hidden" name="items_data[{{ $index }}][sort_order]" value="{{ $row->sort_order }}">
                     </td>
                 </tr>
             @empty
                 <tr id="noItemsRow">
-                    <td colspan="6" class="text-center">No items added yet.</td>
+                    <td colspan="8" class="text-center">No items added yet.</td>
                 </tr>
             @endforelse
         </tbody>
@@ -183,7 +197,12 @@
     function refreshAmount() {
         var meter = toNumber(document.getElementById('meter').value);
         var rate = toNumber(document.getElementById('rate').value);
-        document.getElementById('amount').value = (meter * rate).toFixed(2);
+        var amount = meter * rate;
+        var gst = amount * 0.18;
+        var itemTotalAmount = amount + gst;
+        document.getElementById('amount').value = amount.toFixed(2);
+        document.getElementById('gst').value = gst.toFixed(2);
+        document.getElementById('item_total_amount').value = itemTotalAmount.toFixed(2);
     }
 
     function getDataRows() {
@@ -224,7 +243,7 @@
         document.querySelectorAll('#dispatchItemsBody tr').forEach(function (row) {
             if (row.id === 'noItemsRow') return;
             var meter = toNumber(row.querySelector('input[name$="[meter]"]').value);
-            var amount = toNumber(row.querySelector('input[name$="[amount]"]').value);
+            var amount = toNumber(row.querySelector('input[name$="[total_amount]"]').value);
             totalMeter += meter;
             totalAmount += amount;
         });
@@ -248,6 +267,8 @@
                 '<input type="hidden" name="items_data[' + (count - 1) + '][meter]" value="' + hiddenInputs.querySelector('input[name$="[meter]"]').value + '">' +
                 '<input type="hidden" name="items_data[' + (count - 1) + '][rate]" value="' + hiddenInputs.querySelector('input[name$="[rate]"]').value + '">' +
                 '<input type="hidden" name="items_data[' + (count - 1) + '][amount]" value="' + hiddenInputs.querySelector('input[name$="[amount]"]').value + '">' +
+                '<input type="hidden" name="items_data[' + (count - 1) + '][gst]" value="' + hiddenInputs.querySelector('input[name$="[gst]"]').value + '">' +
+                '<input type="hidden" name="items_data[' + (count - 1) + '][total_amount]" value="' + hiddenInputs.querySelector('input[name$="[total_amount]"]').value + '">' +
                 '<input type="hidden" name="items_data[' + (count - 1) + '][sort_order]" value="' + count + '">';
         });
     }
@@ -278,6 +299,8 @@
         var meter = toNumber(document.getElementById('meter').value);
         var rate = toNumber(document.getElementById('rate').value);
         var amount = toNumber(document.getElementById('amount').value);
+        var gst = toNumber(document.getElementById('gst').value);
+        var itemTotalAmount = toNumber(document.getElementById('item_total_amount').value);
 
         if (!itemId || !lotNo || meter <= 0 || rate <= 0) {
             toastr.error('Please fill item, lot no, meter and rate correctly.');
@@ -297,6 +320,8 @@
             '<td>' + meter.toFixed(2) + '</td>' +
             '<td>' + rate.toFixed(2) + '</td>' +
             '<td>' + amount.toFixed(2) + '</td>' +
+            '<td>' + gst.toFixed(2) + '</td>' +
+            '<td>' + itemTotalAmount.toFixed(2) + '</td>' +
             '<td><button type="button" class="btn btn-sm btn-danger removeItemBtn">Remove</button></td>' +
             '<td class="d-none">' +
             '<input type="hidden" name="items_data[' + rowCount + '][item_id]" value="' + itemId + '">' +
@@ -305,6 +330,8 @@
             '<input type="hidden" name="items_data[' + rowCount + '][meter]" value="' + meter + '">' +
             '<input type="hidden" name="items_data[' + rowCount + '][rate]" value="' + rate + '">' +
             '<input type="hidden" name="items_data[' + rowCount + '][amount]" value="' + amount + '">' +
+            '<input type="hidden" name="items_data[' + rowCount + '][gst]" value="' + gst + '">' +
+            '<input type="hidden" name="items_data[' + rowCount + '][total_amount]" value="' + itemTotalAmount + '">' +
             '<input type="hidden" name="items_data[' + rowCount + '][sort_order]" value="' + (rowCount + 1) + '">' +
             '</td>';
 
@@ -316,6 +343,8 @@
         document.getElementById('meter').value = '';
         document.getElementById('rate').value = '';
         document.getElementById('amount').value = '';
+        document.getElementById('gst').value = '';
+        document.getElementById('item_total_amount').value = '';
 
         updateTotals();
     });
@@ -327,7 +356,7 @@
             if (document.querySelectorAll('#dispatchItemsBody tr').length === 0) {
                 var noItemsRow = document.createElement('tr');
                 noItemsRow.id = 'noItemsRow';
-                noItemsRow.innerHTML = '<td colspan="6" class="text-center">No items added yet.</td>';
+                noItemsRow.innerHTML = '<td colspan="8" class="text-center">No items added yet.</td>';
                 document.getElementById('dispatchItemsBody').appendChild(noItemsRow);
             }
             reIndexItems();

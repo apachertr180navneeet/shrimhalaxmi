@@ -151,6 +151,8 @@ class OrderDispatchController extends Controller
             'items_data.*.meter' => 'required|numeric|min:0',
             'items_data.*.rate' => 'required|numeric|min:0',
             'items_data.*.amount' => 'required|numeric|min:0',
+            'items_data.*.gst' => 'required|numeric|min:0',
+            'items_data.*.total_amount' => 'required|numeric|min:0',
             'items_data.*.sort_order' => 'required|integer|min:1',
         ]);
 
@@ -171,7 +173,7 @@ class OrderDispatchController extends Controller
                     'transport' => $request->transport,
                     'status' => $request->status,
                     'total_meter' => $itemsData->sum(fn ($item) => (float) $item['meter']),
-                    'total_amount' => $itemsData->sum(fn ($item) => (float) $item['amount']),
+                    'total_amount' => $itemsData->sum(fn ($item) => (float) ($item['total_amount'] ?? $item['amount'] ?? 0)),
                 ]);
 
                 foreach ($itemsData as $itemRow) {
@@ -183,6 +185,8 @@ class OrderDispatchController extends Controller
                         'meter' => $itemRow['meter'],
                         'rate' => $itemRow['rate'],
                         'amount' => $itemRow['amount'],
+                        'gst' => $itemRow['gst'] ?? 0,
+                        'total_amount' => $itemRow['total_amount'] ?? $itemRow['amount'],
                         'sort_order' => $itemRow['sort_order'],
                     ]);
 
@@ -246,6 +250,8 @@ class OrderDispatchController extends Controller
             'items_data.*.meter' => 'required|numeric|min:0',
             'items_data.*.rate' => 'required|numeric|min:0',
             'items_data.*.amount' => 'required|numeric|min:0',
+            'items_data.*.gst' => 'required|numeric|min:0',
+            'items_data.*.total_amount' => 'required|numeric|min:0',
             'items_data.*.sort_order' => 'required|integer|min:1',
         ]);
 
@@ -273,7 +279,7 @@ class OrderDispatchController extends Controller
                     'transport' => $request->transport,
                     'status' => $request->status,
                     'total_meter' => $itemsData->sum(fn ($item) => (float) $item['meter']),
-                    'total_amount' => $itemsData->sum(fn ($item) => (float) $item['amount']),
+                    'total_amount' => $itemsData->sum(fn ($item) => (float) ($item['total_amount'] ?? $item['amount'] ?? 0)),
                 ]);
 
                 $dispatch->items()->delete();
@@ -287,6 +293,8 @@ class OrderDispatchController extends Controller
                         'meter' => $itemRow['meter'],
                         'rate' => $itemRow['rate'],
                         'amount' => $itemRow['amount'],
+                        'gst' => $itemRow['gst'] ?? 0,
+                        'total_amount' => $itemRow['total_amount'] ?? $itemRow['amount'],
                         'sort_order' => $itemRow['sort_order'],
                     ]);
 
