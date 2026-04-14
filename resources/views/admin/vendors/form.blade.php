@@ -169,12 +169,65 @@
         <div class="form-row-custom w-50">
             <label>State</label>
             <div class="form-group-custom">
+                @php
+                    $states = [
+                        'Andhra Pradesh',
+                        'Arunachal Pradesh',
+                        'Assam',
+                        'Bihar',
+                        'Chhattisgarh',
+                        'Goa',
+                        'Gujarat',
+                        'Haryana',
+                        'Himachal Pradesh',
+                        'Jharkhand',
+                        'Karnataka',
+                        'Kerala',
+                        'Madhya Pradesh',
+                        'Maharashtra',
+                        'Manipur',
+                        'Meghalaya',
+                        'Mizoram',
+                        'Nagaland',
+                        'Odisha',
+                        'Punjab',
+                        'Rajasthan',
+                        'Sikkim',
+                        'Tamil Nadu',
+                        'Telangana',
+                        'Tripura',
+                        'Uttar Pradesh',
+                        'Uttarakhand',
+                        'West Bengal',
+                        'Andaman and Nicobar Islands',
+                        'Chandigarh',
+                        'Dadra and Nagar Haveli and Daman and Diu',
+                        'Delhi',
+                        'Jammu and Kashmir',
+                        'Ladakh',
+                        'Lakshadweep',
+                        'Puducherry',
+                    ];
+                    $selectedState = old('state', $vendor->state ?? '');
+                @endphp
 
                 <!-- Input: State -->
-                <input type="text" name="state"
-                    class="form-control"
-                    value="{{ old('state', $vendor->state ?? '') }}">
+                <select name="state" id="state"
+                    class="form-control state-select @error('state') is-invalid @enderror">
+                    <option value="">Select State</option>
+                    @foreach ($states as $state)
+                        <option value="{{ $state }}" {{ $selectedState === $state ? 'selected' : '' }}>
+                            {{ $state }}
+                        </option>
+                    @endforeach
+                    @if ($selectedState && !in_array($selectedState, $states))
+                        <option value="{{ $selectedState }}" selected>{{ $selectedState }}</option>
+                    @endif
+                </select>
 
+                @error('state')
+                    <div class="error-text">{{ $message }}</div>
+                @enderror
             </div>
         </div>
 

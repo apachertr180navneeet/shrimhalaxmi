@@ -224,11 +224,12 @@ $(function () {
     $(document).on('click', '.deleteBtn', function () {
 
         let id = $(this).data('id');
+        let deleteUrl = "{{ route('admin.customers.delete', ':id') }}".replace(':id', id);
 
         if(confirm('Delete this customer?')) {
 
             $.ajax({
-                url: '/admin/customers/delete/' + id,
+                url: deleteUrl,
                 type: 'DELETE',
                 data: { _token: "{{ csrf_token() }}" },
                 success: function () {

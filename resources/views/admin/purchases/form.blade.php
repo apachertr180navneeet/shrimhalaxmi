@@ -208,8 +208,16 @@
     </div>
 
     <div class="purchase-field-grid">
-        <label>Color</label>
-        <input type="text" id="color" class="form-control" value="{{ old('color', $purchase['color'] ?? '') }}">
+        <label>Stage</label>
+        <select id="color" class="form-select select2-stage" data-placeholder="Select Stage">
+            <option value="">Select Stage</option>
+            @php $selectedStage = old('color', $purchase['color'] ?? ''); @endphp
+            <option value="Grey" {{ $selectedStage === 'Grey' ? 'selected' : '' }}>Grey</option>
+            <option value="Bleach" {{ $selectedStage === 'Bleach' ? 'selected' : '' }}>Bleach</option>
+            <option value="Dyed" {{ $selectedStage === 'Dyed' ? 'selected' : '' }}>Dyed</option>
+            <option value="RFD" {{ $selectedStage === 'RFD' ? 'selected' : '' }}>RFD</option>
+            <option value="Tie-Dye" {{ $selectedStage === 'Tie-Dye' ? 'selected' : '' }}>Tie-Dye</option>
+        </select>
     </div>
 
     <div class="purchase-field-grid">
@@ -261,7 +269,7 @@
                     <th>Sr. No.</th>
                     <th>LOT No.</th>
                     <th>Item Name</th>
-                    <th>Color</th>
+                    <th>Stage</th>
                     <th>Rate</th>
                     <th>Qty. (M)</th>
                     <th>Fold</th>
@@ -426,16 +434,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     /* =========================
-       DUPLICATE CHECK (UPDATED)
-    ========================= */
-    function isDuplicateItem(itemId, color) {
-        return rows().some(r =>
-            rowData(r).item_id == itemId &&
-            (rowData(r).color || '').toLowerCase() === (color || '').toLowerCase()
-        );
-    }
-
-    /* =========================
        LOT NUMBER
     ========================= */
     const lotNo = s =>
@@ -536,13 +534,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // OPTIONAL: require color
         if (!i.color.value.trim()) {
-            toastr.error('Enter color');
-            return;
-        }
-
-        // DUPLICATE CHECK (ITEM + COLOR)
-        if (isDuplicateItem(item.value, i.color.value)) {
-            toastr.error('Same item with same color already added');
+            toastr.error('Select stage');
             return;
         }
 
@@ -625,6 +617,14 @@ document.addEventListener('DOMContentLoaded', () => {
     calc();
     reindex();
     ensureEmptyState();
+
+    if (window.jQuery && window.jQuery.fn && window.jQuery.fn.select2) {
+        window.jQuery('#color').select2({
+            placeholder: 'Select Stage',
+            allowClear: true,
+            width: '100%'
+        });
+    }
 
     /* =========================
     FOCUS HIGHLIGHT (TAB SUPPORT)

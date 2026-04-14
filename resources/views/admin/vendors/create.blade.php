@@ -1,6 +1,7 @@
 @extends('admin.layouts.app')
 
 @section('style')
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <style>
 
     /* =========================
@@ -51,6 +52,25 @@
     /* Invalid input border */
     .is-invalid {
         border: 1px solid red;
+    }
+
+    .select2-container .select2-selection--single {
+        height: 38px !important;
+        border-radius: 6px !important;
+        border: 1px solid #d9dee3 !important;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 36px !important;
+        padding-left: 10px !important;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 36px !important;
+    }
+
+    .select2-container {
+        width: 100% !important;
     }
 
 </style>
@@ -112,4 +132,17 @@
 
 </div>
 
+@endsection
+
+@section('script')
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $('.state-select').select2({
+            placeholder: 'Select State',
+            allowClear: true,
+            width: '100%'
+        });
+    });
+</script>
 @endsection

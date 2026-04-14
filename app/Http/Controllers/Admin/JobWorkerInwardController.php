@@ -21,7 +21,6 @@ class JobWorkerInwardController extends Controller
     {
         $this->middleware('permission:inward-list', ['only' => ['index']]);
         $this->middleware('permission:inward-create', ['only' => ['create','store']]);
-        $this->middleware('permission:inward-edit', ['only' => ['edit','update']]);
         $this->middleware('permission:inward-delete', ['only' => ['destroy']]);
     }
 
@@ -153,11 +152,29 @@ class JobWorkerInwardController extends Controller
             return DataTables::of($query)
                 ->addColumn('date', fn ($row) => optional($row->inward_date)->format('d/m/Y') ?: '-')
                 ->addColumn('job_worker_name', fn ($row) => $row->jobWorker?->name ?: '-')
+                ->addColumn('status', function ($row) {
+                    $isApproved = $row->status === 'active';
+                    $label = $isApproved ? 'Approved' : 'Pending';
+                    $badgeClass = $isApproved ? 'success' : 'warning';
+
+                    return '<span class="badge bg-' . $badgeClass . '">' . $label . '</span>';
+                })
                 ->addColumn('action', function ($row) {
-                    return '<a href="' . route('admin.jobworkerinwards.edit', $row->id) . '" class="btn btn-sm btn-primary">Edit</a>' .
+                    $isApproved = $row->status === 'active';
+
+                    $editButton = $isApproved
+                        ? '<button class="btn btn-sm btn-secondary" disabled>Approved</button>'
+                        : '<a href="' . route('admin.jobworkerinwards.edit', $row->id) . '" class="btn btn-sm btn-primary">Edit</a>';
+
+                    $approveButton = $isApproved
+                        ? ''
+                        : ' <button class="btn btn-sm btn-success approveBtn" data-id="' . $row->id . '">Approve</button>';
+
+                    return $editButton .
+                        $approveButton .
                         ' <button class="btn btn-sm btn-danger deleteBtn" data-id="' . $row->id . '">Delete</button>';
                 })
-                ->rawColumns(['action'])
+                ->rawColumns(['status', 'action'])
                 ->make(true);
         } catch (\Exception $e) {
             \Log::error('JobWorkerInward DataTable Error: ' . $e->getMessage());
@@ -333,7 +350,50 @@ class JobWorkerInwardController extends Controller
             return redirect()->route('admin.jobworkerinwards.index')->with('success', 'Job worker inward updated successfully');
         } catch (\Exception $e) {
             \Log::error('JobWorkerInward Update Error: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Something went wrong')->withInput();
+            return redirect()->back()->with('error', $e->getMessage() ?: 'Something went wrong')->withInput();
+        }
+    }
+
+    public function changeStatus($id)
+    {
+        try {
+            $inward = JobWorkerInward::findOrFail($id);
+
+            $currentStatus = $inward->status ?? 'inactive';
+
+            // Already approved
+            if ($currentStatus === 'active') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This inward is already approved and cannot be changed again.',
+                ], 422);
+            }
+
+            // Only allow inactive → active
+            if ($currentStatus !== 'inactive') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Only pending inwards can be approved.',
+                ], 422);
+            }
+
+            // Update status
+            $inward->status = 'active';
+            $inward->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Job worker inward approved successfully.',
+            ]);
+
+        } catch (\Exception $e) {
+
+            \Log::error('JobWorkerInward Status Error: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Unable to update status.',
+            ], 500);
         }
     }
 

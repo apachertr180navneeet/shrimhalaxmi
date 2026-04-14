@@ -318,15 +318,15 @@ class AdminAuthController extends Controller
         // Monthly Dispatch (assuming JobWorkerInward as dispatch)
         $monthlyDispatch = [
             'total' => JobWorkerInward::whereMonth('inward_date', now()->month)->whereYear('inward_date', now()->year)->count(),
-            'completed' => JobWorkerInward::whereMonth('inward_date', now()->month)->whereYear('inward_date', now()->year)->where('status', 'completed')->count(),
-            'pending' => JobWorkerInward::whereMonth('inward_date', now()->month)->whereYear('inward_date', now()->year)->whereIn('status', ['pending', 'active'])->count(),
+            'completed' => JobWorkerInward::whereMonth('inward_date', now()->month)->whereYear('inward_date', now()->year)->where('status', 'active')->count(),
+            'pending' => JobWorkerInward::whereMonth('inward_date', now()->month)->whereYear('inward_date', now()->year)->where('status', 'pending')->count(),
         ];
 
         // Today Dispatch
         $todayDispatch = [
             'total' => JobWorkerInward::whereDate('inward_date', today())->count(),
-            'completed' => JobWorkerInward::whereDate('inward_date', today())->where('status', 'completed')->count(),
-            'pending' => JobWorkerInward::whereDate('inward_date', today())->whereIn('status', ['pending', 'active'])->count(),
+            'completed' => JobWorkerInward::whereDate('inward_date', today())->where('status', 'active')->count(),
+            'pending' => JobWorkerInward::whereDate('inward_date', today())->where('status', 'pending')->count(),
         ];
 
         return view("admin.dashboard.index", compact(

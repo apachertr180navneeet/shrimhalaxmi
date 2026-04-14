@@ -127,6 +127,66 @@
                     value="{{ old('gst_no', $customer->gst_no ?? '') }}"
                     placeholder="GST number">
             </div>
+
+            <div class="col-md-6">
+                <label class="form-label">State</label>
+                @php
+                    $states = [
+                        'Andhra Pradesh',
+                        'Arunachal Pradesh',
+                        'Assam',
+                        'Bihar',
+                        'Chhattisgarh',
+                        'Goa',
+                        'Gujarat',
+                        'Haryana',
+                        'Himachal Pradesh',
+                        'Jharkhand',
+                        'Karnataka',
+                        'Kerala',
+                        'Madhya Pradesh',
+                        'Maharashtra',
+                        'Manipur',
+                        'Meghalaya',
+                        'Mizoram',
+                        'Nagaland',
+                        'Odisha',
+                        'Punjab',
+                        'Rajasthan',
+                        'Sikkim',
+                        'Tamil Nadu',
+                        'Telangana',
+                        'Tripura',
+                        'Uttar Pradesh',
+                        'Uttarakhand',
+                        'West Bengal',
+                        'Andaman and Nicobar Islands',
+                        'Chandigarh',
+                        'Dadra and Nagar Haveli and Daman and Diu',
+                        'Delhi',
+                        'Jammu and Kashmir',
+                        'Ladakh',
+                        'Lakshadweep',
+                        'Puducherry',
+                    ];
+                    $selectedState = old('state', $customer->state ?? '');
+                @endphp
+                <select name="state" id="state"
+                    class="form-control state-select @error('state') is-invalid @enderror">
+                    <option value="">Select State</option>
+                    @foreach ($states as $state)
+                        <option value="{{ $state }}" {{ $selectedState === $state ? 'selected' : '' }}>
+                            {{ $state }}
+                        </option>
+                    @endforeach
+                    @if ($selectedState && !in_array($selectedState, $states))
+                        <option value="{{ $selectedState }}" selected>{{ $selectedState }}</option>
+                    @endif
+                </select>
+                @error('state')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
         </div>
     </div>
 </div>

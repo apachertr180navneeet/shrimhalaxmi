@@ -59,6 +59,7 @@
                         <th>Date</th>
                         <th>CH No.</th>
                         <th>Job Worker</th>
+                        <th>Status</th>
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -89,6 +90,7 @@ $(function () {
             { data: 'date', name: 'inward_date' },
             { data: 'ch_no', name: 'ch_no' },
             { data: 'job_worker_name', orderable: false, searchable: false },
+            { data: 'status', orderable: false, searchable: false },
             { data: 'action', orderable: false, searchable: false }
         ]
     });
@@ -122,11 +124,40 @@ $(function () {
         }).then((result) => {
             if (result.isConfirmed) {
                 $.ajax({
-                    url: '/admin/job-worker-inwards/delete/' + id,
+                    url: "{{ route('admin.jobworkerinwards.delete', ['id' => '__id__']) }}".replace('__id__', id),
                     type: 'DELETE',
                     data: { _token: "{{ csrf_token() }}" },
                     success: function () {
                         toastr.success('Job worker inward deleted successfully');
+                        table.ajax.reload();
+                    }
+                });
+            }
+        });
+    });
+
+    $(document).on('click', '.approveBtn', function () {
+        let id = $(this).data('id');
+
+        Swal.fire({
+            title: 'Approve this inward?',
+            text: 'Once approved, status cannot be changed again.',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, Approve'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: "{{ route('admin.jobworkerinwards.status', ['id' => '__id__']) }}".replace('__id__', id),
+                    type: 'POST',
+                    data: { _token: "{{ csrf_token() }}" },
+                    success: function (res) {
+                        toastr.success(res.message || 'Approved successfully');
+                        table.ajax.reload();
+                    },
+                    error: function (xhr) {
+                        let message = xhr.responseJSON?.message || 'Unable to approve';
+                        toastr.error(message);
                         table.ajax.reload();
                     }
                 });

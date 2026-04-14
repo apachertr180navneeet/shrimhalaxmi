@@ -112,7 +112,7 @@ class CustomerController extends Controller
             }
 
             Customer::create($request->only([
-                'name','abbr','phone','email','location','address_2','firm_name','gst_no'
+                'name','abbr','phone','email','location','address_2','firm_name','gst_no','state'
             ]));
 
             return redirect()->route('admin.customers.index')
@@ -175,7 +175,7 @@ class CustomerController extends Controller
             }
 
             Customer::findOrFail($id)->update($request->only([
-                'name','abbr','phone','email','location','address_2','firm_name','gst_no'
+                'name','abbr','phone','email','location','address_2','firm_name','gst_no','state'
             ]));
 
             return redirect()->route('admin.customers.index')

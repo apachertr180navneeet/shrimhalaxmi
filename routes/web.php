@@ -118,6 +118,7 @@ Route::name('admin.')->prefix('admin')->group(function () {
             Route::post('/store', [JobWorkerInwardController::class, 'store'])->name('store');
             Route::get('/edit/{id}', [JobWorkerInwardController::class, 'edit'])->name('edit');
             Route::post('/update/{id}', [JobWorkerInwardController::class, 'update'])->name('update');
+            Route::post('/status/{id}', [JobWorkerInwardController::class, 'changeStatus'])->name('status');
             Route::delete('/delete/{id}', [JobWorkerInwardController::class, 'delete'])->name('delete');
         });
 
