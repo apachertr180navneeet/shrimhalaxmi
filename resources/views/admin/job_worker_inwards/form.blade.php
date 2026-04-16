@@ -12,13 +12,13 @@
         <div class="col-md-3">
             <label>Date</label>
             <input type="date" name="inward_date" class="form-control"
-                   value="{{ old('inward_date', $inward['inward_date'] ?? '') }}">
+                value="{{ old('inward_date', $inward['inward_date'] ?? '') }}">
         </div>
 
         <div class="col-md-3">
             <label>JICH NO</label>
-            <input type="text" name="ch_no" class="form-control"
-                   value="{{ old('ch_no', $inward['ch_no'] ?? '') }}" readonly>
+            <input type="text" name="ch_no" class="form-control" value="{{ old('ch_no', $inward['ch_no'] ?? '') }}"
+                readonly>
         </div>
 
         <div class="col-md-3">
@@ -42,16 +42,18 @@
 
     <div class="row g-3 align-items-end">
 
+        <!-- LOT FIRST -->
         <div class="col-md-2">
-            <label>Item</label>
-            <select id="item_id" class="form-control">
+            <label>LOT NO</label>
+            <select id="lot_no" class="form-control">
                 <option value="">Select</option>
             </select>
         </div>
 
+        <!-- ITEM SECOND -->
         <div class="col-md-2">
-            <label>LOT NO</label>
-            <select id="lot_no" class="form-control" disabled>
+            <label>Item</label>
+            <select id="item_id" class="form-control" disabled>
                 <option value="">Select</option>
             </select>
         </div>
@@ -106,407 +108,224 @@
 <div class="p-3">
     <table class="table table-bordered text-center" id="itemTable">
         <thead class="table-light">
-        <tr>
-            <th>SR</th>
-            <th>LOT NO</th>
-            <th>Item</th>
-            <th>Color</th>
-            <th>Meter</th>
-            <th>Fold</th>
-            <th>Total</th>
-            <th>Shrinkage</th>
-            <th>After Shrinkage</th>
-            <th>Type</th>
-            <th>Action</th>
-        </tr>
+            <tr>
+                <th>SR</th>
+                <th>LOT NO</th>
+                <th>Item</th>
+                <th>Color</th>
+                <th>Meter</th>
+                <th>Fold</th>
+                <th>Total</th>
+                <th>Shrinkage</th>
+                <th>After Shrinkage</th>
+                <th>Type</th>
+                <th>Action</th>
+            </tr>
         </thead>
         <tbody id="itemTableBody">
-        @if($itemRows->isEmpty())
-            <tr id="no_item_row">
-                <td colspan="11" class="text-center">No items added yet.</td>
-            </tr>
-        @else
-            @foreach($itemRows as $rowIndex => $row)
-                @php
-                    $rowShrinkage = (float) ($row->shrinkage ?? 0);
-                    $rowMeter = (float) ($row->meter ?? 0);
-                    $rowAfterShrinkage = $rowMeter - (($rowMeter * $rowShrinkage) / 100);
-                @endphp
-                <tr data-item-id="{{ $row->item_id }}" data-lot-no="{{ $row->lot_no }}" data-source-lot="{{ $row->source_lot_no ?? $row->lot_no }}" data-quality="{{ $row->quality }}" data-meter="{{ $row->meter }}" data-fold="{{ $row->fold }}" data-total="{{ $row->total_meter }}" data-shrinkage="{{ $row->shrinkage }}" data-after-shrinkage="{{ number_format($rowAfterShrinkage, 2, '.', '') }}" data-type="{{ $row->type }}">
-                    <td>{{ $rowIndex + 1 }}</td>
-                    <td>{{ $row->lot_no }}</td>
-                    <td>{{ $row->item?->item_name }}</td>
-                    <td>{{ $row->quality }}</td>
-                    <td>{{ $row->meter }}</td>
-                    <td>{{ $row->fold }}</td>
-                    <td>{{ $row->total_meter }}</td>
-                    <td>{{ $row->shrinkage }}</td>
-                    <td>{{ number_format($rowAfterShrinkage, 2, '.', '') }}</td>
-                    <td>{{ $row->type }}</td>
-                    <td><button class="btn btn-danger btn-sm removeRow" type="button">Delete</button></td>
-                    <td class="d-none row-hidden-inputs">
-                        <input type="hidden" name="items_data[{{ $rowIndex }}][item_id]" value="{{ $row->item_id }}">
-                        <input type="hidden" name="items_data[{{ $rowIndex }}][lot_no]" value="{{ $row->lot_no }}">
-                        <input type="hidden" name="items_data[{{ $rowIndex }}][source_lot_no]" value="{{ $row->source_lot_no ?? $row->lot_no }}">
-                        <input type="hidden" name="items_data[{{ $rowIndex }}][quality]" value="{{ $row->quality }}">
-                        <input type="hidden" name="items_data[{{ $rowIndex }}][meter]" value="{{ $row->meter }}">
-                        <input type="hidden" name="items_data[{{ $rowIndex }}][fold]" value="{{ $row->fold }}">
-                        <input type="hidden" name="items_data[{{ $rowIndex }}][total_meter]" value="{{ $row->total_meter }}">
-                        <input type="hidden" name="items_data[{{ $rowIndex }}][shrinkage]" value="{{ $row->shrinkage }}">
-                        <input type="hidden" name="items_data[{{ $rowIndex }}][type]" value="{{ $row->type }}">
-                    </td>
+            @if ($itemRows->isEmpty())
+                <tr id="no_item_row">
+                    <td colspan="11" class="text-center">No items added yet.</td>
                 </tr>
-            @endforeach
-        @endif
+            @else
+                @foreach ($itemRows as $rowIndex => $row)
+                    @php
+                        $rowShrinkage = (float) ($row->shrinkage ?? 0);
+                        $rowMeter = (float) ($row->meter ?? 0);
+                        $rowAfterShrinkage = $rowMeter - ($rowMeter * $rowShrinkage) / 100;
+                    @endphp
+                    <tr data-item-id="{{ $row->item_id }}" data-lot-no="{{ $row->lot_no }}"
+                        data-source-lot="{{ $row->source_lot_no ?? $row->lot_no }}" data-quality="{{ $row->quality }}"
+                        data-meter="{{ $row->meter }}" data-fold="{{ $row->fold }}"
+                        data-total="{{ $row->total_meter }}" data-shrinkage="{{ $row->shrinkage }}"
+                        data-after-shrinkage="{{ number_format($rowAfterShrinkage, 2, '.', '') }}"
+                        data-type="{{ $row->type }}">
+                        <td>{{ $rowIndex + 1 }}</td>
+                        <td>{{ $row->lot_no }}</td>
+                        <td>{{ $row->item?->item_name }}</td>
+                        <td>{{ $row->quality }}</td>
+                        <td>{{ $row->meter }}</td>
+                        <td>{{ $row->fold }}</td>
+                        <td>{{ $row->total_meter }}</td>
+                        <td>{{ $row->shrinkage }}</td>
+                        <td>{{ number_format($rowAfterShrinkage, 2, '.', '') }}</td>
+                        <td>{{ $row->type }}</td>
+                        <td><button class="btn btn-danger btn-sm removeRow" type="button">Delete</button></td>
+                        <td class="d-none row-hidden-inputs">
+                            <input type="hidden" name="items_data[{{ $rowIndex }}][item_id]"
+                                value="{{ $row->item_id }}">
+                            <input type="hidden" name="items_data[{{ $rowIndex }}][lot_no]"
+                                value="{{ $row->lot_no }}">
+                            <input type="hidden" name="items_data[{{ $rowIndex }}][source_lot_no]"
+                                value="{{ $row->source_lot_no ?? $row->lot_no }}">
+                            <input type="hidden" name="items_data[{{ $rowIndex }}][quality]"
+                                value="{{ $row->quality }}">
+                            <input type="hidden" name="items_data[{{ $rowIndex }}][meter]"
+                                value="{{ $row->meter }}">
+                            <input type="hidden" name="items_data[{{ $rowIndex }}][fold]"
+                                value="{{ $row->fold }}">
+                            <input type="hidden" name="items_data[{{ $rowIndex }}][total_meter]"
+                                value="{{ $row->total_meter }}">
+                            <input type="hidden" name="items_data[{{ $rowIndex }}][shrinkage]"
+                                value="{{ $row->shrinkage }}">
+                            <input type="hidden" name="items_data[{{ $rowIndex }}][type]"
+                                value="{{ $row->type }}">
+                        </td>
+                    </tr>
+                @endforeach
+            @endif
         </tbody>
     </table>
 </div>
 
 @section('script')
-<script>
-    const lotSources = @json($lotSources->toArray());
-    const itemTableBody = $('#itemTableBody');
-    const jobWorkerSelect = $('[name="job_worker_id"]');
-    const itemSelect = $('#item_id');
+    <script>
+        const lotSources = @json($lotSources->toArray());
 
-    function toNumber(value) {
-        const n = parseFloat(value);
-        return isNaN(n) ? 0 : n;
-    }
-
-    function sourceRemainingMeter(source) {
-        if (!source) return 0;
-        const remaining = toNumber(source.remaining_meter);
-        if (remaining > 0) return remaining;
-        return toNumber(source.meter);
-    }
-
-    function calculateValues(triggerField = '') {
-        const meter = parseFloat($('#meter').val()) || 0;
-        const fold = parseFloat($('#fold').val()) || 0;
-        const type = ($('#type').val() || '').toString().trim();
-        const shrinkageRaw = ($('#shrinkage').val() || '').toString().trim();
-        const afterRaw = ($('#after_shrinkage_meter').val() || '').toString().trim();
-        let shrinkagePercent = parseFloat(shrinkageRaw) || 0;
-        let afterShrinkageMeter = parseFloat(afterRaw) || 0;
-
-        // Total meter remains meter * fold / 100 (common)
-        if (type === 'LOT TO LOT') {
-            const baseTotal = (meter * fold) / 100;
-            $('#total_meter').val(baseTotal ? baseTotal.toFixed(2) : '');
-            // Rule 1: lot-to-lot -> after shrinkage input se hi % niklega
-            if (afterRaw === '') {
-                $('#shrinkage').val('');
-                return;
-            }
-
-            if (meter > 0) {
-                // Shrinkage % = ((Meter - AfterShrinkageMeter) / Meter) * 100
-                shrinkagePercent = ((meter - afterShrinkageMeter) / meter) * 100;
-            } else {
-                shrinkagePercent = 0;
-            }
-
-            $('#shrinkage').val(shrinkagePercent.toFixed(2));
-        } else {
-            // Rule 2: lot-to-part -> % input se after-shrinkage niklega
-            const total = (meter * fold) / 100;
-            $('#total_meter').val(total ? total.toFixed(2) : '');
-
-            if (shrinkageRaw === '') {
-                $('#after_shrinkage_meter').val('');
-                return;
-            }
-
-            shrinkagePercent = Math.max(0, Math.min(99.99, shrinkagePercent));
-            const denominator = 100 - shrinkagePercent;
-            afterShrinkageMeter = denominator > 0 ? ((total * 100) / denominator) : 0;
-            $('#shrinkage').val(shrinkagePercent.toFixed(2));
-            $('#after_shrinkage_meter').val(afterShrinkageMeter.toFixed(2));
-        }
-    }
-
-    function updateTypeBehaviour() {
-        const type = ($('#type').val() || '').toString().trim();
-        const isLotToLot = type === 'LOT TO LOT';
-        $('#shrinkage').prop('readonly', isLotToLot);
-        $('#total_meter').prop('readonly', false);
-        $('#after_shrinkage_meter').prop('readonly', !isLotToLot);
-        $('#shrinkage').val('');
-        $('#after_shrinkage_meter').val('');
-        calculateValues();
-    }
-
-    function generateInwardLotNo() {
-        const selectedWorker = jobWorkerSelect.find('option:selected');
-        const abbr = (selectedWorker.data('abbr') || 'JW').toString().trim();
-        const chNo = ($('input[name="ch_no"]').val() || '').toString().trim() || 'CH0000';
-
-        let maxSerial = 0;
-        itemTableBody.find('tr').not('#no_item_row').each(function () {
-            const currentLot = ($(this).data('lot-no') || '').toString().trim();
-            const match = currentLot.match(/\/(\d{5})$/);
-            if (!match) return;
-            const serial = parseInt(match[1], 10);
-            if (!isNaN(serial) && serial > maxSerial) {
-                maxSerial = serial;
-            }
-        });
-
-        const nextSerial = String(maxSerial + 1).padStart(5, '0');
-        return abbr + '/' + chNo + '/' + nextSerial;
-    }
-
-    function filteredSources() {
-        const jobWorkerId = jobWorkerSelect.val();
-        if (!jobWorkerId) return [];
-
-        return lotSources.filter(function (source) {
-            return String(source.job_worker_id) === String(jobWorkerId)
-                && sourceRemainingMeter(source) > 0;
-        });
-    }
-
-    function populateItemDropdown() {
-        const sources = filteredSources();
-        const seenItems = new Set();
-
-        itemSelect.empty().append('<option value="">Select</option>');
-
-        sources.forEach(function (source) {
-            if (!source.item_id || seenItems.has(String(source.item_id))) return;
-            seenItems.add(String(source.item_id));
-
-            const itemName = (source.item_name || '').toString().trim();
-            if (!itemName) return;
-
-            itemSelect.append('<option value="' + source.item_id + '">' + itemName + '</option>');
-        });
-
-        itemSelect.prop('disabled', seenItems.size === 0);
-    }
-
-    function findSourceByItemAndLot(itemId, lotNo) {
-        if (!itemId || !lotNo) return null;
-        return filteredSources().find(function (source) {
-            return String(source.item_id) === String(itemId) && String(source.lot_no) === String(lotNo);
-        }) || null;
-    }
-
-    function populateLotDropdown(itemId) {
+        const jobWorkerSelect = $('[name="job_worker_id"]');
         const lotSelect = $('#lot_no');
-        lotSelect.empty().append('<option value="">Select</option>');
+        const itemSelect = $('#item_id');
 
-        if (!itemId) {
-            lotSelect.prop('disabled', true);
-            return;
+        function toNumber(val) {
+            return parseFloat(val) || 0;
         }
 
-        const seenLots = new Set();
-        filteredSources().forEach(function (source) {
-            if (String(source.item_id) !== String(itemId)) return;
-            const lotNo = (source.lot_no || '').toString().trim();
-            if (!lotNo || seenLots.has(lotNo)) return;
-            seenLots.add(lotNo);
-            const remaining = sourceRemainingMeter(source);
-            lotSelect.append('<option value="' + lotNo + '">' + lotNo + ' (Remain: ' + remaining.toFixed(2) + ')</option>');
-        });
+        /* ===============================
+           FILTER SOURCES
+        ================================*/
+        function filteredSources() {
+            const jobWorkerId = jobWorkerSelect.val();
 
-        lotSelect.prop('disabled', seenLots.size === 0);
-    }
+            if (!jobWorkerId) return [];
 
-    function autoFillFromSelection() {
-        const itemId = $('#item_id').val();
-        const lotNo = $('#lot_no').val();
-        const source = findSourceByItemAndLot(itemId, lotNo);
-        const colorValue = source ? (source.quality || source.colour || source.color || '') : '';
-        const remainingMeter = sourceRemainingMeter(source);
-        $('#quality').val(colorValue);
-        $('#meter').val(source ? (remainingMeter ? remainingMeter.toFixed(2) : '') : '');
-        $('#fold').val(source ? (source.fold || '') : '');
-        calculateValues();
-    }
-
-    function setRowHiddenInputs(row, index) {
-        const itemId = row.data('item-id') || '';
-        const lotNo = row.data('lot-no') || '';
-        const sourceLotNo = row.data('source-lot') || lotNo;
-        const quality = row.data('quality') || '';
-        const meter = row.data('meter') || '';
-        const fold = row.data('fold') || '';
-        const total = row.data('total') || '';
-        const shrinkage = row.data('shrinkage') || '';
-        const afterShrinkage = row.data('after-shrinkage') || '';
-        const type = row.data('type') || '';
-
-        let hidden = row.find('.row-hidden-inputs');
-        if (!hidden.length) {
-            hidden = $('<td class="d-none row-hidden-inputs"></td>');
-            row.append(hidden);
+            return lotSources.filter(s =>
+                String(s.job_worker_id) === String(jobWorkerId) &&
+                parseFloat(s.remaining_meter) > 0
+            );
         }
 
-        hidden.html(
-            '<input type="hidden" name="items_data[' + index + '][item_id]" value="' + itemId + '">' +
-            '<input type="hidden" name="items_data[' + index + '][lot_no]" value="' + lotNo + '">' +
-            '<input type="hidden" name="items_data[' + index + '][source_lot_no]" value="' + sourceLotNo + '">' +
-            '<input type="hidden" name="items_data[' + index + '][quality]" value="' + quality + '">' +
-            '<input type="hidden" name="items_data[' + index + '][meter]" value="' + meter + '">' +
-            '<input type="hidden" name="items_data[' + index + '][fold]" value="' + fold + '">' +
-            '<input type="hidden" name="items_data[' + index + '][total_meter]" value="' + total + '">' +
-            '<input type="hidden" name="items_data[' + index + '][shrinkage]" value="' + shrinkage + '">' +
-            '<input type="hidden" name="items_data[' + index + '][after_shrinkage_meter]" value="' + afterShrinkage + '">' +
-            '<input type="hidden" name="items_data[' + index + '][type]" value="' + type + '">'
-        );
-    }
+        /* ===============================
+           LOAD LOT DROPDOWN
+        ================================*/
+        function loadLots() {
+            const sources = filteredSources();
+            const seen = new Set();
 
-    function reindexRows() {
-        let rows = itemTableBody.find('tr').not('#no_item_row');
+            lotSelect.empty().append('<option value="">Select</option>');
 
-        if (rows.length === 0) {
-            if ($('#no_item_row').length === 0) {
-                itemTableBody.append('<tr id="no_item_row"><td colspan="11" class="text-center">No items added yet.</td></tr>');
+            sources.forEach(s => {
+                if (!seen.has(s.lot_no)) {
+                    seen.add(s.lot_no);
+
+                    lotSelect.append(
+                        `<option value="${s.lot_no}">
+                    ${s.lot_no} (Remain: ${s.remaining_meter})
+                </option>`
+                    );
+                }
+            });
+
+            lotSelect.prop('disabled', seen.size === 0);
+        }
+
+        /* ===============================
+           LOAD ITEM BASED ON LOT
+        ================================*/
+        function loadItemByLot(lotNo) {
+            const sources = filteredSources().filter(s => s.lot_no == lotNo);
+
+            itemSelect.empty().append('<option value="">Select</option>');
+
+            sources.forEach(s => {
+                itemSelect.append(
+                    `<option value="${s.item_id}">${s.item_name}</option>`
+                );
+            });
+
+            itemSelect.prop('disabled', sources.length === 0);
+
+            // 🔥 Auto select first item
+            if (sources.length === 1) {
+                itemSelect.val(sources[0].item_id);
+                autoFill(sources[0]);
             }
-            return;
         }
 
-        $('#no_item_row').remove();
+        /* ===============================
+           AUTO FILL DATA
+        ================================*/
+        function autoFill(source) {
+            if (!source) return;
 
-        rows.each(function (index) {
-            $(this).find('td').first().text(index + 1);
-            setRowHiddenInputs($(this), index);
-        });
-    }
+            $('#quality').val(source.quality || '');
+            $('#meter').val(source.remaining_meter || '');
+            $('#fold').val(source.fold || '');
 
-    function clearEntryFields() {
-        $('#item_id').val('');
-        $('#type').val('LOT TO LOT');
-        $('#quality, #meter, #fold, #total_meter, #shrinkage, #after_shrinkage_meter').val('');
-        updateTypeBehaviour();
-        $('#lot_no').empty().append('<option value="">Select</option>').val('').prop('disabled', true);
-    }
-
-    $('#meter').on('input', function () { calculateValues(); });
-    $('#fold').on('input', function () { calculateValues(); });
-    $('#shrinkage').on('input', function () { calculateValues(); });
-    $('#after_shrinkage_meter').on('input', function () { calculateValues('after_shrinkage'); });
-    $('#total_meter').on('input', function () { calculateValues(); });
-    $('#type').on('change', function () {
-        updateTypeBehaviour();
-        calculateValues();
-    });
-
-    jobWorkerSelect.on('change', function () {
-        clearEntryFields();
-        populateItemDropdown();
-    });
-
-    $('#item_id').on('change', function () {
-        const itemId = $(this).val();
-        populateLotDropdown(itemId);
-        $('#lot_no').val('');
-        autoFillFromSelection();
-    });
-
-    $('#lot_no').on('change', function () {
-        autoFillFromSelection();
-    });
-
-    $('#addItem').on('click', function () {
-        const itemId = $('#item_id').val();
-        const itemText = $('#item_id option:selected').text();
-        const sourceLotNo = $('#lot_no').val();
-
-        if (!itemId) {
-            alert('Please select an item first.');
-            return;
+            calculateValues();
         }
 
-        if (!sourceLotNo) {
-            alert('Please select LOT NO.');
-            return;
+        /* ===============================
+           FIND SOURCE
+        ================================*/
+        function findSource(lotNo, itemId) {
+            return filteredSources().find(s =>
+                s.lot_no == lotNo && s.item_id == itemId
+            );
         }
 
-        if (!jobWorkerSelect.val()) {
-            alert('Please select Job Worker first.');
-            return;
+        /* ===============================
+           CALCULATE
+        ================================*/
+        function calculateValues() {
+            const meter = toNumber($('#meter').val());
+            const fold = toNumber($('#fold').val());
+
+            const total = (meter * fold) / 100;
+
+            $('#total_meter').val(total ? total.toFixed(2) : '');
         }
 
-        let meter = parseFloat($('#meter').val()) || 0;
-        let fold = parseFloat($('#fold').val()) || 0;
-        let totalMeter = parseFloat($('#total_meter').val()) || 0;
-        const selectedSource = findSourceByItemAndLot(itemId, sourceLotNo);
-        const remainingMeter = sourceRemainingMeter(selectedSource);
+        /* ===============================
+           EVENTS
+        ================================*/
 
-        if (meter <= 0 && fold <= 0 && totalMeter <= 0) {
-            alert('Please enter meter or fold values.');
-            return;
-        }
+        // Job worker change
+        jobWorkerSelect.on('change', function() {
+            loadLots();
 
-        if (remainingMeter > 0 && meter > (remainingMeter + 0.0001)) {
-            alert('Inward meter cannot be greater than remaining meter (' + remainingMeter.toFixed(2) + ').');
-            return;
-        }
+            itemSelect.prop('disabled', true).val('');
+            lotSelect.val('');
 
-        // Prevent duplicate line with same item + lot
-        let duplicate = itemTableBody.find('tr').not('#no_item_row').filter(function () {
-            const rowSourceLot = $(this).data('source-lot') || $(this).data('lot-no');
-            return $(this).data('item-id') == itemId && String(rowSourceLot) === String(sourceLotNo);
+            $('#quality, #meter, #fold, #total_meter').val('');
         });
 
-        if (duplicate.length > 0) {
-            alert('This item and LOT NO already added.');
-            return;
-        }
+        // Lot change
+        lotSelect.on('change', function() {
+            const lotNo = $(this).val();
 
-        const inwardLotNo = generateInwardLotNo();
+            loadItemByLot(lotNo);
+        });
 
-        if ($('#no_item_row').length) {
-            $('#no_item_row').remove();
-        }
+        // Item change
+        itemSelect.on('change', function() {
+            const lotNo = lotSelect.val();
+            const itemId = $(this).val();
 
-        let newRow = $('<tr></tr>');
-        newRow.attr('data-item-id', itemId);
-        newRow.attr('data-lot-no', inwardLotNo);
-        newRow.attr('data-source-lot', sourceLotNo);
-        newRow.attr('data-quality', $('#quality').val());
-        newRow.attr('data-meter', $('#meter').val());
-        newRow.attr('data-fold', $('#fold').val());
-        newRow.attr('data-total', $('#total_meter').val());
-        newRow.attr('data-shrinkage', $('#shrinkage').val());
-        newRow.attr('data-after-shrinkage', $('#after_shrinkage_meter').val());
-        newRow.attr('data-type', $('#type').val());
+            const source = findSource(lotNo, itemId);
 
-        newRow.html(
-            '<td></td>' +
-            '<td>' + inwardLotNo + '</td>' +
-            '<td>' + itemText + '</td>' +
-            '<td>' + $('#quality').val() + '</td>' +
-            '<td>' + $('#meter').val() + '</td>' +
-            '<td>' + $('#fold').val() + '</td>' +
-            '<td>' + $('#total_meter').val() + '</td>' +
-            '<td>' + $('#shrinkage').val() + '</td>' +
-            '<td>' + $('#after_shrinkage_meter').val() + '</td>' +
-            '<td>' + $('#type').val() + '</td>' +
-            '<td><button class="btn btn-danger btn-sm removeRow" type="button">Delete</button></td>' +
-            '<td class="d-none row-hidden-inputs"></td>'
-        );
+            autoFill(source);
+        });
 
-        itemTableBody.append(newRow);
-        reindexRows();
-        clearEntryFields();
-    });
+        // Live calc
+        $('#meter, #fold').on('input', function() {
+            calculateValues();
+        });
 
-    $(document).on('click', '.removeRow', function () {
-        $(this).closest('tr').remove();
-        reindexRows();
-    });
-
-    $(document).ready(function () {
-        reindexRows();
-        populateItemDropdown();
-        updateTypeBehaviour();
-        calculateValues();
-        $('#lot_no').empty().append('<option value="">Select</option>').val('').prop('disabled', true);
-    });
-</script>
+        /* ===============================
+           INIT
+        ================================*/
+        $(document).ready(function() {
+            loadLots();
+        });
+    </script>
 @endsection
