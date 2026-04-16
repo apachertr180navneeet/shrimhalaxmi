@@ -189,12 +189,6 @@ class OrderDispatchController extends Controller
                         'total_amount' => $itemRow['total_amount'] ?? $itemRow['amount'],
                         'sort_order' => $itemRow['sort_order'],
                     ]);
-
-                    // Decrease stock for the assigned item
-                    $item = Item::find($itemRow['item_id']);
-                    if ($item) {
-                        $item->decreaseStocknew((float) $itemRow['meter']);
-                    }
                 }
             });
 
@@ -297,12 +291,6 @@ class OrderDispatchController extends Controller
                         'total_amount' => $itemRow['total_amount'] ?? $itemRow['amount'],
                         'sort_order' => $itemRow['sort_order'],
                     ]);
-
-                    // Decrease stock for the assigned item
-                    $item = Item::find($itemRow['item_id']);
-                    if ($item) {
-                        $item->decreaseStocknew((float) $itemRow['meter']);
-                    }
                 }
             });
 

@@ -195,12 +195,6 @@ class PurchaseController extends Controller
                         'net_meter' => $itemRow['net_meter'],
                         'amount' => $itemRow['amount'],
                     ]);
-
-                    // Increase stock for the purchased item
-                    $item = Item::find($itemRow['item_id']);
-                    if ($item) {
-                        $item->increaseStock((float) $itemRow['qty_m'], (float) $itemRow['net_meter']);
-                    }
                 }
             });
 
@@ -320,12 +314,6 @@ class PurchaseController extends Controller
                         'net_meter' => $itemRow['net_meter'],
                         'amount' => $itemRow['amount'],
                     ]);
-
-                    // Increase stock for the new/updated item
-                    $item = Item::find($itemRow['item_id']);
-                    if ($item) {
-                        $item->increaseStock((float) $itemRow['qty_m'], (float) $itemRow['net_meter']);
-                    }
                 }
             });
 
