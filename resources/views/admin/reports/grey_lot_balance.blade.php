@@ -3,20 +3,13 @@
 @section('style')
     <style>
         .report-title {
-            font-weight: 700;
-            color: #1b5e20;
-            text-align: center;
-            border: 1px solid #cfd8dc;
-            background: #d7f0dc;
-            padding: 8px;
-            margin-bottom: 0;
+            
         }
 
         .report-subtitle {
             font-weight: 600;
             text-align: center;
             border: 1px solid #cfd8dc;
-            border-top: 0;
             background: #f8f9fa;
             padding: 6px;
             margin-bottom: 12px;
@@ -45,8 +38,7 @@
             </div>
 
             <div class="report-title">
-                THIS WILL BE THE REPORT FOR THE GOODS WE HAVE PURCHASED AND HAVENT YET BEEN ASSIGNED TO JOB WORKER OR SOLD
-                DIRECTLY
+                
             </div>
 
             <div class="report-subtitle">

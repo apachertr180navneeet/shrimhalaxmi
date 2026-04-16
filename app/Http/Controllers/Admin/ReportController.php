@@ -11,6 +11,9 @@ use App\Models\OrderDispatchItem;
 use App\Models\PurchaseItem;
 use Illuminate\Http\Request;
 
+
+use Illuminate\Support\Facades\DB;
+
 class ReportController extends Controller
 {
     public function slipBook(Request $request)
@@ -143,24 +146,50 @@ class ReportController extends Controller
             ->orderBy('sort_order')
             ->get();
 
+        // ✅ Assignment (purchase_item_id wise)
         $assignedByPurchaseItem = JobWorkAssignmentItem::query()
             ->whereNotNull('purchase_item_id')
             ->get()
             ->groupBy('purchase_item_id')
             ->map(fn ($rows) => (float) $rows->sum('meter'));
 
+        // ✅ Dispatch (lot + item wise)
         $dispatchByLotAndItem = OrderDispatchItem::query()
             ->get()
             ->groupBy(fn (OrderDispatchItem $row) => trim((string) $row->lot_no) . '|' . (int) $row->item_id)
             ->map(fn ($rows) => (float) $rows->sum('meter'));
 
+        // ✅ NEW: Job Work Inward (lot + item wise)
+        $inwardByLotAndItem = DB::table('job_worker_inward_items')
+            ->select('item_id', 'lot_no', DB::raw('SUM(meter) as inward_meter'))
+            ->groupBy('item_id', 'lot_no')
+            ->get()
+            ->groupBy(fn ($row) => trim((string) $row->lot_no) . '|' . (int) $row->item_id)
+            ->map(fn ($rows) => (float) $rows->sum('inward_meter'));
+
         $rows = $purchaseRows
-            ->map(function (PurchaseItem $row) use ($assignedByPurchaseItem, $dispatchByLotAndItem) {
+            ->map(function (PurchaseItem $row) use (
+                $assignedByPurchaseItem,
+                $dispatchByLotAndItem,
+                $inwardByLotAndItem
+            ) {
+
                 $purchaseDate = optional($row->purchase?->purchase_date);
+
                 $assigned = (float) ($assignedByPurchaseItem[$row->id] ?? 0);
-                $dispatchKey = trim((string) $row->lot_no) . '|' . (int) $row->item_id;
-                $dispatchedDirect = (float) ($dispatchByLotAndItem[$dispatchKey] ?? 0);
-                $balance = (float) $row->qty_m - $assigned - $dispatchedDirect;
+
+                $key = trim((string) $row->lot_no) . '|' . (int) $row->item_id;
+
+                $dispatched = (float) ($dispatchByLotAndItem[$key] ?? 0);
+
+                // ✅ NEW inward
+                $inward = (float) ($inwardByLotAndItem[$key] ?? 0);
+
+                // ✅ FINAL BALANCE (UPDATED)
+                $balance = (float) $row->qty_m 
+                    + $inward 
+                    - $assigned 
+                    - $dispatched;
 
                 return [
                     'date' => $purchaseDate?->format('d.m.y') ?: '-',
@@ -169,7 +198,10 @@ class ReportController extends Controller
                     'bill_no' => (string) ($row->purchase?->bno ?? '-'),
                     'lot_no' => (string) ($row->lot_no ?? '-'),
                     'quality' => (string) ($row->item?->item_name ?? 'Unknown Quality'),
+
+                    // ✅ FINAL OUTPUT
                     'quantity' => max($balance, 0),
+
                     'lr_number' => (string) ($row->lr_no ?: '-'),
                     'transport' => (string) ($row->transport ?: '-'),
                 ];
@@ -177,9 +209,7 @@ class ReportController extends Controller
             ->filter(fn (array $row) => $row['quantity'] > 0.0001)
             ->sort(function (array $a, array $b) {
                 $dateSort = strcmp($a['sort_date'], $b['sort_date']);
-                if ($dateSort !== 0) {
-                    return $dateSort;
-                }
+                if ($dateSort !== 0) return $dateSort;
                 return strcmp($a['lot_no'], $b['lot_no']);
             })
             ->values();

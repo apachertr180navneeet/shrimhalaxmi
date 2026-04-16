@@ -44,21 +44,61 @@ class OrderDispatchController extends Controller
 
     private function lotSources()
     {
-        return PurchaseItem::query()
-            ->with('item:id,item_name')
+        // ✅ Purchase
+        $purchase = DB::table('purchase_items')
+            ->select('item_id', 'lot_no', DB::raw('SUM(qty_m) as purchase_meter'))
             ->whereNotNull('lot_no')
             ->where('lot_no', '!=', '')
-            ->orderBy('lot_no')
-            ->orderBy('id')
-            ->get()
-            ->map(function (PurchaseItem $row) {
-                return [
-                    'lot_no' => (string) $row->lot_no,
-                    'item_id' => $row->item_id,
-                    'item_name' => $row->item?->item_name ?: '',
-                ];
+            ->groupBy('item_id', 'lot_no');
+
+        // ✅ Job Inward
+        $inward = DB::table('job_worker_inward_items')
+            ->select('item_id', 'lot_no', DB::raw('SUM(meter) as inward_meter'))
+            ->groupBy('item_id', 'lot_no');
+
+        // ✅ Job Assignment
+        $assigned = DB::table('job_work_assignment_items')
+            ->select('item_id', 'lot_no', DB::raw('SUM(meter) as assigned_meter'))
+            ->groupBy('item_id', 'lot_no');
+
+        // ✅ Dispatch
+        $dispatch = DB::table('order_dispatch_items')
+            ->select('item_id', 'lot_no', DB::raw('SUM(meter) as dispatch_meter'))
+            ->groupBy('item_id', 'lot_no');
+
+        // ✅ BASE: PURCHASE (main stock source)
+        return DB::table(DB::raw("({$purchase->toSql()}) as purchase"))
+            ->mergeBindings($purchase)
+
+            ->leftJoinSub($inward, 'inward', function ($join) {
+                $join->on('purchase.item_id', '=', 'inward.item_id')
+                    ->on('purchase.lot_no', '=', 'inward.lot_no');
             })
-            ->values();
+
+            ->leftJoinSub($assigned, 'assigned', function ($join) {
+                $join->on('purchase.item_id', '=', 'assigned.item_id')
+                    ->on('purchase.lot_no', '=', 'assigned.lot_no');
+            })
+
+            ->leftJoinSub($dispatch, 'dispatch', function ($join) {
+                $join->on('purchase.item_id', '=', 'dispatch.item_id')
+                    ->on('purchase.lot_no', '=', 'dispatch.lot_no');
+            })
+
+            ->select(
+                'purchase.item_id',
+                'purchase.lot_no',
+                DB::raw('
+                    (
+                        COALESCE(purchase.purchase_meter,0)
+                        + COALESCE(inward.inward_meter,0)
+                        - COALESCE(assigned.assigned_meter,0)
+                        - COALESCE(dispatch.dispatch_meter,0)
+                    ) as total_meter
+                ')
+            )
+            ->having('total_meter', '>', 0) // only available stock
+            ->get();
     }
 
     public function index()
