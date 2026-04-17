@@ -337,220 +337,219 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', () => {
 
-    const $ = id => document.getElementById(id);
-    const q = sel => document.querySelector(sel);
+        const $ = id => document.getElementById(id);
+        const q = sel => document.querySelector(sel);
 
-    const item = $('item_id');
-    const vendor = $('vendor_id');
-    const table = $('purchase_items_body');
-    const addBtn = $('add_more_item');
+        const item = $('item_id');
+        const vendor = $('vendor_id');
+        const table = $('purchase_items_body');
+        const addBtn = $('add_more_item');
 
-    const i = {
-        vendorAbbr: $('vendor_abbr'),
-        itemAbbr: $('item_abbr'),
-        pch: $('pch_no'),
-        lot: $('lot_no'),
-        bno: q('[name="bno"]'),
-        qty: $('qty_m'),
-        fold: $('fold'),
-        rate: $('rate'),
-        transport: $('transport'),
-        lr: $('lr_no'),
-        net: $('net_meter'),
-        amt: $('amount'),
-        color: $('color')
-    };
-
-    const defaults = {
-        item: '{{ $defaultItemAbbr }}',
-        vendor: '{{ $defaultVendorAbbr }}'
-    };
-
-    /* =========================
-       EMPTY STATE
-    ========================= */
-    function ensureEmptyState() {
-        const existingRows = rows();
-        const emptyRow = document.getElementById('purchase_empty_row');
-
-        if (existingRows.length === 0) {
-            if (!emptyRow) {
-                const tr = document.createElement('tr');
-                tr.id = 'purchase_empty_row';
-                tr.innerHTML = `<td colspan="12" class="text-center">No items added yet.</td>`;
-                table.appendChild(tr);
-            }
-        } else {
-            emptyRow?.remove();
-        }
-    }
-
-    /* =========================
-       HELPERS
-    ========================= */
-    const num = v => parseFloat(v) || 0;
-    const fix = v => (Math.round(v * 100) / 100).toFixed(2);
-
-    const opt = el => el?.options[el.selectedIndex];
-    const abbr = (el, d) => opt(el)?.dataset.abbr || d;
-    const name = el => opt(el)?.dataset.name || '';
-
-    const rows = () =>
-        [...table.querySelectorAll('tr')].filter(r => r.id !== 'purchase_empty_row');
-
-    const rowData = r => {
-        const d = r.dataset;
-        return {
-            item_id: d.itemId || d.item_id || '',
-            lot_no: d.lotNo || d.lot_no || '',
-            item_code: d.itemCode || d.item_code || d.lotNo || d.lot_no || '',
-            color: d.color || '',
-            qty_m: d.qtyM || d.qty_m || d.qty || '',
-            fold: d.fold || '',
-            rate: d.rate || '',
-            transport: d.transport || '',
-            lr_no: d.lrNo || d.lr_no || '',
-            net_meter: d.netMeter || d.net_meter || '',
-            amount: d.amount || '',
-            sort_order: d.sortOrder || d.sort_order || ''
+        const i = {
+            vendorAbbr: $('vendor_abbr'),
+            itemAbbr: $('item_abbr'),
+            pch: $('pch_no'),
+            lot: $('lot_no'),
+            bno: q('[name="bno"]'),
+            qty: $('qty_m'),
+            fold: $('fold'),
+            rate: $('rate'),
+            transport: $('transport'),
+            lr: $('lr_no'),
+            net: $('net_meter'),
+            amt: $('amount'),
+            color: $('color')
         };
-    };
 
-    const setRowData = (r, data) => {
-        r.dataset.itemId = data.item_id ?? '';
-        r.dataset.lotNo = data.lot_no ?? '';
-        r.dataset.itemCode = data.item_code ?? '';
-        r.dataset.color = data.color ?? '';
-        r.dataset.qtyM = data.qty_m ?? '';
-        r.dataset.fold = data.fold ?? '';
-        r.dataset.rate = data.rate ?? '';
-        r.dataset.transport = data.transport ?? '';
-        r.dataset.lrNo = data.lr_no ?? '';
-        r.dataset.netMeter = data.net_meter ?? '';
-        r.dataset.amount = data.amount ?? '';
-        r.dataset.sortOrder = data.sort_order ?? '';
-    };
+        const defaults = {
+            item: '{{ $defaultItemAbbr }}',
+            vendor: '{{ $defaultVendorAbbr }}'
+        };
 
-    /* =========================
-       LOT NUMBER
-    ========================= */
-    const lotNo = s =>
-        `${abbr(vendor, defaults.vendor).toLowerCase()}/${
+        /* =========================
+           EMPTY STATE
+        ========================= */
+        function ensureEmptyState() {
+            const existingRows = rows();
+            const emptyRow = document.getElementById('purchase_empty_row');
+
+            if (existingRows.length === 0) {
+                if (!emptyRow) {
+                    const tr = document.createElement('tr');
+                    tr.id = 'purchase_empty_row';
+                    tr.innerHTML = `<td colspan="12" class="text-center">No items added yet.</td>`;
+                    table.appendChild(tr);
+                }
+            } else {
+                emptyRow?.remove();
+            }
+        }
+
+        /* =========================
+           HELPERS
+        ========================= */
+        const num = v => parseFloat(v) || 0;
+        const fix = v => (Math.round(v * 100) / 100).toFixed(2);
+
+        const opt = el => el?.options[el.selectedIndex];
+        const abbr = (el, d) => opt(el)?.dataset.abbr || d;
+        const name = el => opt(el)?.dataset.name || '';
+
+        const rows = () => [...table.querySelectorAll('tr')].filter(r => r.id !== 'purchase_empty_row');
+
+        const rowData = r => {
+            const d = r.dataset;
+            return {
+                item_id: d.itemId || d.item_id || '',
+                lot_no: d.lotNo || d.lot_no || '',
+                item_code: d.itemCode || d.item_code || d.lotNo || d.lot_no || '',
+                color: d.color || '',
+                qty_m: d.qtyM || d.qty_m || d.qty || '',
+                fold: d.fold || '',
+                rate: d.rate || '',
+                transport: d.transport || '',
+                lr_no: d.lrNo || d.lr_no || '',
+                net_meter: d.netMeter || d.net_meter || '',
+                amount: d.amount || '',
+                sort_order: d.sortOrder || d.sort_order || ''
+            };
+        };
+
+        const setRowData = (r, data) => {
+            r.dataset.itemId = data.item_id ?? '';
+            r.dataset.lotNo = data.lot_no ?? '';
+            r.dataset.itemCode = data.item_code ?? '';
+            r.dataset.color = data.color ?? '';
+            r.dataset.qtyM = data.qty_m ?? '';
+            r.dataset.fold = data.fold ?? '';
+            r.dataset.rate = data.rate ?? '';
+            r.dataset.transport = data.transport ?? '';
+            r.dataset.lrNo = data.lr_no ?? '';
+            r.dataset.netMeter = data.net_meter ?? '';
+            r.dataset.amount = data.amount ?? '';
+            r.dataset.sortOrder = data.sort_order ?? '';
+        };
+
+        /* =========================
+           LOT NUMBER
+        ========================= */
+        const lotNo = s =>
+            `${abbr(vendor, defaults.vendor).toLowerCase()}/${
             String(i.bno?.value || 0).padStart(4,'0')
         }/${String(i.pch.value || 1).padStart(4,'0')}/${
             String(s).padStart(4,'0')
         }`;
 
-    const updatePreview = () => {
-        i.lot.value = lotNo(rows().length + 1);
-    };
+        const updatePreview = () => {
+            i.lot.value = lotNo(rows().length + 1);
+        };
 
-    /* =========================
-       CALCULATION
-    ========================= */
-    const calc = () => {
-        const net = (num(i.qty.value) * num(i.fold.value)) / 100;
-        i.net.value = net ? fix(net) : '';
-        i.amt.value = (net && i.rate.value) ? fix(net * num(i.rate.value)) : '';
-    };
+        /* =========================
+           CALCULATION
+        ========================= */
+        const calc = () => {
+            const net = (num(i.qty.value) * num(i.fold.value)) / 100;
+            i.net.value = net ? fix(net) : '';
+            i.amt.value = (net && i.rate.value) ? fix(net * num(i.rate.value)) : '';
+        };
 
-    /* =========================
-       SYNC
-    ========================= */
-    const sync = () => {
-        i.vendorAbbr.value = abbr(vendor, defaults.vendor);
-        i.itemAbbr.value = abbr(item, defaults.item);
-    };
+        /* =========================
+           SYNC
+        ========================= */
+        const sync = () => {
+            i.vendorAbbr.value = abbr(vendor, defaults.vendor);
+            i.itemAbbr.value = abbr(item, defaults.item);
+        };
 
-    /* =========================
-       BUILD DATA
-    ========================= */
-    const buildData = (lot, s) => ({
-        item_id: item.value,
-        lot_no: lot,
-        item_code: lot,
-        color: i.color.value || '',
-        qty_m: i.qty.value,
-        fold: i.fold.value,
-        rate: i.rate.value,
-        transport: i.transport.value || '',
-        lr_no: i.lr.value || '',
-        net_meter: i.net.value || '0.00',
-        amount: i.amt.value || '0.00',
-        sort_order: s
-    });
-
-    /* =========================
-       HIDDEN INPUTS
-    ========================= */
-    const hidden = (idx, data) =>
-        Object.entries(data).map(([k,v]) =>
-            `<input type="hidden" name="items_data[${idx}][${k}]" value="${v}">`
-        ).join('');
-
-    /* =========================
-       REINDEX
-    ========================= */
-    const reindex = () => {
-        rows().forEach((r, iIdx) => {
-            const s = iIdx + 1;
-            const lot = lotNo(s);
-            const data = rowData(r);
-
-            data.lot_no = lot;
-            data.item_code = lot;
-            data.sort_order = s;
-
-            r.children[0].textContent = s + '.';
-            r.children[1].textContent = lot;
-
-            setRowData(r, data);
-
-            r.querySelector('.row-hidden-inputs').innerHTML =
-                hidden(iIdx, data);
+        /* =========================
+           BUILD DATA
+        ========================= */
+        const buildData = (lot, s) => ({
+            item_id: item.value,
+            lot_no: lot,
+            item_code: lot,
+            color: i.color.value || '',
+            qty_m: i.qty.value,
+            fold: i.fold.value,
+            rate: i.rate.value,
+            transport: i.transport.value || '',
+            lr_no: i.lr.value || '',
+            net_meter: i.net.value || '0.00',
+            amount: i.amt.value || '0.00',
+            sort_order: s
         });
 
-        updatePreview();
-        ensureEmptyState();
-    };
+        /* =========================
+           HIDDEN INPUTS
+        ========================= */
+        const hidden = (idx, data) =>
+            Object.entries(data).map(([k, v]) =>
+                `<input type="hidden" name="items_data[${idx}][${k}]" value="${v}">`
+            ).join('');
 
-    /* =========================
-       CLEAR
-    ========================= */
-    const clearInputs = () => {
-        ['qty','fold','rate','transport','lr','net','amt','color']
+        /* =========================
+           REINDEX
+        ========================= */
+        const reindex = () => {
+            rows().forEach((r, iIdx) => {
+                const s = iIdx + 1;
+                const lot = lotNo(s);
+                const data = rowData(r);
+
+                data.lot_no = lot;
+                data.item_code = lot;
+                data.sort_order = s;
+
+                r.children[0].textContent = s + '.';
+                r.children[1].textContent = lot;
+
+                setRowData(r, data);
+
+                r.querySelector('.row-hidden-inputs').innerHTML =
+                    hidden(iIdx, data);
+            });
+
+            updatePreview();
+            ensureEmptyState();
+        };
+
+        /* =========================
+           CLEAR
+        ========================= */
+        const clearInputs = () => {
+            ['qty', 'fold', 'rate', 'transport', 'lr', 'net', 'amt', 'color']
             .forEach(k => i[k] && (i[k].value = ''));
-        item.value = '';
-    };
+            item.value = '';
+        };
 
-    /* =========================
-       ADD ROW
-    ========================= */
-    const addRow = () => {
+        /* =========================
+           ADD ROW
+        ========================= */
+        const addRow = () => {
 
-        if (!item.value) return toastr.error('Select item');
+            if (!item.value) return toastr.error('Select item');
 
-        // OPTIONAL: require color
-        if (!i.color.value.trim()) {
-            toastr.error('Select stage');
-            return;
-        }
+            // OPTIONAL: require color
+            if (!i.color.value.trim()) {
+                toastr.error('Select stage');
+                return;
+            }
 
-        if (!i.qty.value || !i.fold.value || !i.rate.value)
-            return toastr.error('Enter qty, fold, rate');
+            if (!i.qty.value || !i.fold.value || !i.rate.value)
+                return toastr.error('Enter qty, fold, rate');
 
-        ensureEmptyState();
+            ensureEmptyState();
 
-        const s = rows().length + 1;
-        const lot = lotNo(s);
-        const data = buildData(lot, s);
+            const s = rows().length + 1;
+            const lot = lotNo(s);
+            const data = buildData(lot, s);
 
-        const r = document.createElement('tr');
-        setRowData(r, data);
+            const r = document.createElement('tr');
+            setRowData(r, data);
 
-        r.innerHTML = `
+            r.innerHTML = `
             <td>${s}.</td>
             <td>${lot}</td>
             <td>${name(item)}</td>
@@ -566,101 +565,101 @@ document.addEventListener('DOMContentLoaded', () => {
             <td class="d-none row-hidden-inputs">${hidden(s-1,data)}</td>
         `;
 
-        table.appendChild(r);
+            table.appendChild(r);
 
-        clearInputs();
-        sync();
-        reindex();
-    };
+            clearInputs();
+            sync();
+            reindex();
+        };
 
-    /* =========================
-       EVENTS
-    ========================= */
+        /* =========================
+           EVENTS
+        ========================= */
 
-    ['qty','fold','rate'].forEach(k =>
-        i[k]?.addEventListener('input', calc)
-    );
+        ['qty', 'fold', 'rate'].forEach(k =>
+            i[k]?.addEventListener('input', calc)
+        );
 
-    item?.addEventListener('change', sync);
+        item?.addEventListener('change', sync);
 
-    vendor?.addEventListener('change', function() {
-        sync();
-        reindex();
+        vendor?.addEventListener('change', function() {
+            sync();
+            reindex();
 
-        const vendorHidden = $('vendor_id_hidden');
-        if (this.value && vendorHidden) {
-            vendorHidden.value = this.value;
-            this.disabled = true;
-        }
-    });
-
-    addBtn?.addEventListener('click', addRow);
-
-    table?.addEventListener('click', e => {
-        if (!e.target.classList.contains('remove-row')) return;
-        e.preventDefault();
-
-        e.target.closest('tr').remove();
-        reindex();
-    });
-
-    i.bno?.addEventListener('change', function() {
-        if (this.value.trim()) this.readOnly = true;
-        updatePreview();
-        reindex();
-    });
-
-    /* =========================
-       INIT
-    ========================= */
-    sync();
-    calc();
-    reindex();
-    ensureEmptyState();
-
-    if (window.jQuery && window.jQuery.fn && window.jQuery.fn.select2) {
-        window.jQuery('#color').select2({
-            placeholder: 'Select Stage',
-            allowClear: true,
-            width: '100%'
-        });
-    }
-
-    /* =========================
-    FOCUS HIGHLIGHT (TAB SUPPORT)
-    ========================= */
-    document.querySelectorAll('.form-control, .form-select').forEach(el => {
-
-        el.addEventListener('focus', function () {
-
-            // Remove previous highlight
-            document.querySelectorAll('.active-field').forEach(e => {
-                e.classList.remove('active-field');
-            });
-
-            // Add highlight to current field
-            this.classList.add('active-field');
-        });
-
-    });
-
-    /* =========================
-    ENTER KEY = NEXT FIELD
-    ========================= */
-    const fields = document.querySelectorAll('.form-control, .form-select');
-
-    fields.forEach((field, index) => {
-        field.addEventListener('keydown', function (e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-
-                let next = fields[index + 1];
-                if (next) {
-                    next.focus();
-                }
+            const vendorHidden = $('vendor_id_hidden');
+            if (this.value && vendorHidden) {
+                vendorHidden.value = this.value;
+                this.disabled = true;
             }
         });
-    });
 
-});
+        addBtn?.addEventListener('click', addRow);
+
+        table?.addEventListener('click', e => {
+            if (!e.target.classList.contains('remove-row')) return;
+            e.preventDefault();
+
+            e.target.closest('tr').remove();
+            reindex();
+        });
+
+        i.bno?.addEventListener('change', function() {
+            if (this.value.trim()) this.readOnly = true;
+            updatePreview();
+            reindex();
+        });
+
+        /* =========================
+           INIT
+        ========================= */
+        sync();
+        calc();
+        reindex();
+        ensureEmptyState();
+
+        if (window.jQuery && window.jQuery.fn && window.jQuery.fn.select2) {
+            window.jQuery('#color').select2({
+                placeholder: 'Select Stage',
+                allowClear: true,
+                width: '100%'
+            });
+        }
+
+        /* =========================
+        FOCUS HIGHLIGHT (TAB SUPPORT)
+        ========================= */
+        document.querySelectorAll('.form-control, .form-select').forEach(el => {
+
+            el.addEventListener('focus', function() {
+
+                // Remove previous highlight
+                document.querySelectorAll('.active-field').forEach(e => {
+                    e.classList.remove('active-field');
+                });
+
+                // Add highlight to current field
+                this.classList.add('active-field');
+            });
+
+        });
+
+        /* =========================
+        ENTER KEY = NEXT FIELD
+        ========================= */
+        const fields = document.querySelectorAll('.form-control, .form-select');
+
+        fields.forEach((field, index) => {
+            field.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+
+                    let next = fields[index + 1];
+                    if (next) {
+                        next.focus();
+                    }
+                }
+            });
+        });
+
+    });
 </script>

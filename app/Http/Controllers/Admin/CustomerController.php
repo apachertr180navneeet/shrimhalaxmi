@@ -120,8 +120,6 @@ class CustomerController extends Controller
 
         } catch (\Exception $e) {
 
-            \Log::error('Customer Store Error: '.$e->getMessage());
-
             return back()->with('error', 'Something went wrong')->withInput();
         }
     }

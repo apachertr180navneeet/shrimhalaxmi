@@ -284,7 +284,7 @@ $(function () {
             if (result.isConfirmed) {
 
                 $.ajax({
-                    url: '/admin/vendors/delete/' + id,
+                    url: "{{ route('admin.vendors.delete', ':id') }}".replace(':id', id),
                     type: 'DELETE',
                     data: {
                         _token: "{{ csrf_token() }}"

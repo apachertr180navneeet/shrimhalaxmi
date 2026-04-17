@@ -127,7 +127,7 @@ class PurchaseController extends Controller
     {
         $purchase = $this->createDefaults();
         $vendors = Vendor::query()->orderBy('vendor_name')->get(['id', 'vendor_name', 'abbr']);
-        $items = Item::query()->orderBy('item_name')->get(['id', 'item_name', 'abbr']);
+        $items = Item::query()->where('status', 'active')->orderBy('item_name')->get(['id', 'item_name', 'abbr']);
         $purchaseItems = collect();
 
         return view('admin.purchases.create', compact('purchase', 'vendors', 'items', 'purchaseItems'));
@@ -228,7 +228,7 @@ class PurchaseController extends Controller
             ];
 
             $vendors = Vendor::query()->orderBy('vendor_name')->get(['id', 'vendor_name', 'abbr']);
-            $items = Item::query()->orderBy('item_name')->get(['id', 'item_name', 'abbr']);
+            $items = Item::query()->where('status', 'active')->orderBy('item_name')->get(['id', 'item_name', 'abbr']);
             $purchaseItems = $purchaseRecord->items()->with('item')->orderBy('sort_order')->get();
 
             return view('admin.purchases.edit', compact('purchase', 'vendors', 'items', 'purchaseItems'));

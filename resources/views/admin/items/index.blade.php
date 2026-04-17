@@ -174,7 +174,7 @@ $(function () {
         }).then((result) => {
             if (result.isConfirmed) {
                 $.ajax({
-                    url: '/admin/items/delete/' + id,
+                    url: "{{ route('admin.items.delete', ':id') }}".replace(':id', id),
                     type: 'DELETE',
                     data: {
                         _token: "{{ csrf_token() }}"

@@ -266,7 +266,7 @@ $(function () {
             if (result.isConfirmed) {
 
                 $.ajax({
-                    url: '/admin/jobworkers/delete/' + id,
+                    url: "{{ route('admin.jobworkers.delete', ':id') }}".replace(':id', id),
                     type: 'DELETE',
                     data: {
                         _token: "{{ csrf_token() }}"
