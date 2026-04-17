@@ -226,6 +226,7 @@
     (function() {
 
         var lotSources = @json($lotSources->toArray());
+        
 
         function toNumber(value) {
             var n = parseFloat(value);
@@ -257,6 +258,8 @@
             var seen = new Set();
 
             lotSources.forEach(function(source) {
+
+                console.log(source)
 
                 if (String(source.item_id) !== String(itemId)) return;
 

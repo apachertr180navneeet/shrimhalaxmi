@@ -42,18 +42,17 @@
 
     <div class="row g-3 align-items-end">
 
-        <!-- LOT FIRST -->
         <div class="col-md-2">
             <label>LOT NO</label>
-            <select id="lot_no" class="form-control">
+            <select id="lot_no" class="form-control" disabled>
                 <option value="">Select</option>
             </select>
         </div>
 
-        <!-- ITEM SECOND -->
+
         <div class="col-md-2">
             <label>Item</label>
-            <select id="item_id" class="form-control" disabled>
+            <select id="item_id" class="form-control">
                 <option value="">Select</option>
             </select>
         </div>
@@ -182,150 +181,318 @@
     <script>
         const lotSources = @json($lotSources->toArray());
 
+        const itemTableBody = $('#itemTableBody');
         const jobWorkerSelect = $('[name="job_worker_id"]');
         const lotSelect = $('#lot_no');
         const itemSelect = $('#item_id');
 
-        function toNumber(val) {
-            return parseFloat(val) || 0;
+        /* ===============================
+           HELPERS
+        ================================*/
+        function toNumber(value) {
+            const n = parseFloat(value);
+            return isNaN(n) ? 0 : n;
         }
 
-        /* ===============================
-           FILTER SOURCES
-        ================================*/
+        function sourceRemainingMeter(source) {
+            if (!source) return 0;
+            const remaining = toNumber(source.remaining_meter);
+            if (remaining > 0) return remaining;
+            return toNumber(source.meter);
+        }
+
         function filteredSources() {
             const jobWorkerId = jobWorkerSelect.val();
-
             if (!jobWorkerId) return [];
 
-            return lotSources.filter(s =>
-                String(s.job_worker_id) === String(jobWorkerId) &&
-                parseFloat(s.remaining_meter) > 0
+            return lotSources.filter(source =>
+                String(source.job_worker_id) === String(jobWorkerId) &&
+                sourceRemainingMeter(source) > 0
             );
         }
 
         /* ===============================
-           LOAD LOT DROPDOWN
+           LOAD LOT
         ================================*/
-        function loadLots() {
-            const sources = filteredSources();
+        function loadLotDropdown() {
+            lotSelect.empty().append('<option value="">Select</option>');
             const seen = new Set();
 
-            lotSelect.empty().append('<option value="">Select</option>');
+            filteredSources().forEach(source => {
+                const lotNo = source.lot_no;
+                if (!lotNo || seen.has(lotNo)) return;
 
-            sources.forEach(s => {
-                if (!seen.has(s.lot_no)) {
-                    seen.add(s.lot_no);
+                seen.add(lotNo);
 
-                    lotSelect.append(
-                        `<option value="${s.lot_no}">
-                    ${s.lot_no} (Remain: ${s.remaining_meter})
-                </option>`
-                    );
-                }
+                lotSelect.append(
+                    `<option value="${lotNo}">
+                ${lotNo} (Remain: ${sourceRemainingMeter(source).toFixed(2)})
+            </option>`
+                );
             });
 
             lotSelect.prop('disabled', seen.size === 0);
         }
 
         /* ===============================
-           LOAD ITEM BASED ON LOT
+           LOAD ITEM AFTER LOT
         ================================*/
         function loadItemByLot(lotNo) {
-            const sources = filteredSources().filter(s => s.lot_no == lotNo);
+            const sources = filteredSources().filter(s =>
+                String(s.lot_no) === String(lotNo)
+            );
 
             itemSelect.empty().append('<option value="">Select</option>');
 
-            sources.forEach(s => {
+            const seen = new Set();
+
+            sources.forEach(source => {
+                if (seen.has(source.item_id)) return;
+                seen.add(source.item_id);
+
                 itemSelect.append(
-                    `<option value="${s.item_id}">${s.item_name}</option>`
+                    `<option value="${source.item_id}">
+                ${source.item_name}
+            </option>`
                 );
             });
 
-            itemSelect.prop('disabled', sources.length === 0);
+            itemSelect.prop('disabled', seen.size === 0);
 
-            // 🔥 Auto select first item
-            if (sources.length === 1) {
-                itemSelect.val(sources[0].item_id);
-                autoFill(sources[0]);
+            if (seen.size === 1) {
+                itemSelect.val(sources[0].item_id).trigger('change');
             }
         }
 
         /* ===============================
-           AUTO FILL DATA
+           FIND SOURCE
         ================================*/
-        function autoFill(source) {
+        function findSource(itemId, lotNo) {
+            return filteredSources().find(s =>
+                String(s.item_id) === String(itemId) &&
+                String(s.lot_no) === String(lotNo)
+            ) || null;
+        }
+
+        /* ===============================
+           AUTO FILL
+        ================================*/
+        function autoFill() {
+            const source = findSource(itemSelect.val(), lotSelect.val());
             if (!source) return;
 
             $('#quality').val(source.quality || '');
-            $('#meter').val(source.remaining_meter || '');
+            $('#meter').val(sourceRemainingMeter(source).toFixed(2));
             $('#fold').val(source.fold || '');
 
             calculateValues();
         }
 
         /* ===============================
-           FIND SOURCE
-        ================================*/
-        function findSource(lotNo, itemId) {
-            return filteredSources().find(s =>
-                s.lot_no == lotNo && s.item_id == itemId
-            );
-        }
-
-        /* ===============================
-           CALCULATE
+           CALCULATION
         ================================*/
         function calculateValues() {
             const meter = toNumber($('#meter').val());
             const fold = toNumber($('#fold').val());
+            const type = ($('#type').val() || '').trim();
+
+            const shrinkageRaw = $('#shrinkage').val();
+            const afterRaw = $('#after_shrinkage_meter').val();
+
+            let shrinkage = parseFloat(shrinkageRaw) || 0;
+            let after = parseFloat(afterRaw) || 0;
 
             const total = (meter * fold) / 100;
-
             $('#total_meter').val(total ? total.toFixed(2) : '');
+
+            if (type === 'LOT TO LOT') {
+                if (!afterRaw) {
+                    $('#shrinkage').val('');
+                    return;
+                }
+
+                shrinkage = meter > 0 ? ((meter - after) / meter) * 100 : 0;
+                $('#shrinkage').val(shrinkage.toFixed(2));
+
+            } else {
+                if (!shrinkageRaw) {
+                    $('#after_shrinkage_meter').val('');
+                    return;
+                }
+
+                shrinkage = Math.max(0, Math.min(99.99, shrinkage));
+                const denom = 100 - shrinkage;
+
+                after = denom > 0 ? ((total * 100) / denom) : 0;
+
+                $('#after_shrinkage_meter').val(after.toFixed(2));
+                $('#shrinkage').val(shrinkage.toFixed(2));
+            }
+        }
+
+        /* ===============================
+           TYPE BEHAVIOUR
+        ================================*/
+        function updateTypeBehaviour() {
+            const isLotToLot = $('#type').val() === 'LOT TO LOT';
+
+            $('#shrinkage').prop('readonly', isLotToLot);
+            $('#after_shrinkage_meter').prop('readonly', !isLotToLot);
+
+            $('#shrinkage').val('');
+            $('#after_shrinkage_meter').val('');
+
+            calculateValues();
+        }
+
+        /* ===============================
+           CLEAR
+        ================================*/
+        function clearEntryFields() {
+            itemSelect.val('').prop('disabled', true);
+            lotSelect.val('');
+
+            $('#quality, #meter, #fold, #total_meter, #shrinkage, #after_shrinkage_meter').val('');
+        }
+
+        /* ===============================
+           GENERATE LOT NO
+        ================================*/
+        function generateInwardLotNo() {
+            const abbr = jobWorkerSelect.find('option:selected').data('abbr') || 'JW';
+            const chNo = $('input[name="ch_no"]').val() || 'CH0000';
+
+            let max = 0;
+
+            itemTableBody.find('tr').not('#no_item_row').each(function() {
+                const lot = $(this).data('lot-no') || '';
+                const m = lot.match(/\/(\d{5})$/);
+                if (m) max = Math.max(max, parseInt(m[1]));
+            });
+
+            return `${abbr}/${chNo}/${String(max + 1).padStart(5, '0')}`;
         }
 
         /* ===============================
            EVENTS
         ================================*/
-
-        // Job worker change
-        jobWorkerSelect.on('change', function() {
-            loadLots();
-
-            itemSelect.prop('disabled', true).val('');
-            lotSelect.val('');
-
-            $('#quality, #meter, #fold, #total_meter').val('');
+        jobWorkerSelect.on('change', () => {
+            clearEntryFields();
+            loadLotDropdown();
         });
 
-        // Lot change
-        lotSelect.on('change', function() {
-            const lotNo = $(this).val();
+        lotSelect.on('change', () => loadItemByLot(lotSelect.val()));
+        itemSelect.on('change', autoFill);
 
-            loadItemByLot(lotNo);
+        $('#meter, #fold').on('input', calculateValues);
+        $('#shrinkage, #after_shrinkage_meter').on('input', calculateValues);
+        $('#type').on('change', updateTypeBehaviour);
+
+        /* ===============================
+           ADD ITEM
+        ================================*/
+        $('#addItem').on('click', function() {
+
+            const itemId = itemSelect.val();
+            const itemText = $('#item_id option:selected').text();
+            const sourceLotNo = lotSelect.val();
+
+            if (!itemId) return alert('Select Item');
+            if (!sourceLotNo) return alert('Select LOT');
+            if (!jobWorkerSelect.val()) return alert('Select Job Worker');
+
+            const source = findSource(itemId, sourceLotNo);
+            const remaining = sourceRemainingMeter(source);
+
+            const meter = toNumber($('#meter').val());
+            const fold = toNumber($('#fold').val());
+            const total = toNumber($('#total_meter').val());
+
+            if (meter <= 0 && fold <= 0 && total <= 0) {
+                return alert('Enter values');
+            }
+
+            if (remaining > 0 && meter > remaining) {
+                return alert('Exceeds remaining!');
+            }
+
+            let duplicate = itemTableBody.find('tr').not('#no_item_row').filter(function() {
+                return $(this).data('item-id') == itemId &&
+                    $(this).data('source-lot') == sourceLotNo;
+            });
+
+            if (duplicate.length) return alert('Already added');
+
+            const inwardLotNo = generateInwardLotNo();
+
+            $('#no_item_row').remove();
+
+            let row = `<tr 
+        data-item-id="${itemId}"
+        data-lot-no="${inwardLotNo}"
+        data-source-lot="${sourceLotNo}"
+        data-quality="${$('#quality').val()}"
+        data-meter="${meter}"
+        data-fold="${fold}"
+        data-total="${total}"
+        data-shrinkage="${$('#shrinkage').val()}"
+        data-after-shrinkage="${$('#after_shrinkage_meter').val()}"
+        data-type="${$('#type').val()}"
+    >
+        <td></td>
+        <td>${inwardLotNo}</td>
+        <td>${itemText}</td>
+        <td>${$('#quality').val()}</td>
+        <td>${meter}</td>
+        <td>${fold}</td>
+        <td>${total}</td>
+        <td>${$('#shrinkage').val()}</td>
+        <td>${$('#after_shrinkage_meter').val()}</td>
+        <td>${$('#type').val()}</td>
+        <td><button class="removeRow btn btn-danger btn-sm">Delete</button></td>
+        <td class="d-none row-hidden-inputs"></td>
+    </tr>`;
+
+            itemTableBody.append(row);
+
+            reindexRows();
+            clearEntryFields();
         });
 
-        // Item change
-        itemSelect.on('change', function() {
-            const lotNo = lotSelect.val();
-            const itemId = $(this).val();
-
-            const source = findSource(lotNo, itemId);
-
-            autoFill(source);
+        /* ===============================
+           REMOVE
+        ================================*/
+        $(document).on('click', '.removeRow', function() {
+            $(this).closest('tr').remove();
+            reindexRows();
         });
 
-        // Live calc
-        $('#meter, #fold').on('input', function() {
-            calculateValues();
-        });
+        /* ===============================
+           REINDEX
+        ================================*/
+        function reindexRows() {
+            let rows = itemTableBody.find('tr').not('#no_item_row');
+
+            if (!rows.length) {
+                itemTableBody.append('<tr id="no_item_row"><td colspan="11">No items</td></tr>');
+                return;
+            }
+
+            $('#no_item_row').remove();
+
+            rows.each(function(i) {
+                $(this).find('td:first').text(i + 1);
+            });
+        }
 
         /* ===============================
            INIT
         ================================*/
         $(document).ready(function() {
-            loadLots();
+            lotSelect.prop('disabled', true);
+            itemSelect.prop('disabled', true);
+
+            updateTypeBehaviour();
         });
     </script>
 @endsection

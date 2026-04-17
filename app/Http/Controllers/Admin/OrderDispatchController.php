@@ -8,6 +8,7 @@ use App\Models\Item;
 use App\Models\OrderDispatch;
 use App\Models\OrderDispatchItem;
 use App\Models\PurchaseItem;
+use App\Models\JobWorkAssignmentItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -44,61 +45,89 @@ class OrderDispatchController extends Controller
 
     private function lotSources()
     {
-        // ✅ Purchase
-        $purchase = DB::table('purchase_items')
-            ->select('item_id', 'lot_no', DB::raw('SUM(qty_m) as purchase_meter'))
-            ->whereNotNull('lot_no')
-            ->where('lot_no', '!=', '')
-            ->groupBy('item_id', 'lot_no');
 
-        // ✅ Job Inward
-        $inward = DB::table('job_worker_inward_items')
-            ->select('item_id', 'lot_no', DB::raw('SUM(meter) as inward_meter'))
-            ->groupBy('item_id', 'lot_no');
-
-        // ✅ Job Assignment
-        $assigned = DB::table('job_work_assignment_items')
-            ->select('item_id', 'lot_no', DB::raw('SUM(meter) as assigned_meter'))
-            ->groupBy('item_id', 'lot_no');
-
-        // ✅ Dispatch
-        $dispatch = DB::table('order_dispatch_items')
-            ->select('item_id', 'lot_no', DB::raw('SUM(meter) as dispatch_meter'))
-            ->groupBy('item_id', 'lot_no');
-
-        // ✅ BASE: PURCHASE (main stock source)
-        return DB::table(DB::raw("({$purchase->toSql()}) as purchase"))
-            ->mergeBindings($purchase)
-
-            ->leftJoinSub($inward, 'inward', function ($join) {
-                $join->on('purchase.item_id', '=', 'inward.item_id')
-                    ->on('purchase.lot_no', '=', 'inward.lot_no');
-            })
-
-            ->leftJoinSub($assigned, 'assigned', function ($join) {
-                $join->on('purchase.item_id', '=', 'assigned.item_id')
-                    ->on('purchase.lot_no', '=', 'assigned.lot_no');
-            })
-
-            ->leftJoinSub($dispatch, 'dispatch', function ($join) {
-                $join->on('purchase.item_id', '=', 'dispatch.item_id')
-                    ->on('purchase.lot_no', '=', 'dispatch.lot_no');
-            })
-
-            ->select(
-                'purchase.item_id',
-                'purchase.lot_no',
-                DB::raw('
-                    (
-                        COALESCE(purchase.purchase_meter,0)
-                        + COALESCE(inward.inward_meter,0)
-                        - COALESCE(assigned.assigned_meter,0)
-                        - COALESCE(dispatch.dispatch_meter,0)
-                    ) as total_meter
-                ')
-            )
-            ->having('total_meter', '>', 0) // only available stock
+        $purchaseRows = PurchaseItem::query()
+            ->with([
+                'purchase:id,purchase_date,bno,vendor_id',
+                'purchase.vendor:id,vendor_name',
+                'item:id,item_name',
+            ])
+            ->whereHas('purchase')
+            ->orderByRaw('(select purchase_date from purchases where purchases.id = purchase_items.purchase_id) asc')
+            ->orderBy('sort_order')
             ->get();
+
+        // ✅ Assignment (purchase_item_id wise)
+        $assignedByPurchaseItem = JobWorkAssignmentItem::query()
+            ->whereNotNull('purchase_item_id')
+            ->get()
+            ->groupBy('purchase_item_id')
+            ->map(fn ($rows) => (float) $rows->sum('meter'));
+
+        // ✅ Dispatch (lot + item wise)
+        $dispatchByLotAndItem = OrderDispatchItem::query()
+            ->get()
+            ->groupBy(fn (OrderDispatchItem $row) => trim((string) $row->lot_no) . '|' . (int) $row->item_id)
+            ->map(fn ($rows) => (float) $rows->sum('meter'));
+
+        // ✅ NEW: Job Work Inward (lot + item wise)
+        $inwardByLotAndItem = DB::table('job_worker_inward_items')
+            ->select('item_id', 'lot_no', DB::raw('SUM(meter) as inward_meter'))
+            ->groupBy('item_id', 'lot_no')
+            ->get()
+            ->groupBy(fn ($row) => trim((string) $row->lot_no) . '|' . (int) $row->item_id)
+            ->map(fn ($rows) => (float) $rows->sum('inward_meter'));
+
+        $rows = $purchaseRows
+            ->map(function (PurchaseItem $row) use (
+                $assignedByPurchaseItem,
+                $dispatchByLotAndItem,
+                $inwardByLotAndItem
+            ) {
+
+                $purchaseDate = optional($row->purchase?->purchase_date);
+
+                $assigned = (float) ($assignedByPurchaseItem[$row->id] ?? 0);
+
+                $key = trim((string) $row->lot_no) . '|' . (int) $row->item_id;
+
+                $dispatched = (float) ($dispatchByLotAndItem[$key] ?? 0);
+
+                // ✅ NEW inward
+                $inward = (float) ($inwardByLotAndItem[$key] ?? 0);
+
+                // ✅ FINAL BALANCE (UPDATED)
+                $balance = (float) $row->qty_m 
+                    + $inward 
+                    - $assigned 
+                    - $dispatched;
+
+                return [
+                    'item_id' => (int) $row->item_id,
+                    'date' => $purchaseDate?->format('d.m.y') ?: '-',
+                    'sort_date' => $purchaseDate?->format('Y-m-d') ?: '0000-00-00',
+                    'supplier_name' => (string) ($row->purchase?->vendor?->vendor_name ?? '-'),
+                    'bill_no' => (string) ($row->purchase?->bno ?? '-'),
+                    'lot_no' => (string) ($row->lot_no ?? '-'),
+                    'quality' => (string) ($row->item?->item_name ?? 'Unknown Quality'),
+
+                    // ✅ FINAL OUTPUT
+                    'total_meter' => max($balance, 0),
+
+                    'lr_number' => (string) ($row->lr_no ?: '-'),
+                    'transport' => (string) ($row->transport ?: '-'),
+                ];
+            })
+            ->filter(fn (array $row) => $row['total_meter'] > 0.0001)
+            ->sort(function (array $a, array $b) {
+                $dateSort = strcmp($a['sort_date'], $b['sort_date']);
+                if ($dateSort !== 0) return $dateSort;
+                return strcmp($a['lot_no'], $b['lot_no']);
+            })
+            ->values();
+
+
+            return $rows;
     }
 
     public function index()
@@ -168,7 +197,7 @@ class OrderDispatchController extends Controller
         ];
 
         $customers = Customer::orderBy('name')->get(['id', 'name', 'abbr']);
-        $items = Item::where('stock_net_meter','!=','0')->orderBy('item_name')->get(['id', 'item_name', 'abbr']);
+        $items = Item::where('status','active')->orderBy('item_name')->get(['id', 'item_name', 'abbr']);
         $lotSources = $this->lotSources();
         $dispatchItems = collect();
 
