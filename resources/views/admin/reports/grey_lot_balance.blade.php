@@ -2,9 +2,7 @@
 
 @section('style')
     <style>
-        .report-title {
-            
-        }
+        .report-title {}
 
         .report-subtitle {
             font-weight: 600;
@@ -20,6 +18,11 @@
             white-space: nowrap;
             font-size: 14px;
             vertical-align: middle;
+        }
+
+        tfoot tr {
+            background: #e9ecef;
+            font-weight: bold;
         }
     </style>
 @endsection
@@ -37,9 +40,7 @@
                 </button>
             </div>
 
-            <div class="report-title">
-                
-            </div>
+            <div class="report-title"></div>
 
             <div class="report-subtitle">
                 GREY LOT BALANCE REPORT (SORTED BY DATE)
@@ -59,8 +60,12 @@
                             <th>TRANSPORT</th>
                         </tr>
                     </thead>
+
                     <tbody>
+                        @php $totalQty = 0; @endphp
+
                         @forelse ($rows as $row)
+                            @php $totalQty += (float) $row['quantity']; @endphp
                             <tr>
                                 <td>{{ $row['date'] }}</td>
                                 <td>{{ $row['supplier_name'] }}</td>
@@ -77,6 +82,15 @@
                             </tr>
                         @endforelse
                     </tbody>
+
+                    <tfoot>
+                        <tr>
+                            <td colspan="5" class="text-end">TOTAL</td>
+                            <td>{{ number_format($totalQty, 2, '.', '') }}</td>
+                            <td colspan="2"></td>
+                        </tr>
+                    </tfoot>
+
                 </table>
             </div>
 
@@ -126,6 +140,7 @@
                         r: R,
                         c: C
                     })];
+
                     if (cell && cell.v) {
                         maxWidth = Math.max(maxWidth, cell.v.toString().length);
                     }
