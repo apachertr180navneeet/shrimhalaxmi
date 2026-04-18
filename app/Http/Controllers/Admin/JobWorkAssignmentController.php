@@ -20,7 +20,7 @@ class JobWorkAssignmentController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('permission:jobassign-list', ['only' => ['index']]);
+        $this->middleware('permission:jobassign-list', ['only' => ['index', 'preview']]);
         $this->middleware('permission:jobassign-create', ['only' => ['create','store']]);
         $this->middleware('permission:jobassign-edit', ['only' => ['edit','update']]);
         $this->middleware('permission:jobassign-delete', ['only' => ['destroy']]);
@@ -310,6 +310,7 @@ class JobWorkAssignmentController extends Controller
                 // 🎯 ACTION BUTTONS
                 ->addColumn('action', function ($row) {
                     return '
+                        <a href="' . route('admin.jobworkassignments.preview', $row->id) . '" class="btn btn-sm btn-info" target="_blank">Preview</a>
                         <a href="' . route('admin.jobworkassignments.edit', $row->id) . '" class="btn btn-sm btn-primary">Edit</a>
                         <button class="btn btn-sm btn-danger deleteBtn" data-id="' . $row->id . '">Delete</button>
                     ';
@@ -469,6 +470,33 @@ class JobWorkAssignmentController extends Controller
             ));
         } catch (\Exception $e) {
             \Log::error('Job Work Assignment Edit Error: ' . $e->getMessage());
+
+            return redirect()->route('admin.jobworkassignments.index')->with('error', 'Record not found');
+        }
+    }
+
+    /**
+     * Show print preview for a job work assignment.
+     *
+     * @param int $id Assignment ID
+     * @return \Illuminate\View\View|\Illuminate\Http\RedirectResponse
+     */
+    public function preview($id)
+    {
+        try {
+            $assignment = JobWorkAssignment::with([
+                'jobWorker:id,name,abbr',
+                'items' => function ($query) {
+                    $query->with([
+                        'item:id,item_name',
+                        'processItem:id,item_name',
+                    ])->orderBy('sort_order');
+                },
+            ])->findOrFail($id);
+
+            return view('admin.job_work_assignments.preview', compact('assignment'));
+        } catch (\Exception $e) {
+            \Log::error('Job Work Assignment Preview Error: ' . $e->getMessage());
 
             return redirect()->route('admin.jobworkassignments.index')->with('error', 'Record not found');
         }

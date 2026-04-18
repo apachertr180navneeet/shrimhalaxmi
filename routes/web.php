@@ -106,6 +106,7 @@ Route::name('admin.')->prefix('admin')->group(function () {
             Route::get('/getall', [JobWorkAssignmentController::class, 'getAll'])->name('getall');
             Route::get('/create', [JobWorkAssignmentController::class, 'create'])->name('create');
             Route::post('/store', [JobWorkAssignmentController::class, 'store'])->name('store');
+            Route::get('/preview/{id}', [JobWorkAssignmentController::class, 'preview'])->name('preview');
             Route::get('/edit/{id}', [JobWorkAssignmentController::class, 'edit'])->name('edit');
             Route::post('/update/{id}', [JobWorkAssignmentController::class, 'update'])->name('update');
             Route::delete('/delete/{id}', [JobWorkAssignmentController::class, 'delete'])->name('delete');
