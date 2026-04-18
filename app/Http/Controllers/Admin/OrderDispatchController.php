@@ -21,7 +21,7 @@ class OrderDispatchController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('permission:dispatch-list', ['only' => ['index']]);
+        $this->middleware('permission:dispatch-list', ['only' => ['index', 'preview']]);
         $this->middleware('permission:dispatch-create', ['only' => ['create','store']]);
         $this->middleware('permission:dispatch-edit', ['only' => ['edit','update']]);
         $this->middleware('permission:dispatch-delete', ['only' => ['destroy']]);
@@ -219,7 +219,7 @@ class OrderDispatchController extends Controller
                     }
                     return '<button class="btn btn-sm btn-' . $color . '" disabled>' . htmlspecialchars($row->status) . '</button>';
                 })
-                ->addColumn('action', fn ($row) => '<a href="' . route('admin.orderdispatches.edit', $row->id) . '" class="btn btn-sm btn-primary">Edit</a>   <button class="btn btn-sm btn-danger deleteBtn" data-id="' . $row->id . '">Delete</button>')
+                ->addColumn('action', fn ($row) => '<a href="' . route('admin.orderdispatches.preview', $row->id) . '" class="btn btn-sm btn-info" target="_blank">Challan</a> <a href="' . route('admin.orderdispatches.edit', $row->id) . '" class="btn btn-sm btn-primary">Edit</a> <button class="btn btn-sm btn-danger deleteBtn" data-id="' . $row->id . '">Delete</button>')
                 ->rawColumns(['action', 'status'])
                 ->make(true);
         } catch (\Exception $e) {
@@ -337,6 +337,24 @@ class OrderDispatchController extends Controller
             return view('admin.order_dispatches.edit', compact('dispatch', 'customers', 'items', 'lotSources', 'dispatchItems'));
         } catch (\Exception $e) {
             \Log::error('OrderDispatch Edit Error: ' . $e->getMessage());
+            return redirect()->route('admin.orderdispatches.index')->with('error', 'Record not found');
+        }
+    }
+
+    public function preview($id)
+    {
+        try {
+            $dispatch = OrderDispatch::with([
+                'customer:id,name,abbr,phone,firm_name,gst_no,location,address_2',
+                'items' => function ($query) {
+                    $query->with('item:id,item_name,abbr')->orderBy('sort_order');
+                },
+            ])->findOrFail($id);
+
+            return view('admin.order_dispatches.preview', compact('dispatch'));
+        } catch (\Exception $e) {
+            \Log::error('OrderDispatch Preview Error: ' . $e->getMessage());
+
             return redirect()->route('admin.orderdispatches.index')->with('error', 'Record not found');
         }
     }

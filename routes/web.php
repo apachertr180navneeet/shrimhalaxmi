@@ -95,6 +95,7 @@ Route::name('admin.')->prefix('admin')->group(function () {
             Route::get('/', [OrderDispatchController::class, 'index'])->name('index');
             Route::get('/getall', [OrderDispatchController::class, 'getAll'])->name('getall');
             Route::get('/create', [OrderDispatchController::class, 'create'])->name('create');
+            Route::get('/preview/{id}', [OrderDispatchController::class, 'preview'])->name('preview');
             Route::post('/store', [OrderDispatchController::class, 'store'])->name('store');
             Route::get('/edit/{id}', [OrderDispatchController::class, 'edit'])->name('edit');
             Route::post('/update/{id}', [OrderDispatchController::class, 'update'])->name('update');
