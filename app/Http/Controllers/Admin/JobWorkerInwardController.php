@@ -161,7 +161,6 @@ class JobWorkerInwardController extends Controller
                 })
                 ->addColumn('action', function ($row) {
                     $isApproved = $row->status === 'active';
-
                     $editButton = $isApproved
                         ? '<button class="btn btn-sm btn-secondary" disabled>Approved</button>'
                         : '<a href="' . route('admin.jobworkerinwards.edit', $row->id) . '" class="btn btn-sm btn-primary">Edit</a>';

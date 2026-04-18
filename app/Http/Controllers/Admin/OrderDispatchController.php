@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\Item;
+use App\Models\JobWorkerInwardItem;
 use App\Models\OrderDispatch;
 use App\Models\OrderDispatchItem;
 use App\Models\PurchaseItem;
@@ -57,6 +58,13 @@ class OrderDispatchController extends Controller
             ->orderBy('sort_order')
             ->get();
 
+        $purchaseLotKeys = $purchaseRows
+            ->mapWithKeys(function (PurchaseItem $row) {
+                $key = trim((string) $row->lot_no) . '|' . (int) $row->item_id;
+
+                return [$key => true];
+            });
+
         // ✅ Assignment (purchase_item_id wise)
         $assignedByPurchaseItem = JobWorkAssignmentItem::query()
             ->whereNotNull('purchase_item_id')
@@ -78,7 +86,7 @@ class OrderDispatchController extends Controller
             ->groupBy(fn ($row) => trim((string) $row->lot_no) . '|' . (int) $row->item_id)
             ->map(fn ($rows) => (float) $rows->sum('inward_meter'));
 
-        $rows = $purchaseRows
+        $purchaseBalanceRows = $purchaseRows
             ->map(function (PurchaseItem $row) use (
                 $assignedByPurchaseItem,
                 $dispatchByLotAndItem,
@@ -118,16 +126,52 @@ class OrderDispatchController extends Controller
                     'transport' => (string) ($row->transport ?: '-'),
                 ];
             })
-            ->filter(fn (array $row) => $row['total_meter'] > 0.0001)
+            ->filter(fn (array $row) => $row['total_meter'] > 0.0001);
+
+        $inwardOnlyRows = JobWorkerInwardItem::query()
+            ->with([
+                'inward:id,inward_date,ch_no,job_worker_id',
+                'inward.jobWorker:id,name',
+                'item:id,item_name',
+            ])
+            ->whereHas('inward')
+            ->get()
+            ->groupBy(fn (JobWorkerInwardItem $row) => trim((string) $row->lot_no) . '|' . (int) $row->item_id)
+            ->reject(fn ($rows, string $key) => isset($purchaseLotKeys[$key]))
+            ->map(function ($rows, string $key) use ($dispatchByLotAndItem) {
+                $sortedRows = $rows->sortBy(fn (JobWorkerInwardItem $row) => $row->inward?->inward_date?->format('Y-m-d') ?: '9999-12-31');
+                $first = $sortedRows->first();
+                $inwardDate = $first?->inward?->inward_date;
+                $inwardMeter = (float) $rows->sum('meter');
+                $dispatched = (float) ($dispatchByLotAndItem[$key] ?? 0);
+                $balance = $inwardMeter - $dispatched;
+
+                return [
+                    'item_id' => (int) ($first?->item_id ?? 0),
+                    'date' => $inwardDate?->format('d.m.y') ?: '-',
+                    'sort_date' => $inwardDate?->format('Y-m-d') ?: '0000-00-00',
+                    'supplier_name' => (string) ($first?->inward?->jobWorker?->name ?? 'Job Inward'),
+                    'bill_no' => (string) ($first?->inward?->ch_no ?? '-'),
+                    'lot_no' => (string) ($first?->lot_no ?? '-'),
+                    'quality' => (string) ($first?->item?->item_name ?? 'Unknown Quality'),
+                    'total_meter' => max($balance, 0),
+                    'lr_number' => '-',
+                    'transport' => '-',
+                ];
+            })
+            ->filter(fn (array $row) => $row['total_meter'] > 0.0001);
+
+        return $purchaseBalanceRows
+            ->concat($inwardOnlyRows)
             ->sort(function (array $a, array $b) {
                 $dateSort = strcmp($a['sort_date'], $b['sort_date']);
-                if ($dateSort !== 0) return $dateSort;
+                if ($dateSort !== 0) {
+                    return $dateSort;
+                }
+
                 return strcmp($a['lot_no'], $b['lot_no']);
             })
             ->values();
-
-
-            return $rows;
     }
 
     public function index()

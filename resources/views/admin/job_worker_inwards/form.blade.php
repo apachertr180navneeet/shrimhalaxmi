@@ -33,6 +33,7 @@
                 @endforeach
             </select>
         </div>
+
     </div>
 </div>
 
@@ -169,6 +170,8 @@
                                 value="{{ $row->shrinkage }}">
                             <input type="hidden" name="items_data[{{ $rowIndex }}][type]"
                                 value="{{ $row->type }}">
+                            <input type="hidden" name="items_data[{{ $rowIndex }}][after_shrinkage_meter]"
+                                value="{{ number_format($rowAfterShrinkage, 2, '.', '') }}">
                         </td>
                     </tr>
                 @endforeach
@@ -192,6 +195,20 @@
         function toNumber(value) {
             const n = parseFloat(value);
             return isNaN(n) ? 0 : n;
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/"/g, '&quot;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+        }
+
+        function buildHiddenInputs(index, data) {
+            return Object.entries(data).map(([key, value]) =>
+                `<input type="hidden" name="items_data[${index}][${key}]" value="${escapeHtml(value)}">`
+            ).join('');
         }
 
         function sourceRemainingMeter(source) {
@@ -481,7 +498,21 @@
             $('#no_item_row').remove();
 
             rows.each(function(i) {
-                $(this).find('td:first').text(i + 1);
+                const row = $(this);
+                row.find('td:first').text(i + 1);
+
+                row.find('.row-hidden-inputs').html(buildHiddenInputs(i, {
+                    item_id: row.data('item-id') ?? '',
+                    lot_no: row.data('lot-no') ?? '',
+                    source_lot_no: row.data('source-lot') ?? '',
+                    quality: row.data('quality') ?? '',
+                    meter: row.data('meter') ?? '',
+                    fold: row.data('fold') ?? '',
+                    total_meter: row.data('total') ?? '',
+                    shrinkage: row.data('shrinkage') ?? '',
+                    type: row.data('type') ?? '',
+                    after_shrinkage_meter: row.data('after-shrinkage') ?? '',
+                }));
             });
         }
 
