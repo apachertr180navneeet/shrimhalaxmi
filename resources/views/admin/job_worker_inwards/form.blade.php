@@ -67,7 +67,7 @@
         </div>
 
         <div class="col-md-2">
-            <label>Color</label>
+            <label>Stage</label>
             <input type="text" id="quality" class="form-control">
         </div>
 
@@ -112,7 +112,7 @@
                 <th>SR</th>
                 <th>LOT NO</th>
                 <th>Item</th>
-                <th>Color</th>
+                <th>Stage</th>
                 <th>Meter</th>
                 <th>Fold</th>
                 <th>Total</th>
@@ -378,6 +378,7 @@
         function generateInwardLotNo() {
             const abbr = jobWorkerSelect.find('option:selected').data('abbr') || 'JW';
             const chNo = $('input[name="ch_no"]').val() || 'CH0000';
+            const color = $('#quality').val() || 'NA';
 
             let max = 0;
 
@@ -387,7 +388,7 @@
                 if (m) max = Math.max(max, parseInt(m[1]));
             });
 
-            return `${abbr}/${chNo}/${String(max + 1).padStart(5, '0')}`;
+            return `${abbr}/${chNo}/${color}/${String(max + 1).padStart(5, '0')}`;
         }
 
         /* ===============================

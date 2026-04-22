@@ -273,7 +273,7 @@
     </div>
 
     <div class="assignment-field-grid">
-        <label>Colour</label>
+        <label>Stage</label>
         <input type="text" id="colour" class="form-control" readonly>
     </div>
 
@@ -340,7 +340,7 @@
                     <th>Sr. No.</th>
                     <th>LOT NO.</th>
                     <th>Item</th>
-                    <th>Colour</th>
+                    <th>Stage</th>
                     <th>Meter</th>
                     <th>Fold</th>
                     <th>Net Meter</th>

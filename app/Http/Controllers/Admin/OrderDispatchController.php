@@ -330,7 +330,7 @@ class OrderDispatchController extends Controller
             ];
 
             $customers = Customer::orderBy('name')->get(['id', 'name', 'abbr']);
-            $items = Item::orderBy('item_name')->get(['id', 'item_name', 'abbr']);
+            $items = Item::where('status','active')->orderBy('item_name')->get(['id', 'item_name', 'abbr']);
             $lotSources = $this->lotSources();
             $dispatchItems = $dispatchRecord->items()->orderBy('sort_order')->get();
 
@@ -350,6 +350,7 @@ class OrderDispatchController extends Controller
                     $query->with('item:id,item_name,abbr')->orderBy('sort_order');
                 },
             ])->findOrFail($id);
+
 
             return view('admin.order_dispatches.preview', compact('dispatch'));
         } catch (\Exception $e) {
