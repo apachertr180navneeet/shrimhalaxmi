@@ -221,7 +221,6 @@
         <strong>Total Amount:</strong> <span id="totalAmount">{{ number_format((float) $totalAmount, 2, '.', '') }}</span>
     </div>
 </div>  --}}
-
 <script>
     (function() {
 

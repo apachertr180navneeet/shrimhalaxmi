@@ -23,6 +23,7 @@ class JobWorkerInwardItem extends Model
         'shrinkage',
         'type',
         'after_shrinkage_meter',
+        'design_no',
     ];
 
     protected $casts = [

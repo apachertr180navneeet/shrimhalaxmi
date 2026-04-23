@@ -68,7 +68,20 @@
 
         <div class="col-md-2">
             <label>Stage</label>
-            <input type="text" id="quality" class="form-control">
+            <select id="quality" class="form-control">
+                <option value="">Select</option>
+                @php $selectedStage = old('color', $purchase['color'] ?? ''); @endphp
+                <option value="Grey" {{ $selectedStage === 'Grey' ? 'selected' : '' }}>Grey</option>
+                <option value="Bleach" {{ $selectedStage === 'Bleach' ? 'selected' : '' }}>Bleach</option>
+                <option value="Dyed" {{ $selectedStage === 'Dyed' ? 'selected' : '' }}>Dyed</option>
+                <option value="RFD" {{ $selectedStage === 'RFD' ? 'selected' : '' }}>RFD</option>
+                <option value="Tie-Dye" {{ $selectedStage === 'Tie-Dye' ? 'selected' : '' }}>Tie-Dye</option>
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <label>Design No</label>
+            <input type="text" id="design_no" class="form-control">
         </div>
 
         <div class="col-md-2">
@@ -116,6 +129,7 @@
                 <th>Meter</th>
                 <th>Fold</th>
                 <th>Total</th>
+                <th>Design No</th>
                 <th>Shrinkage</th>
                 <th>After Shrinkage</th>
                 <th>Type</th>
@@ -139,7 +153,7 @@
                         data-meter="{{ $row->meter }}" data-fold="{{ $row->fold }}"
                         data-total="{{ $row->total_meter }}" data-shrinkage="{{ $row->shrinkage }}"
                         data-after-shrinkage="{{ number_format($rowAfterShrinkage, 2, '.', '') }}"
-                        data-type="{{ $row->type }}">
+                        data-type="{{ $row->type }}" data-design-no="{{ $row->design_no ?? '' }}">
                         <td>{{ $rowIndex + 1 }}</td>
                         <td>{{ $row->lot_no }}</td>
                         <td>{{ $row->item?->item_name }}</td>
@@ -147,6 +161,7 @@
                         <td>{{ $row->meter }}</td>
                         <td>{{ $row->fold }}</td>
                         <td>{{ $row->total_meter }}</td>
+                        <td>{{ $row->design_no ?? '' }}</td>
                         <td>{{ $row->shrinkage }}</td>
                         <td>{{ number_format($rowAfterShrinkage, 2, '.', '') }}</td>
                         <td>{{ $row->type }}</td>
@@ -172,6 +187,8 @@
                                 value="{{ $row->type }}">
                             <input type="hidden" name="items_data[{{ $rowIndex }}][after_shrinkage_meter]"
                                 value="{{ number_format($rowAfterShrinkage, 2, '.', '') }}">
+                            <input type="hidden" name="items_data[{{ $rowIndex }}][design_no]"
+                                value="{{ $row->design_no ?? '' }}">
                         </td>
                     </tr>
                 @endforeach
@@ -369,26 +386,35 @@
             itemSelect.val('').prop('disabled', true);
             lotSelect.val('');
 
-            $('#quality, #meter, #fold, #total_meter, #shrinkage, #after_shrinkage_meter').val('');
+            $('#quality, #meter, #fold, #total_meter, #shrinkage, #after_shrinkage_meter, #design_no').val('');
         }
 
         /* ===============================
            GENERATE LOT NO
         ================================*/
         function generateInwardLotNo() {
-            const abbr = jobWorkerSelect.find('option:selected').data('abbr') || 'JW';
-            const chNo = $('input[name="ch_no"]').val() || 'CH0000';
-            const color = $('#quality').val() || 'NA';
+
+            const designNo = $('#design_no').val() || 'DN';
+            const jobWorkerAbbr = jobWorkerSelect.find('option:selected').data('abbr') || 'JW';
+            const stage = $('#quality').val() || 'ST';
+            const inwardNo = $('input[name="ch_no"]').val() || 'IN0000';
 
             let max = 0;
 
-            itemTableBody.find('tr').not('#no_item_row').each(function() {
+            itemTableBody.find('tr').not('#no_item_row').each(function () {
                 const lot = $(this).data('lot-no') || '';
-                const m = lot.match(/\/(\d{5})$/);
-                if (m) max = Math.max(max, parseInt(m[1]));
+
+                const parts = lot.split('/');
+                const last = parts[parts.length - 1];
+
+                if (!isNaN(last)) {
+                    max = Math.max(max, parseInt(last));
+                }
             });
 
-            return `${abbr}/${chNo}/${color}/${String(max + 1).padStart(5, '0')}`;
+            const runningNo = String(max + 1).padStart(3, '0');
+
+            return `${designNo}/${jobWorkerAbbr}/${stage}/${inwardNo}/${runningNo}`;
         }
 
         /* ===============================
@@ -446,30 +472,32 @@
             $('#no_item_row').remove();
 
             let row = `<tr 
-        data-item-id="${itemId}"
-        data-lot-no="${inwardLotNo}"
-        data-source-lot="${sourceLotNo}"
-        data-quality="${$('#quality').val()}"
-        data-meter="${meter}"
-        data-fold="${fold}"
-        data-total="${total}"
-        data-shrinkage="${$('#shrinkage').val()}"
-        data-after-shrinkage="${$('#after_shrinkage_meter').val()}"
-        data-type="${$('#type').val()}"
-    >
-        <td></td>
-        <td>${inwardLotNo}</td>
-        <td>${itemText}</td>
-        <td>${$('#quality').val()}</td>
-        <td>${meter}</td>
-        <td>${fold}</td>
-        <td>${total}</td>
-        <td>${$('#shrinkage').val()}</td>
-        <td>${$('#after_shrinkage_meter').val()}</td>
-        <td>${$('#type').val()}</td>
-        <td><button class="removeRow btn btn-danger btn-sm">Delete</button></td>
-        <td class="d-none row-hidden-inputs"></td>
-    </tr>`;
+                data-item-id="${itemId}"
+                data-lot-no="${inwardLotNo}"
+                data-design-no="${$('#design_no').val()}"
+                data-source-lot="${sourceLotNo}"
+                data-quality="${$('#quality').val()}"
+                data-meter="${meter}"
+                data-fold="${fold}"
+                data-total="${total}"
+                data-shrinkage="${$('#shrinkage').val()}"
+                data-after-shrinkage="${$('#after_shrinkage_meter').val()}"
+                data-type="${$('#type').val()}"
+            >
+                <td></td>
+                <td>${inwardLotNo}</td>
+                <td>${itemText}</td>
+                <td>${$('#quality').val()}</td>
+                <td>${meter}</td>
+                <td>${fold}</td>
+                <td>${total}</td>
+                <td>${$('#design_no').val()}</td>
+                <td>${$('#shrinkage').val()}</td>
+                <td>${$('#after_shrinkage_meter').val()}</td>
+                <td>${$('#type').val()}</td>
+                <td><button class="removeRow btn btn-danger btn-sm">Delete</button></td>
+                <td class="d-none row-hidden-inputs"></td>
+            </tr>`;
 
             itemTableBody.append(row);
 
@@ -513,6 +541,7 @@
                     shrinkage: row.data('shrinkage') ?? '',
                     type: row.data('type') ?? '',
                     after_shrinkage_meter: row.data('after-shrinkage') ?? '',
+                    design_no: row.data('design-no') ?? '',
                 }));
             });
         }

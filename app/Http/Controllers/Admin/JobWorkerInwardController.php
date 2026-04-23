@@ -215,6 +215,7 @@ class JobWorkerInwardController extends Controller
             'items_data.*.shrinkage' => 'nullable|string|max:50',
             'items_data.*.type' => 'nullable|string|max:50',
             'items_data.*.after_shrinkage_meter' => 'nullable|string|max:50',
+            'items_data.*.design_no' => 'nullable|string|max:50',
         ]);
 
         if ($validator->fails()) {
@@ -247,6 +248,7 @@ class JobWorkerInwardController extends Controller
                         'shrinkage' => $itemRow['shrinkage'] ?? null,
                         'type' => $itemRow['type'] ?? null,
                         'after_shrinkage_meter' => $itemRow['after_shrinkage_meter'] ?? null,
+                        'design_no' => $itemRow['design_no'] ?? null
                     ]);
                 }
             });
@@ -301,6 +303,7 @@ class JobWorkerInwardController extends Controller
             'items_data.*.shrinkage' => 'nullable|string|max:50',
             'items_data.*.type' => 'nullable|string|max:50',
             'items_data.*.after_shrinkage_meter' => 'nullable|string|max:50',
+            'items_data.*.design_no' => 'nullable|string|max:50',
         ]);
 
         if ($validator->fails()) {
@@ -336,6 +339,7 @@ class JobWorkerInwardController extends Controller
                         'shrinkage' => $itemRow['shrinkage'] ?? null,
                         'type' => $itemRow['type'] ?? null,
                         'after_shrinkage_meter' => $itemRow['after_shrinkage_meter'] ?? null,
+                        'design_no' => $itemRow['design_no'] ?? null
                     ]);
                 }
             });

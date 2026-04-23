@@ -338,7 +338,7 @@ class JobWorkAssignmentController extends Controller
     {
         $assignment = $this->assignmentDefaults();
         $jobWorkers = JobWorker::query()->orderBy('name')->get(['id', 'name', 'abbr']);
-        $items = Item::query()->orderBy('item_name')->get(['id', 'item_name']);
+        $items = Item::query()->where('status','active')->orderBy('item_name')->get(['id', 'item_name']);
         $lotSources = $this->lotSources();
         $assignmentItems = collect();
         $processOptions = $this->processOptions();
