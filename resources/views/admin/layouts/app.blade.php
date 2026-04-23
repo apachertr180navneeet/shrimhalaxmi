@@ -20,14 +20,17 @@
         <link rel="stylesheet" href="{{asset('assets/admin/css/bootstrapDataTable.css')}}" />
         <link rel="stylesheet" href="{{asset('assets/admin/vendor/libs/perfect-scrollbar/perfect-scrollbar.css')}}" />
         <link rel="stylesheet" href="{{asset('assets/admin/vendor/libs/apex-charts/apex-charts.css')}}" />
+        <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
         <script src="{{asset('assets/admin/vendor/js/helpers.js')}}"></script>
         <script src="{{asset('assets/admin/js/config.js')}}"></script>
         <link rel="stylesheet" href="{{asset('assets/admin/css/sweet-alert.css')}}" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css"/>
+        <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
         @yield('style')
         <style>
             
         </style>
+        <script src="{{asset('assets/admin/vendor/libs/jquery/jquery.js')}}"></script>
         
     </head>
     <body>
@@ -44,7 +47,8 @@
                     @include('admin.layouts.elements.right_sidebar')
                 </div>
         
-                <script src="{{asset('assets/admin/vendor/libs/jquery/jquery.js')}}"></script>
+                
+                <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
                 <script src="{{asset('assets/admin/vendor/libs/popper/popper.js')}}"></script>
                 <script src="{{asset('assets/admin/vendor/js/bootstrap.js')}}"></script>
                 <script src="{{asset('assets/admin/vendor/libs/perfect-scrollbar/perfect-scrollbar.js')}}"></script>
