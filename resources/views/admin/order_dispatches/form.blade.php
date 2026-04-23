@@ -212,15 +212,6 @@
         </table>
     </div>
 </div>
-
-{{--  <div class="row mt-2">
-    <div class="col-md-3">
-        <strong>Total Meter:</strong> <span id="totalMeter">{{ number_format((float) $totalMeter, 2, '.', '') }}</span>
-    </div>
-    <div class="col-md-3">
-        <strong>Total Amount:</strong> <span id="totalAmount">{{ number_format((float) $totalAmount, 2, '.', '') }}</span>
-    </div>
-</div>  --}}
 <script>
     (function() {
 
@@ -257,8 +248,6 @@
             var seen = new Set();
 
             lotSources.forEach(function(source) {
-
-                console.log(source)
 
                 if (String(source.item_id) !== String(itemId)) return;
 
