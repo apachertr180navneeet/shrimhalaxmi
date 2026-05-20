@@ -64,6 +64,7 @@
                         <th>LR No.</th>
                         <th>Process</th>
                         <th>Freight</th>
+                        <th>Factory Challan</th>
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -95,6 +96,7 @@ $(function () {
             { data: 'lr_no', orderable: false, searchable: false },
             { data: 'process', orderable: false, searchable: false },
             { data: 'freight', name: 'freight' },
+            { data: 'factory_challan', name: 'factory_challan' },
             { data: 'action', orderable: false, searchable: false }
         ]
     });

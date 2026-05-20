@@ -59,9 +59,9 @@
                 <thead>
                     <tr>
                         <th>Date</th>
-                        <th>PCH. NO.</th>
                         <th>BNO</th>
                         <th>Vendor Name</th>
+                        <th>Remark</th>
                         <th>Freight</th>
                         <th>Action</th>
                     </tr>
@@ -87,14 +87,14 @@ $(function () {
             }
         },
         searching: false,
-        columns: [
-            { data: 'date', name: 'purchase_date' },
-            { data: 'pch_no', name: 'pch_no' },
-            { data: 'bno', name: 'bno' },
-            { data: 'vendor_name', orderable: false, searchable: false },
-            { data: 'freight', name: 'freight' },
-            { data: 'action', orderable: false, searchable: false }
-        ]
+            columns: [
+                { data: 'date', name: 'purchase_date' },
+                { data: 'bno', name: 'bno' },
+                { data: 'vendor_name', orderable: false, searchable: false },
+                { data: 'remark', name: 'remark' },
+                { data: 'freight', name: 'freight' },
+                { data: 'action', orderable: false, searchable: false }
+            ]
     });
 
     $('#searchBtn').on('click', function () {

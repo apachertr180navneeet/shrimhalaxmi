@@ -7,7 +7,6 @@
 
     $dispatchDate = old('dispatch_date', $dispatch['dispatch_date'] ?? now()->format('Y-m-d'));
     $dispatchNo = old('dispatch_no', $dispatch['dispatch_no'] ?? '');
-    $billNo = old('bill_no', $dispatch['bill_no'] ?? '');
     $customerId = old('customer_id', $dispatch['customer_id'] ?? '');
     $mobileNumber = old('mobile_number', $dispatch['mobile_number'] ?? '');
     $transport = old('transport', $dispatch['transport'] ?? '');
@@ -49,7 +48,7 @@
             @enderror
         </div>
         <div class="col-md-4">
-            <label class="form-label">BALE No.</label>
+            <label class="form-label">Order Dispatch No.</label>
             <input type="text" name="dispatch_no" class="form-control @error('dispatch_no') is-invalid @enderror"
                 value="{{ $dispatchNo }}" readonly required>
             @error('dispatch_no')
@@ -57,10 +56,10 @@
             @enderror
         </div>
         <div class="col-md-4">
-            <label class="form-label">Bill No</label>
-            <input type="text" name="bill_no" class="form-control @error('bill_no') is-invalid @enderror"
-                value="{{ $billNo }}">
-            @error('bill_no')
+            <label class="form-label">Bill No.</label>
+            <input type="text" name="order_dispatch_no" class="form-control @error('order_dispatch_no') is-invalid @enderror"
+                value="{{ old('order_dispatch_no', $dispatch['order_dispatch_no'] ?? '') }}">
+            @error('order_dispatch_no')
                 <div class="invalid-feedback">{{ $message }}</div>
             @enderror
         </div>
@@ -109,6 +108,10 @@
 
     <h6 class="mt-4">Items Details</h6>
     <div class="row g-3">
+        <div class="col-md-1">
+            <label class="form-label">Bale No.</label>
+            <input type="text" id="bale_no" class="form-control" placeholder="Bale No.">
+        </div>
         <div class="col-md-2">
             <label class="form-label">Item</label>
             <select id="item_id" class="form-select">
@@ -133,6 +136,14 @@
         <div class="col-md-1">
             <label class="form-label">Meter</label>
             <input type="number" step="0.01" id="meter" class="form-control" placeholder="Meter" disabled>
+        </div>
+        <div class="col-md-1">
+            <label class="form-label">Fold</label>
+            <input type="number" step="0.01" id="fold" class="form-control" placeholder="Fold" readonly>
+        </div>
+        <div class="col-md-1">
+            <label class="form-label">Net Meter</label>
+            <input type="number" step="0.01" id="net_meter" class="form-control" placeholder="Net Meter" readonly>
         </div>
         <div class="col-md-1">
             <label class="form-label">Rate</label>
@@ -161,9 +172,12 @@
         <table class="table table-bordered" id="dispatchItemsTable">
             <thead>
                 <tr>
+                    <th>Bale No.</th>
                     <th>Lot No</th>
                     <th>Item</th>
                     <th>Meter</th>
+                    <th>Fold</th>
+                    <th>Net Meter</th>
                     <th>Rate</th>
                     <th>Amount</th>
                     <th>GST (18%)</th>
@@ -174,9 +188,12 @@
             <tbody id="dispatchItemsBody">
                 @forelse ($dispatchItems as $index => $row)
                     <tr data-index="{{ $index }}">
+                        <td>{{ $row->bale_no ?? '-' }}</td>
                         <td>{{ $row->lot_no }}</td>
                         <td>{{ $row->item?->item_name ?? '-' }}</td>
                         <td>{{ number_format($row->meter, 2, '.', '') }}</td>
+                        <td>{{ number_format($row->fold ?? 0, 2, '.', '') }}</td>
+                        <td>{{ number_format($row->net_meter ?? 0, 2, '.', '') }}</td>
                         <td>{{ number_format($row->rate, 2, '.', '') }}</td>
                         <td>{{ number_format($row->amount, 2, '.', '') }}</td>
                         <td>{{ number_format((float) ($row->gst ?? 0), 2, '.', '') }}</td>
@@ -191,6 +208,12 @@
                                 value="{{ $row->item_code }}">
                             <input type="hidden" name="items_data[{{ $index }}][meter]"
                                 value="{{ $row->meter }}">
+                            <input type="hidden" name="items_data[{{ $index }}][fold]"
+                                value="{{ $row->fold ?? 0 }}">
+                            <input type="hidden" name="items_data[{{ $index }}][net_meter]"
+                                value="{{ $row->net_meter ?? 0 }}">
+                            <input type="hidden" name="items_data[{{ $index }}][bale_no]"
+                                value="{{ $row->bale_no ?? '' }}">
                             <input type="hidden" name="items_data[{{ $index }}][rate]"
                                 value="{{ $row->rate }}">
                             <input type="hidden" name="items_data[{{ $index }}][amount]"
@@ -205,7 +228,7 @@
                     </tr>
                 @empty
                     <tr id="noItemsRow">
-                        <td colspan="8" class="text-center">No items added yet.</td>
+                        <td colspan="11" class="text-center">No items added yet.</td>
                     </tr>
                 @endforelse
             </tbody>
@@ -268,6 +291,7 @@
                     var opt = new Option(lotNo + ' (Available: ' + available + ')', lotNo,
                         false, false);
                     $(opt).attr('data-meter', available);
+                    $(opt).attr('data-fold', source.fold || 0);
                     lotSelect.append(opt);
                 });
 
@@ -284,18 +308,36 @@
             // Lot selection change (Select2 compatible)
             $('#lot_no').on('change', function() {
                 var meterInput = $('#meter');
+                var foldInput = $('#fold');
+                var netMeterInput = $('#net_meter');
                 var selected = $(this).find(':selected');
 
                 if (!this.value) {
                     meterInput.prop('disabled', true).val('');
+                    foldInput.val('');
+                    netMeterInput.val('');
                     $('#available_meter').val('');
                     return;
                 }
 
                 var available = parseFloat(selected.attr('data-meter') || 0);
+                var foldVal = parseFloat(selected.attr('data-fold') || 0);
                 meterInput.prop('disabled', false).attr('max', available);
+                foldInput.val(foldVal.toFixed(2));
                 $('#available_meter').val(available.toFixed(2));
+                recalculateNetMeter();
             });
+
+            function recalculateNetMeter() {
+                var meter = toNumber($('#meter').val());
+                var fold = toNumber($('#fold').val());
+                if (meter <= 0 || fold <= 0) {
+                    $('#net_meter').val('');
+                    return;
+                }
+                var netMeter = (meter * fold) / 100;
+                $('#net_meter').val(netMeter.toFixed(2));
+            }
 
             // Meter input validation and calculation
             $('#meter').on('input', function() {
@@ -307,6 +349,7 @@
                     $(this).val(available);
                     if (window.toastr) toastr.warning('Max allowed: ' + available);
                 }
+                recalculateNetMeter();
                 refreshAmount();
             });
 
@@ -355,6 +398,9 @@
                     return;
                 }
 
+                var foldVal = toNumber($('#fold').val());
+                var netMeterVal = toNumber($('#net_meter').val());
+                var baleNo = $('#bale_no').val();
                 var amount = toNumber($('#amount').val());
                 var gst = toNumber($('#gst').val());
                 var total = toNumber($('#item_total_amount').val());
@@ -365,9 +411,12 @@
 
                 var row = `
                 <tr>
+                    <td>${baleNo || '-'}</td>
                     <td>${lotNo}</td>
                     <td>${itemName}</td>
                     <td>${meter.toFixed(2)}</td>
+                    <td>${foldVal.toFixed(2)}</td>
+                    <td>${netMeterVal.toFixed(2)}</td>
                     <td>${rate.toFixed(2)}</td>
                     <td>${amount.toFixed(2)}</td>
                     <td>${gst.toFixed(2)}</td>
@@ -377,6 +426,9 @@
                         <input type="hidden" name="items_data[${index}][item_id]" value="${itemId}">
                         <input type="hidden" name="items_data[${index}][lot_no]" value="${lotNo}">
                         <input type="hidden" name="items_data[${index}][meter]" value="${meter}">
+                        <input type="hidden" name="items_data[${index}][fold]" value="${foldVal}">
+                        <input type="hidden" name="items_data[${index}][net_meter]" value="${netMeterVal}">
+                        <input type="hidden" name="items_data[${index}][bale_no]" value="${baleNo}">
                         <input type="hidden" name="items_data[${index}][rate]" value="${rate}">
                         <input type="hidden" name="items_data[${index}][amount]" value="${amount}">
                         <input type="hidden" name="items_data[${index}][gst]" value="${gst}">
@@ -389,6 +441,9 @@
 
                 // Reset item entry fields
                 $('#meter').val('').prop('disabled', true);
+                $('#fold').val('');
+                $('#net_meter').val('');
+                $('#bale_no').val('');
                 $('#rate').val('');
                 $('#amount').val('');
                 $('#gst').val('');
@@ -402,7 +457,7 @@
                 $(this).closest('tr').remove();
                 if ($('#dispatchItemsBody tr').length === 0) {
                     $('#dispatchItemsBody').append(
-                        '<tr id="noItemsRow"><td colspan="8" class="text-center">No items added yet.</td></tr>'
+                        '<tr id="noItemsRow"><td colspan="11" class="text-center">No items added yet.</td></tr>'
                         );
                 }
             });

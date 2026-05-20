@@ -14,6 +14,7 @@ class OrderDispatch extends Model
     protected $fillable = [
         'dispatch_date',
         'dispatch_no',
+        'order_dispatch_no',
         'bill_no',
         'customer_id',
         'mobile_number',

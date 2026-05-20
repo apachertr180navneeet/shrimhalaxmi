@@ -238,7 +238,7 @@
             <!-- META -->
             <table class="dispatch-preview__meta">
                 <tr>
-                    <td class="dispatch-preview__label">Bale No.</td>
+                    <td class="dispatch-preview__label">Order Dispatch No.</td>
                     <td class="dispatch-preview__line">{{ $dispatch->dispatch_no ?? '-' }}</td>
 
                     <td class="dispatch-preview__label text-end">Date</td>
@@ -272,16 +272,25 @@
                     <td class="dispatch-preview__label text-end">L.R. No.</td>
                     <td class="dispatch-preview__line">-</td>
                 </tr>
+
+                <tr>
+                    <td class="dispatch-preview__label">Order Dispatch No.</td>
+                    <td class="dispatch-preview__line">{{ $dispatch->order_dispatch_no ?? '-' }}</td>
+                    <td colspan="2"></td>
+                </tr>
             </table>
 
             <!-- ITEMS -->
             <table class="dispatch-preview__body">
                 <thead>
                     <tr>
-                        <th width="10%">S.No.</th>
-                        <th width="25%">Lot No.</th>
-                        <th width="35%">Quality</th>
-                        <th width="20%">Meters</th>
+                        <th width="8%">S.No.</th>
+                        <th width="12%">Bale No.</th>
+                        <th width="18%">Lot No.</th>
+                        <th width="20%">Quality</th>
+                        <th width="10%">Meters</th>
+                        <th width="10%">Fold</th>
+                        <th width="10%">Net Mtr</th>
                     </tr>
                 </thead>
 
@@ -289,15 +298,22 @@
                     @forelse ($dispatch->items as $index => $item)
                         <tr>
                             <td>{{ $index + 1 }}</td>
+                            <td>{{ $item->bale_no ?? '-' }}</td>
                             <td>{{ $item->lot_no }}</td>
                             <td>{{ $item->item?->item_name }}</td>
                             <td class="numeric">
                                 {{ number_format((float) $item->meter, 2, '.', '') }}
                             </td>
+                            <td class="numeric">
+                                {{ number_format((float) ($item->fold ?? 0), 2, '.', '') }}
+                            </td>
+                            <td class="numeric">
+                                {{ number_format((float) ($item->net_meter ?? 0), 2, '.', '') }}
+                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" class="text-center">No items found</td>
+                            <td colspan="7" class="text-center">No items found</td>
                         </tr>
                     @endforelse
 
@@ -309,6 +325,9 @@
                                 {{ number_format((float) $dispatch->total_meter, 2, '.', '') }}
                             </strong>
                         </td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
                     </tr>
                 </tbody>
             </table>

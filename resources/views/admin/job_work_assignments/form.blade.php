@@ -233,6 +233,15 @@
                 <div class="text-danger small">{{ $message }}</div>
             @enderror
         </div>
+
+        <div class="assignment-field-grid">
+            <label>Factory Challan</label>
+            <input type="text" name="factory_challan" class="form-control @error('factory_challan') is-invalid @enderror"
+                value="{{ old('factory_challan', $assignment['factory_challan'] ?? '') }}">
+            @error('factory_challan')
+                <div class="text-danger small">{{ $message }}</div>
+            @enderror
+        </div>
     </div>
 </div>
 

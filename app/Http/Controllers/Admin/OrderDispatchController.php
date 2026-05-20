@@ -121,6 +121,7 @@ class OrderDispatchController extends Controller
 
                     // ✅ FINAL OUTPUT
                     'total_meter' => max($balance, 0),
+                    'fold' => (string) ($row->fold ?? 0),
 
                     'lr_number' => (string) ($row->lr_no ?: '-'),
                     'transport' => (string) ($row->transport ?: '-'),
@@ -155,6 +156,7 @@ class OrderDispatchController extends Controller
                     'lot_no' => (string) ($first?->lot_no ?? '-'),
                     'quality' => (string) ($first?->item?->item_name ?? 'Unknown Quality'),
                     'total_meter' => max($balance, 0),
+                    'fold' => (string) ($first?->fold ?? 0),
                     'lr_number' => '-',
                     'transport' => '-',
                 ];
@@ -233,6 +235,7 @@ class OrderDispatchController extends Controller
         $dispatch = [
             'dispatch_date' => now()->format('Y-m-d'),
             'dispatch_no' => $this->nextDispatchNo(),
+            'order_dispatch_no' => '',
             'bill_no' => '',
             'customer_id' => '',
             'mobile_number' => '',
@@ -253,6 +256,7 @@ class OrderDispatchController extends Controller
         $validator = Validator::make($request->all(), [
             'dispatch_date' => 'required|date',
             'dispatch_no' => 'required|string|max:50|unique:order_dispatches,dispatch_no',
+            'order_dispatch_no' => 'nullable|string|max:100',
             'bill_no' => 'nullable|string|max:50',
             'customer_id' => 'required|exists:customers,id',
             'mobile_number' => 'nullable|string|max:25',
@@ -262,6 +266,9 @@ class OrderDispatchController extends Controller
             'items_data.*.item_id' => 'required|exists:items,id',
             'items_data.*.lot_no' => 'required|string|max:100',
             'items_data.*.meter' => 'required|numeric|min:0',
+            'items_data.*.fold' => 'required|numeric|min:0',
+            'items_data.*.net_meter' => 'required|numeric|min:0',
+            'items_data.*.bale_no' => 'nullable|string|max:100',
             'items_data.*.rate' => 'required|numeric|min:0',
             'items_data.*.amount' => 'required|numeric|min:0',
             'items_data.*.gst' => 'required|numeric|min:0',
@@ -280,6 +287,7 @@ class OrderDispatchController extends Controller
                 $dispatch = OrderDispatch::create([
                     'dispatch_date' => $request->dispatch_date,
                     'dispatch_no' => $request->dispatch_no,
+                    'order_dispatch_no' => $request->order_dispatch_no,
                     'bill_no' => $request->bill_no,
                     'customer_id' => $request->customer_id,
                     'mobile_number' => $request->mobile_number,
@@ -296,6 +304,9 @@ class OrderDispatchController extends Controller
                         'lot_no' => $itemRow['lot_no'],
                         'item_code' => $itemRow['item_code'] ?? null,
                         'meter' => $itemRow['meter'],
+                        'fold' => $itemRow['fold'],
+                        'net_meter' => $itemRow['net_meter'],
+                        'bale_no' => $itemRow['bale_no'] ?? null,
                         'rate' => $itemRow['rate'],
                         'amount' => $itemRow['amount'],
                         'gst' => $itemRow['gst'] ?? 0,
@@ -322,6 +333,7 @@ class OrderDispatchController extends Controller
                 'id' => $dispatchRecord->id,
                 'dispatch_date' => optional($dispatchRecord->dispatch_date)->format('Y-m-d'),
                 'dispatch_no' => $dispatchRecord->dispatch_no,
+                'order_dispatch_no' => $dispatchRecord->order_dispatch_no,
                 'bill_no' => $dispatchRecord->bill_no,
                 'customer_id' => $dispatchRecord->customer_id,
                 'mobile_number' => $dispatchRecord->mobile_number,
@@ -365,6 +377,7 @@ class OrderDispatchController extends Controller
         $validator = Validator::make($request->all(), [
             'dispatch_date' => 'required|date',
             'dispatch_no' => ['required', 'string', 'max:50', Rule::unique('order_dispatches', 'dispatch_no')->ignore($id)],
+            'order_dispatch_no' => 'nullable|string|max:100',
             'bill_no' => 'nullable|string|max:50',
             'customer_id' => 'required|exists:customers,id',
             'mobile_number' => 'nullable|string|max:25',
@@ -374,6 +387,9 @@ class OrderDispatchController extends Controller
             'items_data.*.item_id' => 'required|exists:items,id',
             'items_data.*.lot_no' => 'required|string|max:100',
             'items_data.*.meter' => 'required|numeric|min:0',
+            'items_data.*.fold' => 'required|numeric|min:0',
+            'items_data.*.net_meter' => 'required|numeric|min:0',
+            'items_data.*.bale_no' => 'nullable|string|max:100',
             'items_data.*.rate' => 'required|numeric|min:0',
             'items_data.*.amount' => 'required|numeric|min:0',
             'items_data.*.gst' => 'required|numeric|min:0',
@@ -399,6 +415,7 @@ class OrderDispatchController extends Controller
                 $dispatch->update([
                     'dispatch_date' => $request->dispatch_date,
                     'dispatch_no' => $request->dispatch_no,
+                    'order_dispatch_no' => $request->order_dispatch_no,
                     'bill_no' => $request->bill_no,
                     'customer_id' => $request->customer_id,
                     'mobile_number' => $request->mobile_number,
@@ -417,6 +434,9 @@ class OrderDispatchController extends Controller
                         'lot_no' => $itemRow['lot_no'],
                         'item_code' => $itemRow['item_code'] ?? null,
                         'meter' => $itemRow['meter'],
+                        'fold' => $itemRow['fold'],
+                        'net_meter' => $itemRow['net_meter'],
+                        'bale_no' => $itemRow['bale_no'] ?? null,
                         'rate' => $itemRow['rate'],
                         'amount' => $itemRow['amount'],
                         'gst' => $itemRow['gst'] ?? 0,

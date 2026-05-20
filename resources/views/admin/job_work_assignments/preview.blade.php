@@ -215,6 +215,10 @@
                     <td colspan="2"><strong>LR No.</strong> {{ $lrNo ?: '-' }}</td>
                 </tr>
                 <tr>
+                    <td colspan="2"><strong>Factory Challan</strong> {{ $assignment->factory_challan ?: '-' }}</td>
+                    <td colspan="2"></td>
+                </tr>
+                <tr>
                     <td colspan="2"><strong>Item Name</strong> {{ $itemNames ?: '-' }}</td>
                     <td><strong>Shade</strong> {{ $shadeNames ?: '-' }}</td>
                     <td><strong>Fold</strong> {{ $firstItem ? number_format((float) $firstItem->fold, 2, '.', '') : '-' }}</td>

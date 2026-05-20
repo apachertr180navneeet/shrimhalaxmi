@@ -17,6 +17,9 @@ class OrderDispatchItem extends Model
         'lot_no',
         'item_code',
         'meter',
+        'fold',
+        'net_meter',
+        'bale_no',
         'rate',
         'amount',
         'gst',
@@ -26,6 +29,8 @@ class OrderDispatchItem extends Model
 
     protected $casts = [
         'meter' => 'decimal:2',
+        'fold' => 'decimal:2',
+        'net_meter' => 'decimal:2',
         'rate' => 'decimal:2',
         'amount' => 'decimal:2',
         'gst' => 'decimal:2',

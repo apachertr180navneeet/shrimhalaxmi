@@ -44,16 +44,15 @@
     <div class="row g-3 align-items-end">
 
         <div class="col-md-2">
-            <label>LOT NO</label>
-            <select id="lot_no" class="form-control" disabled>
+            <label>Item</label>
+            <select id="item_id" class="form-control" disabled>
                 <option value="">Select</option>
             </select>
         </div>
 
-
         <div class="col-md-2">
-            <label>Item</label>
-            <select id="item_id" class="form-control">
+            <label>LOT NO</label>
+            <select id="lot_no" class="form-control" disabled>
                 <option value="">Select</option>
             </select>
         </div>
@@ -76,6 +75,7 @@
                 <option value="Dyed" {{ $selectedStage === 'Dyed' ? 'selected' : '' }}>Dyed</option>
                 <option value="RFD" {{ $selectedStage === 'RFD' ? 'selected' : '' }}>RFD</option>
                 <option value="Tie-Dye" {{ $selectedStage === 'Tie-Dye' ? 'selected' : '' }}>Tie-Dye</option>
+                <option value="Printed" {{ $selectedStage === 'Printed' ? 'selected' : '' }}>Printed</option>
             </select>
         </div>
 
@@ -123,8 +123,8 @@
         <thead class="table-light">
             <tr>
                 <th>SR</th>
-                <th>LOT NO</th>
                 <th>Item</th>
+                <th>LOT NO</th>
                 <th>Stage</th>
                 <th>Meter</th>
                 <th>Fold</th>
@@ -155,8 +155,8 @@
                         data-after-shrinkage="{{ number_format($rowAfterShrinkage, 2, '.', '') }}"
                         data-type="{{ $row->type }}" data-design-no="{{ $row->design_no ?? '' }}">
                         <td>{{ $rowIndex + 1 }}</td>
-                        <td>{{ $row->lot_no }}</td>
                         <td>{{ $row->item?->item_name }}</td>
+                        <td>{{ $row->lot_no }}</td>
                         <td>{{ $row->quality }}</td>
                         <td>{{ $row->meter }}</td>
                         <td>{{ $row->fold }}</td>
@@ -246,16 +246,44 @@
         }
 
         /* ===============================
-           LOAD LOT
+           LOAD ITEM (first dropdown)
         ================================*/
-        function loadLotDropdown() {
-            lotSelect.empty().append('<option value="">Select</option>');
+        function loadItemDropdown() {
+            itemSelect.empty().append('<option value="">Select</option>');
             const seen = new Set();
 
             filteredSources().forEach(source => {
+                const id = source.item_id;
+                if (!id || seen.has(id)) return;
+                seen.add(id);
+
+                itemSelect.append(
+                    `<option value="${id}">${source.item_name}</option>`
+                );
+            });
+
+            itemSelect.prop('disabled', seen.size === 0);
+
+            if (seen.size === 1) {
+                itemSelect.val([...seen][0]).trigger('change');
+            }
+        }
+
+        /* ===============================
+           LOAD LOT AFTER ITEM
+        ================================*/
+        function loadLotByItem(itemId) {
+            const sources = filteredSources().filter(s =>
+                String(s.item_id) === String(itemId)
+            );
+
+            lotSelect.empty().append('<option value="">Select</option>');
+
+            const seen = new Set();
+
+            sources.forEach(source => {
                 const lotNo = source.lot_no;
                 if (!lotNo || seen.has(lotNo)) return;
-
                 seen.add(lotNo);
 
                 lotSelect.append(
@@ -266,35 +294,9 @@
             });
 
             lotSelect.prop('disabled', seen.size === 0);
-        }
-
-        /* ===============================
-           LOAD ITEM AFTER LOT
-        ================================*/
-        function loadItemByLot(lotNo) {
-            const sources = filteredSources().filter(s =>
-                String(s.lot_no) === String(lotNo)
-            );
-
-            itemSelect.empty().append('<option value="">Select</option>');
-
-            const seen = new Set();
-
-            sources.forEach(source => {
-                if (seen.has(source.item_id)) return;
-                seen.add(source.item_id);
-
-                itemSelect.append(
-                    `<option value="${source.item_id}">
-                ${source.item_name}
-            </option>`
-                );
-            });
-
-            itemSelect.prop('disabled', seen.size === 0);
 
             if (seen.size === 1) {
-                itemSelect.val(sources[0].item_id).trigger('change');
+                lotSelect.val([...seen][0]).trigger('change');
             }
         }
 
@@ -384,7 +386,7 @@
         ================================*/
         function clearEntryFields() {
             itemSelect.val('').prop('disabled', true);
-            lotSelect.val('');
+            lotSelect.val('').prop('disabled', true);
 
             $('#quality, #meter, #fold, #total_meter, #shrinkage, #after_shrinkage_meter, #design_no').val('');
         }
@@ -422,11 +424,11 @@
         ================================*/
         jobWorkerSelect.on('change', () => {
             clearEntryFields();
-            loadLotDropdown();
+            loadItemDropdown();
         });
 
-        lotSelect.on('change', () => loadItemByLot(lotSelect.val()));
-        itemSelect.on('change', autoFill);
+        itemSelect.on('change', () => loadLotByItem(itemSelect.val()));
+        lotSelect.on('change', autoFill);
 
         $('#meter, #fold').on('input', calculateValues);
         $('#shrinkage, #after_shrinkage_meter').on('input', calculateValues);
@@ -485,8 +487,8 @@
                 data-type="${$('#type').val()}"
             >
                 <td></td>
-                <td>${inwardLotNo}</td>
                 <td>${itemText}</td>
+                <td>${inwardLotNo}</td>
                 <td>${$('#quality').val()}</td>
                 <td>${meter}</td>
                 <td>${fold}</td>
@@ -550,8 +552,8 @@
            INIT
         ================================*/
         $(document).ready(function() {
-            lotSelect.prop('disabled', true);
             itemSelect.prop('disabled', true);
+            lotSelect.prop('disabled', true);
 
             updateTypeBehaviour();
         });

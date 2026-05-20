@@ -16,6 +16,7 @@ class JobWorkAssignment extends Model
         'assign_no',
         'job_worker_id',
         'freight',
+        'factory_challan',
         'total_meter',
         'total_net_meter',
         'remark',

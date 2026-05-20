@@ -81,6 +81,7 @@ class JobWorkAssignmentController extends Controller
             'assign_no' => $this->nextAssignNo(),
             'job_worker_id' => '',
             'freight' => '',
+            'factory_challan' => '',
             'remark' => '',
         ];
     }
@@ -234,6 +235,7 @@ class JobWorkAssignmentController extends Controller
 
                     $q->where('assign_no', 'like', "%{$search}%")
                         ->orWhere('freight', 'like', "%{$search}%")
+                        ->orWhere('factory_challan', 'like', "%{$search}%")
 
                         ->orWhereHas('jobWorker', function ($jq) use ($search) {
                             $jq->where('name', 'like', "%{$search}%");
@@ -367,6 +369,7 @@ class JobWorkAssignmentController extends Controller
             'assign_no' => 'required|string|max:30|unique:job_work_assignments,assign_no',
             'job_worker_id' => 'required|exists:job_workers,id',
             'freight' => 'nullable|string|max:100',
+            'factory_challan' => 'nullable|string|max:100',
             'remark' => 'nullable|string',
             'items_data' => 'required|array|min:1',
             'items_data.*.purchase_item_id' => 'nullable|exists:purchase_items,id',
@@ -401,6 +404,7 @@ class JobWorkAssignmentController extends Controller
                     'assign_no' => $request->assign_no,
                     'job_worker_id' => $request->job_worker_id,
                     'freight' => $request->freight,
+                    'factory_challan' => $request->factory_challan,
                     'remark' => $request->remark,
                     'total_meter' => $itemsData->sum(fn ($item) => (float) $item['meter']),
                     'total_net_meter' => $itemsData->sum(fn ($item) => (float) $item['net_meter']),
@@ -451,6 +455,7 @@ class JobWorkAssignmentController extends Controller
                 'assign_no' => $assignmentRecord->assign_no,
                 'job_worker_id' => $assignmentRecord->job_worker_id,
                 'freight' => $assignmentRecord->freight,
+                'factory_challan' => $assignmentRecord->factory_challan,
                 'remark' => $assignmentRecord->remark,
             ];
 
@@ -517,6 +522,7 @@ class JobWorkAssignmentController extends Controller
             'assign_no' => ['required', 'string', 'max:30', Rule::unique('job_work_assignments', 'assign_no')->ignore($id)],
             'job_worker_id' => 'required|exists:job_workers,id',
             'freight' => 'nullable|string|max:100',
+            'factory_challan' => 'nullable|string|max:100',
             'remark' => 'nullable|string',
             'items_data' => 'required|array|min:1',
             'items_data.*.purchase_item_id' => 'nullable|exists:purchase_items,id',
@@ -552,6 +558,7 @@ class JobWorkAssignmentController extends Controller
                     'assign_no' => $request->assign_no,
                     'job_worker_id' => $request->job_worker_id,
                     'freight' => $request->freight,
+                    'factory_challan' => $request->factory_challan,
                     'remark' => $request->remark,
                     'total_meter' => $itemsData->sum(fn ($item) => (float) $item['meter']),
                     'total_net_meter' => $itemsData->sum(fn ($item) => (float) $item['net_meter']),

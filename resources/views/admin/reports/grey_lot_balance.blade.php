@@ -46,6 +46,13 @@
                 GREY LOT BALANCE REPORT (SORTED BY DATE)
             </div>
 
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <label>Search Lot No</label>
+                    <input type="text" id="searchLotNo" class="form-control" placeholder="Type lot no...">
+                </div>
+            </div>
+
             <div class="table-responsive">
                 <table id="greyLotTable" class="table table-bordered report-table">
                     <thead class="table-light">
@@ -106,6 +113,16 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <script>
+        $(document).ready(function () {
+            $('#searchLotNo').on('keyup', function () {
+                const value = this.value.toLowerCase();
+                $('#greyLotTable tbody tr').each(function () {
+                    const lotNo = $(this).find('td').eq(3).text().toLowerCase();
+                    $(this).toggle(lotNo.includes(value));
+                });
+            });
+        });
+
         function exportGreyLotToExcel() {
 
             let table = document.getElementById("greyLotTable");
