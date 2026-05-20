@@ -659,6 +659,7 @@
         purchaseItemSelect.addEventListener('change', function() {
             populateLotOptions();
             fillSourceFields(null);
+            processSelect.value = this.value;
         });
 
         lotSelect.addEventListener('change', function() {
