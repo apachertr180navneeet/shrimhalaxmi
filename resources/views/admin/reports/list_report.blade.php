@@ -147,9 +147,11 @@
                                 <td colspan="6" class="text-end fw-bold">OUTWARD TOTAL</td>
                                 <td class="fw-bold">{{ number_format((float) $summary['outward_mtrs_l100'], 3, '.', '') }}
                                 </td>
-                                <td colspan="10" class="text-end fw-bold">INWARD TOTAL</td>
+                                <td colspan="8" class="text-end fw-bold">INWARD TOTAL</td>
                                 <td class="fw-bold">{{ number_format((float) $summary['inward_mtrs_l100'], 3, '.', '') }}
                                 </td>
+                                <td></td>
+                                <td></td>
                             </tr>
 
                             <tr class="table-warning">

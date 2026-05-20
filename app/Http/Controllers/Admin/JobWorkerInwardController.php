@@ -70,7 +70,7 @@ class JobWorkerInwardController extends Controller
 
         return JobWorkAssignmentItem::query()
             ->with([
-                'assignment:id,job_worker_id',
+                'assignment:id,job_worker_id,factory_challan',
                 'item:id,item_name',
                 'processItem:id,item_name',
             ])
@@ -105,6 +105,7 @@ class JobWorkerInwardController extends Controller
                     'assigned_meter' => number_format($assignedMeter, 2, '.', ''),
                     'inwarded_meter' => number_format($inwardedMeter, 2, '.', ''),
                     'remaining_meter' => number_format($remainingMeter, 2, '.', ''),
+                    'factory_challan' => (string) ($row->assignment?->factory_challan ?? ''),
                 ];
             })
             ->filter(function (array $row) {

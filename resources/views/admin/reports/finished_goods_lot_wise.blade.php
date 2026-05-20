@@ -34,10 +34,6 @@
                 </button>
             </div>
 
-            <div class="report-title">
-                LOT WISE REPORT OF FINISHED GOODS IN STOCK
-            </div>
-
             <div class="table-responsive">
                 <table id="lotReportTable" class="table table-bordered report-table">
                     <thead class="table-light">
@@ -47,6 +43,7 @@
                             <th>QUALITY</th>
                             <th>QTY</th>
                             <th>PRINTED / DYED</th>
+                            <th>STAGE</th>
                             <th>DESIGN NO</th>
                             <th>SUPPLIER</th>
                         </tr>
@@ -59,12 +56,13 @@
                                 <td>{{ $row['quality'] }}</td>
                                 <td>{{ number_format((float) $row['qty'], 2, '.', '') }}</td>
                                 <td>{{ $row['printed_dyed'] }}</td>
+                                <td>{{ $row['stage'] }}</td>
                                 <td>{{ $row['design_no'] }}</td>
                                 <td>{{ $row['supplier'] }}</td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center">No stock found.</td>
+                                <td colspan="8" class="text-center">No stock found.</td>
                             </tr>
                         @endforelse
                     </tbody>

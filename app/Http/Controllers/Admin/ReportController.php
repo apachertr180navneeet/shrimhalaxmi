@@ -236,7 +236,8 @@ class ReportController extends Controller
                     'quality' => (string) ($row->item?->item_name ?? 'Unknown Quality'),
                     'qty' => max($balance, 0),
                     'printed_dyed' => (string) ($row->type ?: '-'),
-                    'design_no' => (string) ($row->quality ?: '-'),
+                    'stage' => (string) ($row->quality ?: '-'),
+                    'design_no' => (string) ($row->design_no ?: '-'),
                     'supplier' => (string) ($row->inward?->jobWorker?->name ?? '-'),
                 ];
             })
@@ -378,7 +379,7 @@ class ReportController extends Controller
                 ->values();
 
             $summary['outward_mtrs_l100'] = (float) $outwardRows->sum('mtrs_l100');
-            $summary['inward_mtrs_l100'] = (float) $inwardRows->sum('mtrs_l100');
+            $summary['inward_mtrs_l100'] = (float) $inwardRows->sum('grey_mtr');
             $summary['balance'] = $summary['outward_mtrs_l100'] - $summary['inward_mtrs_l100'];
         }
 

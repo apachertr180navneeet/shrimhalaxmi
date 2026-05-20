@@ -84,6 +84,8 @@
             <input type="text" id="design_no" class="form-control">
         </div>
 
+        <input type="hidden" id="factory_challan">
+
         <div class="col-md-2">
             <label>Meter</label>
             <input type="number" id="meter" class="form-control">
@@ -320,6 +322,7 @@
             $('#quality').val(source.quality || '');
             $('#meter').val(sourceRemainingMeter(source).toFixed(2));
             $('#fold').val(source.fold || '');
+            $('#factory_challan').val(source.factory_challan || '');
 
             calculateValues();
         }
@@ -399,6 +402,7 @@
             const designNo = $('#design_no').val() || 'DN';
             const jobWorkerAbbr = jobWorkerSelect.find('option:selected').data('abbr') || 'JW';
             const stage = $('#quality').val() || 'ST';
+            const factoryChallan = $('#factory_challan').val() || 'FC';
             const inwardNo = $('input[name="ch_no"]').val() || 'IN0000';
 
             let max = 0;
@@ -416,7 +420,7 @@
 
             const runningNo = String(max + 1).padStart(3, '0');
 
-            return `${designNo}/${jobWorkerAbbr}/${stage}/${inwardNo}/${runningNo}`;
+            return `${designNo}/${factoryChallan}/${jobWorkerAbbr}/${stage}/${inwardNo}/${runningNo}`;
         }
 
         /* ===============================
@@ -485,6 +489,7 @@
                 data-shrinkage="${$('#shrinkage').val()}"
                 data-after-shrinkage="${$('#after_shrinkage_meter').val()}"
                 data-type="${$('#type').val()}"
+                data-factory-challan="${$('#factory_challan').val()}"
             >
                 <td></td>
                 <td>${itemText}</td>
@@ -544,6 +549,7 @@
                     type: row.data('type') ?? '',
                     after_shrinkage_meter: row.data('after-shrinkage') ?? '',
                     design_no: row.data('design-no') ?? '',
+                    factory_challan: row.data('factory-challan') ?? '',
                 }));
             });
         }
