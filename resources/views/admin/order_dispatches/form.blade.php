@@ -139,7 +139,7 @@
         </div>
         <div class="col-md-1">
             <label class="form-label">Fold</label>
-            <input type="number" step="0.01" id="fold" class="form-control" placeholder="Fold" readonly>
+            <input type="number" step="0.01" id="fold" class="form-control" placeholder="Fold">
         </div>
         <div class="col-md-1">
             <label class="form-label">Net Meter</label>

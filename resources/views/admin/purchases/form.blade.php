@@ -217,6 +217,7 @@
             <option value="Dyed" {{ $selectedStage === 'Dyed' ? 'selected' : '' }}>Dyed</option>
             <option value="RFD" {{ $selectedStage === 'RFD' ? 'selected' : '' }}>RFD</option>
             <option value="Tie-Dye" {{ $selectedStage === 'Tie-Dye' ? 'selected' : '' }}>Tie-Dye</option>
+            <option value="Printed" {{ $selectedStage === 'Printed' ? 'selected' : '' }}>Printed</option>
         </select>
     </div>
 
