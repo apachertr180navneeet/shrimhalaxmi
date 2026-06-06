@@ -9,19 +9,19 @@
 <div class="p-4 mb-4">
 
     <div class="row mb-3">
-        <div class="col-md-3">
+        <div class="col-sm-6 col-md-3">
             <label>Date</label>
             <input type="date" name="inward_date" class="form-control"
                 value="{{ old('inward_date', $inward['inward_date'] ?? '') }}">
         </div>
 
-        <div class="col-md-3">
+        <div class="col-sm-6 col-md-3">
             <label>JICH NO</label>
             <input type="text" name="ch_no" class="form-control" value="{{ old('ch_no', $inward['ch_no'] ?? '') }}"
                 readonly>
         </div>
 
-        <div class="col-md-3">
+        <div class="col-sm-6 col-md-3">
             <label>Job Worker</label>
             <select name="job_worker_id" class="form-control">
                 <option value="">Select</option>
@@ -43,21 +43,21 @@
 
     <div class="row g-3 align-items-end">
 
-        <div class="col-md-2">
+        <div class="col-sm-6 col-md-2">
             <label>Item</label>
             <select id="item_id" class="form-control" disabled>
                 <option value="">Select</option>
             </select>
         </div>
 
-        <div class="col-md-2">
+        <div class="col-sm-6 col-md-2">
             <label>LOT NO</label>
             <select id="lot_no" class="form-control" disabled>
                 <option value="">Select</option>
             </select>
         </div>
 
-        <div class="col-md-2">
+        <div class="col-sm-6 col-md-2">
             <label>Type</label>
             <select id="type" class="form-control">
                 <option value="LOT TO LOT">LOT TO LOT</option>
@@ -65,7 +65,7 @@
             </select>
         </div>
 
-        <div class="col-md-2">
+        <div class="col-sm-6 col-md-2">
             <label>Stage</label>
             <select id="quality" class="form-control">
                 <option value="">Select</option>
@@ -79,39 +79,39 @@
             </select>
         </div>
 
-        <div class="col-md-2">
+        <div class="col-sm-6 col-md-2">
             <label>Design No</label>
             <input type="text" id="design_no" class="form-control">
         </div>
 
         <input type="hidden" id="factory_challan">
 
-        <div class="col-md-2">
+        <div class="col-sm-6 col-md-2">
             <label>Meter</label>
             <input type="number" id="meter" class="form-control">
         </div>
 
-        <div class="col-md-2">
+        <div class="col-sm-6 col-md-2">
             <label>Fold</label>
             <input type="number" id="fold" class="form-control">
         </div>
 
-        <div class="col-md-2">
+        <div class="col-sm-6 col-md-2">
             <label>Total Meter</label>
             <input type="number" id="total_meter" class="form-control" readonly>
         </div>
 
-        <div class="col-md-2">
+        <div class="col-sm-6 col-md-2">
             <label>Shrinkage</label>
             <input type="text" id="shrinkage" class="form-control">
         </div>
 
-        <div class="col-md-2">
+        <div class="col-sm-6 col-md-2">
             <label>After Shrinkage</label>
             <input type="number" id="after_shrinkage_meter" class="form-control">
         </div>
 
-        <div class="col-md-2">
+        <div class="col-sm-6 col-md-2">
             <button type="button" id="addItem" class="btn btn-primary w-100">
                 Add Item
             </button>
@@ -121,82 +121,84 @@
 
 <!-- TABLE -->
 <div class="p-3">
-    <table class="table table-bordered text-center" id="itemTable">
-        <thead class="table-light">
-            <tr>
-                <th>SR</th>
-                <th>Item</th>
-                <th>LOT NO</th>
-                <th>Stage</th>
-                <th>Meter</th>
-                <th>Fold</th>
-                <th>Total</th>
-                <th>Design No</th>
-                <th>Shrinkage</th>
-                <th>After Shrinkage</th>
-                <th>Type</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody id="itemTableBody">
-            @if ($itemRows->isEmpty())
-                <tr id="no_item_row">
-                    <td colspan="11" class="text-center">No items added yet.</td>
+    <div class="table-responsive">
+        <table class="table table-bordered text-center" id="itemTable">
+            <thead class="table-light">
+                <tr>
+                    <th>SR</th>
+                    <th>Item</th>
+                    <th>LOT NO</th>
+                    <th>Stage</th>
+                    <th>Meter</th>
+                    <th>Fold</th>
+                    <th>Total</th>
+                    <th>Design No</th>
+                    <th>Shrinkage</th>
+                    <th>After Shrinkage</th>
+                    <th>Type</th>
+                    <th>Action</th>
                 </tr>
-            @else
-                @foreach ($itemRows as $rowIndex => $row)
-                    @php
-                        $rowShrinkage = (float) ($row->shrinkage ?? 0);
-                        $rowMeter = (float) ($row->meter ?? 0);
-                        $rowAfterShrinkage = $rowMeter - ($rowMeter * $rowShrinkage) / 100;
-                    @endphp
-                    <tr data-item-id="{{ $row->item_id }}" data-lot-no="{{ $row->lot_no }}"
-                        data-source-lot="{{ $row->source_lot_no ?? $row->lot_no }}" data-quality="{{ $row->quality }}"
-                        data-meter="{{ $row->meter }}" data-fold="{{ $row->fold }}"
-                        data-total="{{ $row->total_meter }}" data-shrinkage="{{ $row->shrinkage }}"
-                        data-after-shrinkage="{{ number_format($rowAfterShrinkage, 2, '.', '') }}"
-                        data-type="{{ $row->type }}" data-design-no="{{ $row->design_no ?? '' }}">
-                        <td>{{ $rowIndex + 1 }}</td>
-                        <td>{{ $row->item?->item_name }}</td>
-                        <td>{{ $row->lot_no }}</td>
-                        <td>{{ $row->quality }}</td>
-                        <td>{{ $row->meter }}</td>
-                        <td>{{ $row->fold }}</td>
-                        <td>{{ $row->total_meter }}</td>
-                        <td>{{ $row->design_no ?? '' }}</td>
-                        <td>{{ $row->shrinkage }}</td>
-                        <td>{{ number_format($rowAfterShrinkage, 2, '.', '') }}</td>
-                        <td>{{ $row->type }}</td>
-                        <td><button class="btn btn-danger btn-sm removeRow" type="button">Delete</button></td>
-                        <td class="d-none row-hidden-inputs">
-                            <input type="hidden" name="items_data[{{ $rowIndex }}][item_id]"
-                                value="{{ $row->item_id }}">
-                            <input type="hidden" name="items_data[{{ $rowIndex }}][lot_no]"
-                                value="{{ $row->lot_no }}">
-                            <input type="hidden" name="items_data[{{ $rowIndex }}][source_lot_no]"
-                                value="{{ $row->source_lot_no ?? $row->lot_no }}">
-                            <input type="hidden" name="items_data[{{ $rowIndex }}][quality]"
-                                value="{{ $row->quality }}">
-                            <input type="hidden" name="items_data[{{ $rowIndex }}][meter]"
-                                value="{{ $row->meter }}">
-                            <input type="hidden" name="items_data[{{ $rowIndex }}][fold]"
-                                value="{{ $row->fold }}">
-                            <input type="hidden" name="items_data[{{ $rowIndex }}][total_meter]"
-                                value="{{ $row->total_meter }}">
-                            <input type="hidden" name="items_data[{{ $rowIndex }}][shrinkage]"
-                                value="{{ $row->shrinkage }}">
-                            <input type="hidden" name="items_data[{{ $rowIndex }}][type]"
-                                value="{{ $row->type }}">
-                            <input type="hidden" name="items_data[{{ $rowIndex }}][after_shrinkage_meter]"
-                                value="{{ number_format($rowAfterShrinkage, 2, '.', '') }}">
-                            <input type="hidden" name="items_data[{{ $rowIndex }}][design_no]"
-                                value="{{ $row->design_no ?? '' }}">
-                        </td>
+            </thead>
+            <tbody id="itemTableBody">
+                @if ($itemRows->isEmpty())
+                    <tr id="no_item_row">
+                        <td colspan="11" class="text-center">No items added yet.</td>
                     </tr>
-                @endforeach
-            @endif
-        </tbody>
-    </table>
+                @else
+                    @foreach ($itemRows as $rowIndex => $row)
+                        @php
+                            $rowShrinkage = (float) ($row->shrinkage ?? 0);
+                            $rowMeter = (float) ($row->meter ?? 0);
+                            $rowAfterShrinkage = $rowMeter - ($rowMeter * $rowShrinkage) / 100;
+                        @endphp
+                        <tr data-item-id="{{ $row->item_id }}" data-lot-no="{{ $row->lot_no }}"
+                            data-source-lot="{{ $row->source_lot_no ?? $row->lot_no }}" data-quality="{{ $row->quality }}"
+                            data-meter="{{ $row->meter }}" data-fold="{{ $row->fold }}"
+                            data-total="{{ $row->total_meter }}" data-shrinkage="{{ $row->shrinkage }}"
+                            data-after-shrinkage="{{ number_format($rowAfterShrinkage, 2, '.', '') }}"
+                            data-type="{{ $row->type }}" data-design-no="{{ $row->design_no ?? '' }}">
+                            <td>{{ $rowIndex + 1 }}</td>
+                            <td>{{ $row->item?->item_name }}</td>
+                            <td>{{ $row->lot_no }}</td>
+                            <td>{{ $row->quality }}</td>
+                            <td>{{ $row->meter }}</td>
+                            <td>{{ $row->fold }}</td>
+                            <td>{{ $row->total_meter }}</td>
+                            <td>{{ $row->design_no ?? '' }}</td>
+                            <td>{{ $row->shrinkage }}</td>
+                            <td>{{ number_format($rowAfterShrinkage, 2, '.', '') }}</td>
+                            <td>{{ $row->type }}</td>
+                            <td><button class="btn btn-danger btn-sm removeRow" type="button">Delete</button></td>
+                            <td class="d-none row-hidden-inputs">
+                                <input type="hidden" name="items_data[{{ $rowIndex }}][item_id]"
+                                    value="{{ $row->item_id }}">
+                                <input type="hidden" name="items_data[{{ $rowIndex }}][lot_no]"
+                                    value="{{ $row->lot_no }}">
+                                <input type="hidden" name="items_data[{{ $rowIndex }}][source_lot_no]"
+                                    value="{{ $row->source_lot_no ?? $row->lot_no }}">
+                                <input type="hidden" name="items_data[{{ $rowIndex }}][quality]"
+                                    value="{{ $row->quality }}">
+                                <input type="hidden" name="items_data[{{ $rowIndex }}][meter]"
+                                    value="{{ $row->meter }}">
+                                <input type="hidden" name="items_data[{{ $rowIndex }}][fold]"
+                                    value="{{ $row->fold }}">
+                                <input type="hidden" name="items_data[{{ $rowIndex }}][total_meter]"
+                                    value="{{ $row->total_meter }}">
+                                <input type="hidden" name="items_data[{{ $rowIndex }}][shrinkage]"
+                                    value="{{ $row->shrinkage }}">
+                                <input type="hidden" name="items_data[{{ $rowIndex }}][type]"
+                                    value="{{ $row->type }}">
+                                <input type="hidden" name="items_data[{{ $rowIndex }}][after_shrinkage_meter]"
+                                    value="{{ number_format($rowAfterShrinkage, 2, '.', '') }}">
+                                <input type="hidden" name="items_data[{{ $rowIndex }}][design_no]"
+                                    value="{{ $row->design_no ?? '' }}">
+                            </td>
+                        </tr>
+                    @endforeach
+                @endif
+            </tbody>
+        </table>
+    </div>
 </div>
 
 @section('script')

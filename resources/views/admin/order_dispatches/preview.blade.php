@@ -275,7 +275,7 @@
 
                 <tr>
                     <td class="dispatch-preview__label">Order Dispatch No.</td>
-                    <td class="dispatch-preview__line">{{ $dispatch->order_dispatch_no ?? '-' }}</td>
+                    <td class="dispatch-preview__line">{{ $dispatch->dispatch_no ?? '-' }}</td>
                     <td colspan="2"></td>
                 </tr>
             </table>

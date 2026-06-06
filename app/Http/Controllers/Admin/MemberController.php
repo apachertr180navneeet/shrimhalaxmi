@@ -39,37 +39,40 @@ class MemberController extends Controller
         try {
             $query = User::query();
 
-            if ($request->member_name) {
-                $query->where('name', 'like', '%' . $request->member_name . '%');
+            if ($request->filled('member_name')) {
+                $query->where('full_name', 'like', '%' . $request->member_name . '%');
             }
 
             return DataTables::of($query)
                 ->addIndexColumn()
-
+                ->filter(function ($query) use ($request) {
+                    if ($request->filled('search_value')) {
+                        $search = $request->search_value;
+                        $query->where(function ($q) use ($search) {
+                            $q->where('full_name', 'like', "%{$search}%")
+                              ->orWhere('email', 'like', "%{$search}%")
+                              ->orWhere('phone', 'like', "%{$search}%");
+                        });
+                    }
+                })
                 ->addColumn('role', function ($row) {
                     return $row->getRoleNames()->first() ?? '-';
                 })
-
                 ->addColumn('status', function ($row) {
                     $checked = $row->status === 'active' ? 'checked' : '';
-
                     return '<label class="switch">
                         <input type="checkbox" class="statusToggle" data-id="'.$row->id.'" '.$checked.'>
                         <span class="slider"></span>
                     </label>';
                 })
-
                 ->addColumn('action', function ($row) {
                     return '
                         <a href="'.route('admin.members.edit', $row->id).'" 
-                        class="btn btn-sm btn-info">
-                        Edit
-                        </a>
+                        class="btn btn-sm btn-info">Edit</a>
                         <button class="btn btn-sm btn-danger deleteBtn" data-id="'.$row->id.'">Delete</button>
                     ';
                 })
-
-                ->rawColumns(['status','action'])
+                ->rawColumns(['status', 'action'])
                 ->make(true);
 
         } catch (\Exception $e) {

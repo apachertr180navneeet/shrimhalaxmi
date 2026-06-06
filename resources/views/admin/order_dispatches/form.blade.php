@@ -49,17 +49,17 @@
         </div>
         <div class="col-md-4">
             <label class="form-label">Order Dispatch No.</label>
-            <input type="text" name="dispatch_no" class="form-control @error('dispatch_no') is-invalid @enderror"
-                value="{{ $dispatchNo }}" readonly required>
-            @error('dispatch_no')
+            <input type="text" name="order_dispatch_no" class="form-control @error('order_dispatch_no') is-invalid @enderror"
+                value="{{ old('order_dispatch_no', $dispatch['dispatch_no'] ?? '') }}" readonly>
+            @error('order_dispatch_no')
                 <div class="invalid-feedback">{{ $message }}</div>
             @enderror
         </div>
         <div class="col-md-4">
             <label class="form-label">Bill No.</label>
-            <input type="text" name="order_dispatch_no" class="form-control @error('order_dispatch_no') is-invalid @enderror"
-                value="{{ old('order_dispatch_no', $dispatch['order_dispatch_no'] ?? '') }}">
-            @error('order_dispatch_no')
+            <input type="text" name="bill_no" class="form-control @error('bill_no') is-invalid @enderror"
+                value="{{ old('bill_no', $dispatch['bill_no'] ?? '') }}">
+            @error('bill_no')
                 <div class="invalid-feedback">{{ $message }}</div>
             @enderror
         </div>

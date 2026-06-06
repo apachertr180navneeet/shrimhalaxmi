@@ -13,20 +13,12 @@ return new class extends Migration
             $table->decimal('net_meter', 12, 2)->default(0)->after('fold');
             $table->string('bale_no', 100)->nullable()->after('net_meter');
         });
-
-        Schema::table('order_dispatches', function (Blueprint $table) {
-            $table->string('order_dispatch_no', 100)->nullable()->after('dispatch_no');
-        });
     }
 
     public function down(): void
     {
         Schema::table('order_dispatch_items', function (Blueprint $table) {
             $table->dropColumn(['fold', 'net_meter', 'bale_no']);
-        });
-
-        Schema::table('order_dispatches', function (Blueprint $table) {
-            $table->dropColumn('order_dispatch_no');
         });
     }
 };

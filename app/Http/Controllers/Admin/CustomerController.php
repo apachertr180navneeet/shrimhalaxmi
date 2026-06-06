@@ -52,7 +52,7 @@ class CustomerController extends Controller
                 $q->where('name', 'like', "%$search%")
                 ->orWhere('phone', 'like', "%$search%")
                 ->orWhere('email', 'like', "%$search%")
-                ->orWhere('city', 'like', "%$search%");
+                ->orWhere('location', 'like', "%$search%");
             });
         }
 
