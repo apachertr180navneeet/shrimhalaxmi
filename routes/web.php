@@ -132,8 +132,8 @@ Route::name('admin.')->prefix('admin')->group(function () {
             Route::post('/store', [RoleController::class, 'store'])->name('store');
             Route::get('/edit/{id}', [RoleController::class, 'edit'])->name('edit');
             Route::post('/update/{id}', [RoleController::class, 'update'])->name('update');
-            Route::delete('/delete/{id}', [RoleController::class, 'destroy'])->name('delete');
-            Route::get('roles/getall', [RoleController::class, 'getAll'])->name('getall');
+            Route::post('/delete/{id}', [RoleController::class, 'destroy'])->name('delete');
+            Route::get('/getall', [RoleController::class, 'getAll'])->name('getall');
 
         });
 

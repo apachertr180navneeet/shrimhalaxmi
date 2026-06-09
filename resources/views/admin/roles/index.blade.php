@@ -126,7 +126,7 @@ $(function () {
 
                 $.ajax({
                     url: '/admin/roles/delete/' + id,
-                    type: 'DELETE',
+                    type: 'POST',
                     data: { _token: "{{ csrf_token() }}" },
 
                     success: function () {
